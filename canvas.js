@@ -28,6 +28,13 @@ Canvas.prototype = {
         this.ctx.moveTo(p1.x, p1.y);
         this.ctx.lineTo(p2.x, p2.y);
         this.ctx.stroke();
+    },
+
+    rectangle: function (x1, y1, w, h, color) {
+        this.ctx.strokeStype = color;
+        this.ctx.beginPath();
+        this.ctx.rect(x1, y1, w, h);
+        this.ctx.fill();
     }
 };
 

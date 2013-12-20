@@ -5,9 +5,7 @@ $(function () {
         waterfall = new Waterfall(canvas),
         debug = false,
         mouseDown = false,
-        influencer = -1,
-        snd = new Audio("rain.mp3");
-    //snd.play();
+        influencer = -1;
     if (debug) {
         waterfall.update();
     } else {
@@ -50,26 +48,48 @@ var Waterfall = function (canvas) {
     var i, p, waterfallWidth = 200;
     this.originX = canvas.width / 2 - waterfallWidth / 2;
     this.originY = 0;
-    this.waterfallWidth = waterfallWidth;
-    this.canvas = canvas;
-    this.nParticles = 100;
-    this.particles = [];
+    this.sourceWidth = 100;
     this.influencers = [];
-    this.influencers[0] = new Influencer(this.originX, this.originY + 200);
-    this.influencers[1] = new Influencer(this.originX + waterfallWidth, this.originY + 200);
-    this.influencers[2] = new Influencer(this.originX, this.originY + 300);
-
-    for (i = 0; i < this.nParticles; i += 1) {
-        p = new Particle(this.originX + Math.random() * this.waterfallWidth,
-                         this.originY + Math.random() * this.canvas.height);
-        p.vel.x = 0;
-        p.vel.y = 5;
-        this.particles[i] = p;
-    }
+    this.buckets = [];
+    this.particles = [];
+    this.canvas = canvas;
+    this.loadLevel(level1);
 };
 
 Waterfall.prototype = {
-    
+    loadLevel: function (level) {
+        var i = 0,
+            influencerList = level.influencers,
+            bucketList = level.buckets,
+            x = 0,
+            y = 0,
+            width = 0,
+            p;
+        this.sourceWidth = level.sourceWidth;
+        this.sourceX = level.sourceX;
+        this.sourceY = level.sourceY;
+        this.nParticles = level.nParticles;
+        for (i = 0; i < influencerList.length; i += 1) {
+            x = influencerList[i].x;
+            y = influencerList[i].y;
+            this.influencers[i] = new Influencer(x, y);
+        }
+
+        for (i = 0; i < bucketList.length; i += 1) {
+            x = bucketList[i].x;
+            y = bucketList[i].y;
+            width = bucketList[i].width;
+            this.buckets[i] = new Bucket(x, y, width);
+        }
+        for (i = 0; i < this.nParticles; i += 1) {
+            p = new Particle(this.originX + Math.random() * this.sourceWidth,
+                             this.originY + Math.random() * this.canvas.height);
+            p.vel.x = 0;
+            p.vel.y = 5;
+            this.particles[i] = p;
+        }
+    },
+
     update: function () {
         var i = 0, nearest, color;
 
@@ -86,6 +106,8 @@ Waterfall.prototype = {
             color = 'rgba(0,153,255,1)';
             this.drawParticle(this.particles[i], color);
         }
+
+        this.drawBuckets();
         
     },
 
@@ -142,7 +164,8 @@ Waterfall.prototype = {
         particle.y += particle.vel.y;
 
         if (particle.y > this.canvas.height) {
-            particle.x = this.originX + Math.random() * this.waterfallWidth;
+            //this.droplet.play();
+            particle.x = this.originX + Math.random() * this.sourceWidth;
             particle.y = this.originY + Math.random() * 10;
             particle.vel.x = 0;
             particle.vel.y = 5;
@@ -172,6 +195,14 @@ Waterfall.prototype = {
         var i, alpha = 1, color = 'rgba(0,153,255,' + alpha + ')';
         for (i = 0; i < this.influencers.length; i += 1) {
             this.canvas.circle(this.influencers[i].x, this.influencers[i].y, 5, color);
+        }
+    },
+
+    drawBuckets : function () {
+        var i, b, alpha = 1, color = 'rgba(0,153,255,' + alpha + ')';
+        for (i = 0; i < this.buckets.length; i += 1) {
+            b = this.buckets[i];
+            this.canvas.rectangle(b.x, b.y, b.width, 50, color);
         }
     },
     
