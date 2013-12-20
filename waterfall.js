@@ -45,14 +45,17 @@ $(function () {
 
 var Waterfall = function (canvas) {
     
-    var i, p, waterfallWidth = 200;
-    this.originX = canvas.width / 2 - waterfallWidth / 2;
-    this.originY = 0;
+    var i, p;
+    this.sourceX = 0;
+    this.sourceY = 0;
     this.sourceWidth = 100;
     this.influencers = [];
     this.buckets = [];
     this.particles = [];
     this.canvas = canvas;
+    this.score = 0;
+    this.missed = 0;
+    this.level = 1;
     this.loadLevel(level1);
 };
 
@@ -82,8 +85,8 @@ Waterfall.prototype = {
             this.buckets[i] = new Bucket(x, y, width);
         }
         for (i = 0; i < this.nParticles; i += 1) {
-            p = new Particle(this.originX + Math.random() * this.sourceWidth,
-                             this.originY + Math.random() * this.canvas.height);
+            p = new Particle(this.sourceX + Math.random() * this.sourceWidth,
+                             this.sourceY + Math.random() * this.canvas.height);
             p.vel.x = 0;
             p.vel.y = 5;
             this.particles[i] = p;
@@ -93,12 +96,16 @@ Waterfall.prototype = {
     update: function () {
         var i = 0, nearest, color;
 
+        if (this.score >= 1000 && this.level === 1) {
+            this.loadLevel(level2);
+            this.score = 0;
+            this.missed = 0;
+        }
         this.canvas.clear();
         
         this.drawWayPoint();
 
         for (i = 0; i < this.nParticles; i += 1) {
-            nearest = this.nearestNeighbor(i);
             this.moveParticle(this.particles[i], nearest);
         }
 
@@ -108,34 +115,32 @@ Waterfall.prototype = {
         }
 
         this.drawBuckets();
+
+        this.drawScore();
         
     },
 
-    nearestNeighbor: function (index) {
-        /**
-         * Find the particle closest to the particle at this index
-         * @param {integer} index of particle to test against
-         * @return {Particle} closest neighboring particle
-         * */
-        var i = 0,
-            minD = 1e6,
-            nearest,
-            p = this.particles[index],
-            d = minD;
-
-        for (i = 0; i < this.nParticles; i += 1) {
-            if (i !== index) {
-                d = p.distanceSquared(this.particles[i]);
-                if (d < minD) {
-                    minD = d;
-                    nearest = this.particles[i];
+    hitBuckets: function (p) {
+        var i, b;
+        for (i = 0; i < this.buckets.length; i += 1) {
+            b = this.buckets[i];
+            if (p.x < b.x + b.width && p.x > b.x && p.y > b.y) {
+                this.score += 1;
+                //this.droplet.play();
+                p.x = this.sourceX + Math.random() * this.sourceWidth;
+                p.y = this.sourceY + Math.random() * 10;
+                p.vel.x = 0;
+                p.vel.y = 5;
+                for (i = 0; i < p.numTracers; i += 1) {
+                    p.trail[i].x = p.x;
+                    p.trail[i].y = p.y;
                 }
+                return true;
             }
         }
-        return nearest;
     },
 
-    moveParticle: function (particle, nearestNeighbor) {
+    moveParticle: function (particle) {
         /**
          * move our particle
          * @param {Particle} the particle to move
@@ -162,11 +167,14 @@ Waterfall.prototype = {
         }
         particle.x += particle.vel.x;
         particle.y += particle.vel.y;
+        
+        this.hitBuckets(particle);
 
         if (particle.y > this.canvas.height) {
             //this.droplet.play();
-            particle.x = this.originX + Math.random() * this.sourceWidth;
-            particle.y = this.originY + Math.random() * 10;
+            this.missed += 1;
+            particle.x = this.sourceX + Math.random() * this.sourceWidth;
+            particle.y = this.sourceY + Math.random() * 10;
             particle.vel.x = 0;
             particle.vel.y = 5;
             for (i = 0; i < particle.numTracers; i += 1) {
@@ -199,19 +207,30 @@ Waterfall.prototype = {
     },
 
     drawBuckets : function () {
-        var i, b, alpha = 1, color = 'rgba(0,153,255,' + alpha + ')';
+        var i, b, alpha = Math.min(this.score / 1000 + 0.25, 1),
+            color = 'rgba(0,153,255,' + alpha + ')';
         for (i = 0; i < this.buckets.length; i += 1) {
             b = this.buckets[i];
             this.canvas.rectangle(b.x, b.y, b.width, 50, color);
         }
     },
     
+    drawScore : function () {
+        var i, b, alpha = 1.0, color = 'rgba(100,100,100,' + alpha + ')',
+            fontFamily = 'arial', fontSize = 18, str;
+        str = "caught " + this.score;
+        //console.log(this.score);
+        this.canvas.text(20, 20, color, fontFamily, fontSize, str);
+        str = "missed " + this.missed;
+        this.canvas.text(20, 50, color, fontFamily, fontSize, str);
+    },
+
     hitInfluencer: function (x, y) {
         var i, influencer, hitSize = 50;
         for (i = 0; i < this.influencers.length; i += 1) {
             influencer = this.influencers[i];
-            console.log("click at :" + x + ", " + y);
-            console.log("influencer at :" + influencer.x + ", " + influencer.y);
+            //console.log("click at :" + x + ", " + y);
+            //console.log("influencer at :" + influencer.x + ", " + influencer.y);
             if (x < influencer.x + hitSize && x > influencer.x - hitSize && y < influencer.y + hitSize && y > influencer.y - hitSize) {
                 console.log("hit influencer");
                 return i;

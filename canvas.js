@@ -31,10 +31,16 @@ Canvas.prototype = {
     },
 
     rectangle: function (x1, y1, w, h, color) {
-        this.ctx.strokeStype = color;
+        this.ctx.fillStyle = color;
         this.ctx.beginPath();
         this.ctx.rect(x1, y1, w, h);
         this.ctx.fill();
+    },
+
+    text: function (x, y, color, fontFamily, fontSize, str) {
+        this.ctx.fillStyle = color;
+        this.ctx.font = fontSize + "px " + fontFamily;
+        this.ctx.fillText(str, x, y);
     }
 };
 
