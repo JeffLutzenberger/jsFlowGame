@@ -1,8 +1,8 @@
 jsWaterfall
 =======
 
-Simple waterfall algorithm in javascript
+Flow Game Prototype
 
 Try it out here:
 
-http://jefflutzenberger.github.io/jsWaterfall/
+http://jefflutzenberger.github.io/jsFlowGame/
