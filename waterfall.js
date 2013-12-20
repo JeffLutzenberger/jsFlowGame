@@ -15,7 +15,6 @@ $(function () {
     $("#canvas").click(function (e) {
         var x = Math.floor((e.pageX - $("#canvas").offset().left)),
             y = Math.floor((e.pageY - $("#canvas").offset().top));
-        //waterfall.wayPoint = new Vector(x, y);
     });
    
     $("#canvas").mousedown(function (e) {
@@ -119,6 +118,19 @@ Waterfall.prototype = {
         this.drawScore();
         
     },
+    
+    recycleParticle: function (p, vX, vY) {
+        var i = 0;
+        p.x = this.sourceX + Math.random() * this.sourceWidth;
+        p.y = this.sourceY + Math.random() * 10;
+        p.vel.x = vX;
+        p.vel.y = vY;
+        for (i = 0; i < p.numTracers; i += 1) {
+            p.trail[i].x = p.x;
+            p.trail[i].y = p.y;
+        }
+    
+    },
 
     hitBuckets: function (p) {
         var i, b;
@@ -126,15 +138,8 @@ Waterfall.prototype = {
             b = this.buckets[i];
             if (p.x < b.x + b.width && p.x > b.x && p.y > b.y) {
                 this.score += 1;
+                this.recycleParticle(p, 0, 5);
                 //this.droplet.play();
-                p.x = this.sourceX + Math.random() * this.sourceWidth;
-                p.y = this.sourceY + Math.random() * 10;
-                p.vel.x = 0;
-                p.vel.y = 5;
-                for (i = 0; i < p.numTracers; i += 1) {
-                    p.trail[i].x = p.x;
-                    p.trail[i].y = p.y;
-                }
                 return true;
             }
         }
@@ -173,14 +178,7 @@ Waterfall.prototype = {
         if (particle.y > this.canvas.height) {
             //this.droplet.play();
             this.missed += 1;
-            particle.x = this.sourceX + Math.random() * this.sourceWidth;
-            particle.y = this.sourceY + Math.random() * 10;
-            particle.vel.x = 0;
-            particle.vel.y = 5;
-            for (i = 0; i < particle.numTracers; i += 1) {
-                particle.trail[i].x = particle.x;
-                particle.trail[i].y = particle.y;
-            }
+            this.recycleParticle(particle, 0, 5);
         }
     },
 
@@ -229,10 +227,7 @@ Waterfall.prototype = {
         var i, influencer, hitSize = 50;
         for (i = 0; i < this.influencers.length; i += 1) {
             influencer = this.influencers[i];
-            //console.log("click at :" + x + ", " + y);
-            //console.log("influencer at :" + influencer.x + ", " + influencer.y);
             if (x < influencer.x + hitSize && x > influencer.x - hitSize && y < influencer.y + hitSize && y > influencer.y - hitSize) {
-                console.log("hit influencer");
                 return i;
             }
         }
