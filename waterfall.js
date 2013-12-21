@@ -18,8 +18,8 @@ $(function () {
     });
    
     $("#canvas").mousedown(function (e) {
-         var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-             y = Math.floor((e.pageY - $("#canvas").offset().top));
+        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
+            y = Math.floor((e.pageY - $("#canvas").offset().top));
         mouseDown = true;
         influencer = waterfall.hitInfluencer(x, y);
     });
@@ -40,6 +40,31 @@ $(function () {
             waterfall.influencers[influencer].y = y;
         }
     });
+
+    $('#canvas').on({ 'touchstart' : function (e) {
+        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
+            y = Math.floor((e.pageY - $("#canvas").offset().top));
+        mouseDown = true;
+        influencer = waterfall.hitInfluencer(x, y);
+    }});
+
+    $('#canvas').on({ 'touchend' : function (e) {
+        mouseDown = false;
+        influencer = -1;
+    }});
+
+    $('#canvas').on({ 'touchmove' : function (e) {
+        if (mouseDown === false) {
+            return;
+        }
+        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
+            y = Math.floor((e.pageY - $("#canvas").offset().top));
+        if (influencer >= 0) {
+            waterfall.influencers[influencer].x = x;
+            waterfall.influencers[influencer].y = y;
+        }
+    }});
+
 });
 
 var Waterfall = function (canvas) {
