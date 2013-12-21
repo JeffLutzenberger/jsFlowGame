@@ -41,14 +41,15 @@ $(function () {
         }
     });
 
-    $('#canvas').on({ 'touchstart' : function (e) {
+    $('#canvas').on({ 'touchstart' : function (e) {i
+        alert("touchstart");
         var x = Math.floor((e.pageX - $("#canvas").offset().left)),
             y = Math.floor((e.pageY - $("#canvas").offset().top));
         mouseDown = true;
         influencer = waterfall.hitInfluencer(x, y);
     }});
 
-    $('#canvas').on({ 'touchend' : function (e) {
+    $(document).on({ 'touchend' : function (e) {
         mouseDown = false;
         influencer = -1;
     }});
