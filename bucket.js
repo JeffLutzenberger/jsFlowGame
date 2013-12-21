@@ -6,3 +6,7 @@ var Bucket = function (x, y, width) {
     this.width = width;
     this.multiplier = 1;
 };
+
+var bucketFromJson = function (j) {
+    return new Bucket(j.x, j.y, j.width);
+}
