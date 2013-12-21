@@ -17,19 +17,21 @@ $(function () {
             y = Math.floor((e.pageY - $("#canvas").offset().top));
     });
    
-    $("#canvas").mousedown(function (e) {
+    $('canvas').bind('mousedown touchstart', function (e) {
         var x = Math.floor((e.pageX - $("#canvas").offset().left)),
             y = Math.floor((e.pageY - $("#canvas").offset().top));
         mouseDown = true;
         influencer = waterfall.hitInfluencer(x, y);
     });
 
-    $(document).mouseup(function () {
+    $(document).bind('mouseup touchend', function (e) {
+    //$(document).mouseup(function () {
         mouseDown = false;
         influencer = -1;
     });
 
-    $("#canvas").mousemove(function (e) {
+    $('canvas').bind('mousemove touchmove', function (e) {
+    //$("#canvas").mousemove(function (e) {
         if (mouseDown === false) {
             return;
         }
@@ -41,6 +43,7 @@ $(function () {
         }
     });
 
+    /*
     $('#canvas').on({ 'touchstart' : function (e) {i
         alert("touchstart");
         var x = Math.floor((e.pageX - $("#canvas").offset().left)),
@@ -65,6 +68,7 @@ $(function () {
             waterfall.influencers[influencer].y = y;
         }
     }});
+    */
 
 });
 
