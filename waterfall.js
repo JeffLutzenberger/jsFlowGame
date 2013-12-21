@@ -12,23 +12,35 @@ $(function () {
         setInterval(waterfall.update.bind(waterfall), waterfall.framerate);
     }
 
-    $("#canvas").click(function (e) {
-        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-            y = Math.floor((e.pageY - $("#canvas").offset().top));
-    });
-   
-    $('canvas').bind('mousedown touchstart', function (e) {
+    function mouseClickEvent(e) {
         var x = Math.floor((e.pageX - $("#canvas").offset().left)),
             y = Math.floor((e.pageY - $("#canvas").offset().top));
         mouseDown = true;
         influencer = waterfall.hitInfluencer(x, y);
-    });
+    }
+
+    $('canvas').bind('mousedown touchstart', mouseClickEvent);
+
+    canvas.canvas.addEventListener('mousedown', mouseClickEvent, false);
+    canvas.canvas.addEventListener('touchstart', mouseClickEvent, false);
 
     $(document).bind('mouseup touchend', function (e) {
     //$(document).mouseup(function () {
         mouseDown = false;
         influencer = -1;
     });
+
+    function mouseMoveEvent(e) {
+        if (mouseDown === false) {
+            return;
+        }
+        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
+            y = Math.floor((e.pageY - $("#canvas").offset().top));
+        if (influencer >= 0) {
+            waterfall.influencers[influencer].x = x;
+            waterfall.influencers[influencer].y = y;
+        }
+    }
 
     $('canvas').bind('mousemove touchmove', function (e) {
     //$("#canvas").mousemove(function (e) {
@@ -43,6 +55,8 @@ $(function () {
         }
     });
 
+    canvas.canvas.addEventListener('mousemove', mouseMoveEvent, false);
+    canvas.canvas.addEventListener('touchmove', mouseMoveEvent, false);
     /*
     $('#canvas').on({ 'touchstart' : function (e) {i
         alert("touchstart");
