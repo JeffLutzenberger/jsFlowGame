@@ -1,91 +1,5 @@
 'use strict';
 
-$(function () {
-    var canvas = new Canvas($('canvas')[0]),
-        waterfall = new Waterfall(canvas),
-        debug = false,
-        mouseDown = false,
-        influencer = -1;
-    if (debug) {
-        waterfall.update();
-    } else {
-        setInterval(waterfall.update.bind(waterfall), waterfall.framerate);
-    }
-
-    function mouseClickEvent(e) {
-        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-            y = Math.floor((e.pageY - $("#canvas").offset().top));
-        mouseDown = true;
-        influencer = waterfall.hitInfluencer(x, y);
-    }
-
-    $('canvas').bind('mousedown touchstart', mouseClickEvent);
-
-    canvas.canvas.addEventListener('mousedown', mouseClickEvent, false);
-    canvas.canvas.addEventListener('touchstart', mouseClickEvent, false);
-
-    $(document).bind('mouseup touchend', function (e) {
-    //$(document).mouseup(function () {
-        mouseDown = false;
-        influencer = -1;
-    });
-
-    function mouseMoveEvent(e) {
-        if (mouseDown === false) {
-            return;
-        }
-        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-            y = Math.floor((e.pageY - $("#canvas").offset().top));
-        if (influencer >= 0) {
-            waterfall.influencers[influencer].x = x;
-            waterfall.influencers[influencer].y = y;
-        }
-    }
-
-    $('canvas').bind('mousemove touchmove', function (e) {
-    //$("#canvas").mousemove(function (e) {
-        if (mouseDown === false) {
-            return;
-        }
-        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-            y = Math.floor((e.pageY - $("#canvas").offset().top));
-        if (influencer >= 0) {
-            waterfall.influencers[influencer].x = x;
-            waterfall.influencers[influencer].y = y;
-        }
-    });
-
-    canvas.canvas.addEventListener('mousemove', mouseMoveEvent, false);
-    canvas.canvas.addEventListener('touchmove', mouseMoveEvent, false);
-    /*
-    $('#canvas').on({ 'touchstart' : function (e) {i
-        alert("touchstart");
-        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-            y = Math.floor((e.pageY - $("#canvas").offset().top));
-        mouseDown = true;
-        influencer = waterfall.hitInfluencer(x, y);
-    }});
-
-    $(document).on({ 'touchend' : function (e) {
-        mouseDown = false;
-        influencer = -1;
-    }});
-
-    $('#canvas').on({ 'touchmove' : function (e) {
-        if (mouseDown === false) {
-            return;
-        }
-        var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-            y = Math.floor((e.pageY - $("#canvas").offset().top));
-        if (influencer >= 0) {
-            waterfall.influencers[influencer].x = x;
-            waterfall.influencers[influencer].y = y;
-        }
-    }});
-    */
-
-});
-
 var Waterfall = function (canvas) {
     
     var i, p;
@@ -106,6 +20,8 @@ var Waterfall = function (canvas) {
     this.framerate = 24;
     this.frame = 0;
     this.loadLevel(level1);
+    this.influcencer = -1;
+    this.mouseDown = false;
 };
 
 Waterfall.prototype = {
@@ -220,7 +136,7 @@ Waterfall.prototype = {
             influencer = this.influencers[i];
             v2 = new Vector(influencer.x - particle.x, influencer.y - particle.y);
             d2 = v2.squaredLength();
-            d2 = 1000 / d2;
+            d2 = 3000 / d2;
             if (d2 > 0.2) {
                 d2 = 0.2;
             }

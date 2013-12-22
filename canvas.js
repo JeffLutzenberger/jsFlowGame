@@ -37,6 +37,13 @@ Canvas.prototype = {
         this.ctx.fill();
     },
 
+    rectangleOutline: function (x1, y1, w, h, color) {
+        this.ctx.strokeStyle = color;
+        this.ctx.beginPath();
+        this.ctx.rect(x1, y1, w, h);
+        this.ctx.stroke();
+    },
+
     text: function (x, y, color, fontFamily, fontSize, str) {
         this.ctx.fillStyle = color;
         this.ctx.font = fontSize + "px " + fontFamily;
