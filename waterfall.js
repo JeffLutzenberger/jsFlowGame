@@ -185,7 +185,7 @@ Waterfall.prototype = {
         var i, b;
         for (i = 0; i < this.buckets.length; i += 1) {
             b = this.buckets[i];
-            if (p.x < b.x + b.width && p.x > b.x && p.y > b.y) {
+            if (p.x < b.x + b.w && p.x > b.x && p.y > b.y) {
                 this.score += 1;
                 this.sumFlux += p.vel.y;
                 this.recycleParticle(p, 0, 5);
@@ -239,7 +239,7 @@ Waterfall.prototype = {
     drawInfluencers : function () {
         var i = 0, alpha = 1, color = 'rgba(0,153,255,' + alpha + ')';
         for (i = 0; i < this.influencers.length; i += 1) {
-            this.influencers[i].draw(this.canvas);
+            this.influencers[i].draw(this.canvas, color);
         }
     },
 
@@ -247,8 +247,7 @@ Waterfall.prototype = {
         var i, b, alpha = Math.min(this.score / 1000 + 0.25, 1),
             color = 'rgba(0,153,255,' + alpha + ')';
         for (i = 0; i < this.buckets.length; i += 1) {
-            b = this.buckets[i];
-            this.canvas.rectangle(b.x, b.y, b.width, 50, color);
+            this.buckets[i].draw(this.canvas, color);
         }
     },
 
@@ -256,8 +255,7 @@ Waterfall.prototype = {
         var i, o, alpha = 1,
             color = 'rgba(100,100,100,' + alpha + ')';
         for (i = 0; i < this.obstacles.length; i += 1) {
-            o = this.obstacles[i];
-            this.canvas.rectangle(o.x, o.y, o.w, o.h, color);
+            this.obstacles[i].draw(this.canvas, color);
         }
     },
 
@@ -265,9 +263,7 @@ Waterfall.prototype = {
         var i, c, alpha = 1,
             color = 'rgba(255,153,0,' + alpha + ')';
         for (i = 0; i < this.channels.length; i += 1) {
-            c = this.channels[i];
-            this.canvas.rectangle(c.xin, c.yin, c.win, 25, color);
-            this.canvas.rectangle(c.xout, c.yout, c.wout, 25, color);
+            this.channels[i].draw(this.canvas, color);
         }
     },
     

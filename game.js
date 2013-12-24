@@ -47,13 +47,15 @@ GameController.prototype = {
     },
 
     levelSelected: function (level) {
+        var levels = [level1, level2, level3, level4];
         this.playPage.setHandlers();
         this.gameState = 'play';
-        if (level === 0) {
+        this.waterfall.loadLevel(levels[level]);
+        /*if (level === 0) {
             this.waterfall.loadLevel(level1);
         } else if (level === 1) {
             this.waterfall.loadLevel(level2);
-        }
+        }*/
     }
 
     //game states:

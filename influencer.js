@@ -7,9 +7,7 @@ var Influencer = function (x, y) {
 };
 
 Influencer.prototype = {
-
-    draw: function (canvas) {
-        var alpha = 1, color = 'rgba(0,153,255,' + alpha + ')';
+    draw: function (canvas, color) {
         canvas.circle(this.x, this.y, 5, color);
     }
 };

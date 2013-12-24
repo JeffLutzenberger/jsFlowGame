@@ -6,6 +6,7 @@ var Canvas = function (canvas) {
     this.ctx.fillStyle = this.ctx.strokeStyle = 'black';
     this.width = this.canvas.width;
     this.height = this.canvas.height;
+    this.degtorad = Math.PI/180;
 };
 
 Canvas.prototype = {
@@ -32,6 +33,14 @@ Canvas.prototype = {
 
     rectangle: function (x1, y1, w, h, color) {
         this.ctx.fillStyle = color;
+        this.ctx.beginPath();
+        this.ctx.rect(x1, y1, w, h);
+        this.ctx.fill();
+    },
+
+    rotatedRect: function (x1, y1, w, h, theta, color) {
+        this.ctx.fillStyle = color;
+        this.ctx.rotate(theta * this.degtorad);
         this.ctx.beginPath();
         this.ctx.rect(x1, y1, w, h);
         this.ctx.fill();
