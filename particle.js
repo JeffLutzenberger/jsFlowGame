@@ -6,9 +6,10 @@ var Particle = function (x, y) {
     this.dir = new Vector(1, 0);
     this.vel = new Vector(1, 0);
     this.mass = this.inv_mass = 1;
-    this.radius = 3;
+    this.radius = 5;
     this.trail = [];
     this.numTracers = 20;
+    this.tracerradius = 0.075;
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y);
@@ -36,9 +37,6 @@ Particle.prototype = {
     },
     
     draw: function (canvas, color) {
-        if (this.y > canvas.height) {
-            return;
-        }
         var i = 0, alpha = 1.0, t1, t2;
         canvas.circle(this.x, this.y, this.radius, color);
         for (i = 1; i < this.numTracers; i += 1) {
@@ -55,4 +53,21 @@ var Tracer = function (x, y) {
     this.x = x;
     this.y = y;
     this.age = 0;
+};
+
+var Influencer = function (x, y) {
+    this.x = x;
+    this.y = y;
+    this.force = 1;
+    this.radius = 10;
+};
+
+Influencer.prototype = {
+    draw: function (canvas, color) {
+        canvas.circle(this.x, this.y, this.radius, color);
+    }
+};
+
+var influencerFromJson = function (j) {
+    return new Influencer(j.x, j.y);
 };
