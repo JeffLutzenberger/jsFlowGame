@@ -6,6 +6,10 @@ var Rectangle = function (x, y, w, h, theta) {
     this.w = w || 100;
     this.h = h || 100;
     this.theta = theta || 0;
+    this.p1 = new Vector(this.x, this.y);
+    this.p2 = new Vector(this.x + this.w, this.y);
+    this.p3 = new Vector(this.x + this.w, this.y + this.h);
+    this.p4 = new Vector(this.x, this.y + this.h);
 };
 
 Rectangle.prototype = {
@@ -13,11 +17,20 @@ Rectangle.prototype = {
         canvas.rectangle(this.x, this.y, this.w, this.h, this.theta, color);
     },
 
-    hit: function (p) {
+    hit2: function (p) {
         if (p.x < this.x + this.w && p.x > this.x && p.y > this.y && p.y < this.y + this.h) {
             return true;
-        
+        }
         return false;
+    },
+
+    hit : function (p) {
+        //return (p.lineCollision(this.p1, this.p2, this.h));
+        var r = 10;
+        return (p.lineCollision(this.p1, this.p2, r) ||
+                p.lineCollision(this.p2, this.p3, r) ||
+                p.lineCollision(this.p3, this.p4, r) ||
+                p.lineCollision(this.p4, this.p1, r));
     }
 };
 

@@ -12,7 +12,7 @@ var GameController = function (canvas) {
     this.influencer = -1;
     this.levelstats = [];
     this.levels = [];
-    this.framerate = 24;
+    this.clockrate = 10; //ms
     this.numLevels = 8;
     this.gameState = 'start';    
     this.startPage = new StartPage(this.canvas);
@@ -21,7 +21,7 @@ var GameController = function (canvas) {
     if (this.debug) {
         this.update();
     } else {
-        setInterval(this.update.bind(this), this.framerate);
+        setInterval(this.update.bind(this), this.clockrate);
     }
     this.startPage.setHandlers();
 };

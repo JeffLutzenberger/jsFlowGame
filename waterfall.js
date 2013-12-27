@@ -13,7 +13,7 @@ var Waterfall = function (canvas) {
     this.sumFlux = 0;
     this.missed = 0;
     this.level = 1;
-    this.framerate = 24;
+    this.framerate = 60;
     this.frame = 0;
     this.influcencer = -1;
     this.mouseDown = false;
@@ -67,19 +67,21 @@ Waterfall.prototype = {
    
         this.moveParticles();
         
-        this.canvas.clear();
+        if (this.frame % this.framerate) {
+            this.canvas.clear();
         
-        this.drawParticles();
+            this.drawParticles();
         
-        this.drawObstacles();
+            this.drawObstacles();
         
-        this.drawPortals();
+            this.drawPortals();
         
-        this.drawInfluencers();
+            this.drawInfluencers();
 
-        this.drawBuckets();
+            this.drawBuckets();
 
-        this.drawScore();
+            this.drawScore();
+        }
         
     },
     
@@ -106,6 +108,8 @@ Waterfall.prototype = {
         var i = 0;
         p.x = this.sources[0].x + Math.random() * this.sources[0].w;
         p.y = this.sources[0].y;
+        p.prevx = p.x;
+        p.prevy = p.y;
         p.vel.x = vX;
         p.vel.y = vY;
         for (i = 0; i < p.numTracers; i += 1) {
@@ -138,10 +142,11 @@ Waterfall.prototype = {
             particle.vel.x -= v2.x;
             particle.vel.y -= v2.y;
         }
-        particle.x += particle.vel.x;
-        particle.y += particle.vel.y;
+        
+        particle.move();
         
         if (this.hitObstacles(particle)) {
+            particle.move();
             return;
         }
 

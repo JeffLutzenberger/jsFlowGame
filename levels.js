@@ -9,7 +9,7 @@ var level1 = {
                          {'x' : 100, 'y' : 400}],
         'portals' : [],
         'buckets' : [{'x' : 568, 'y' : 900, 'w' : 200, 'h' : 25}],
-        'obstacles' : [{'x' : 0, 'y' : 700, 'w' : 568, 'h' : 50, 'theta' : 0, 'reaction' : 1}]
+        'obstacles' : [{'x' : 0, 'y' : 700, 'w' : 200, 'h' : 50, 'theta' : 0, 'reaction' : 1}]
     };
 
 var level2 = {
