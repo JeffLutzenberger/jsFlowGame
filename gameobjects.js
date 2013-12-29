@@ -1,37 +1,73 @@
 'use strict';
 
 var Rectangle = function (x, y, w, h, theta) {
-    this.x = x || 0;
-    this.y = y || 0;
+    this.x = x || 0; // centroid
+    this.y = y || 0; // centroid
     this.w = w || 100;
     this.h = h || 100;
     this.theta = theta || 0;
-    this.p1 = new Vector(this.x, this.y);
-    this.p2 = new Vector(this.x + this.w, this.y);
-    this.p3 = new Vector(this.x + this.w, this.y + this.h);
-    this.p4 = new Vector(this.x, this.y + this.h);
+    this.selected = false;
+    this.updatePoints();
 };
 
 Rectangle.prototype = {
-    draw: function (canvas, color) {
-        canvas.rectangle(this.x, this.y, this.w, this.h, this.theta, color);
+
+    updatePoints : function () {
+        this.p1 = new Vector(this.x - this.w / 2, this.y - this.h / 2);
+        this.p2 = new Vector(this.x + this.w / 2, this.y - this.h / 2);
+        this.p3 = new Vector(this.x + this.w / 2, this.y + this.h / 2);
+        this.p4 = new Vector(this.x - this.w / 2, this.y + this.h / 2);
     },
 
-    hit2: function (p) {
-        if (p.x < this.x + this.w && p.x > this.x && p.y > this.y && p.y < this.y + this.h) {
-            return true;
-        }
-        return false;
+    setxy: function (x, y) {
+        this.x = x;
+        this.y = y;
+        this.updatePoints();
+    },
+
+    draw: function (canvas, color) {
+        canvas.rectangle(this.x - this.w * 0.5, this.y - this.h * 0.5, this.w, this.h, this.theta, color);
+    },
+    
+    bbHit : function (p) {
+        return (p.x >= this.x - this.w * 0.5 &&
+                p.x <= this.x + this.w * 0.5 &&
+                p.y >= this.y - this.h * 0.5 &&
+                p.y <= this.y + this.h * 0.5);
     },
 
     hit : function (p) {
-        //return (p.lineCollision(this.p1, this.p2, this.h));
         var r = 10;
         return (p.lineCollision(this.p1, this.p2, r) ||
                 p.lineCollision(this.p2, this.p3, r) ||
                 p.lineCollision(this.p3, this.p4, r) ||
                 p.lineCollision(this.p4, this.p1, r));
+    },
+
+    circleHit : function (p) {
+        return (p.circleCollision(this.p1, this.p2) ||
+                p.circleCollision(this.p2, this.p3) ||
+                p.circleCollision(this.p3, this.p4) ||
+                p.circleCollision(this.p4, this.p1));
     }
+};
+
+var Influencer = function (x, y) {
+    var radius = 15;
+    this.base = Rectangle;
+    this.base(x, y, 2 * radius, 2 * radius, 0);
+    this.force = 1;
+    this.radius = radius;
+};
+
+Influencer.prototype = new Rectangle();
+
+Influencer.prototype.draw = function (canvas, color) {
+    canvas.circle(this.x, this.y, this.radius, color);
+};
+
+var influencerFromJson = function (j) {
+    return new Influencer(j.x, j.y);
 };
 
 function Source(x, y, w, h, theta, vx, vy) {
@@ -71,17 +107,49 @@ var obstacleFromJson = function (j) {
     return new Obstacle(j.x, j.y, j.w, j.h, j.theta, j.reaction);
 };
 
-
-var Portal = function (x1, y1, w1, h1, theta1, x2, y2, w2, h2, theta2) {
-    this.inlet = new Rectangle(x1, y1, w1, h1, theta1);
-    this.outlet = new Rectangle(x2, y2, w2, h2, theta2);
-    this.multiplier = 1;
+var Portal = function (x, y, w, h, theta, outlet) {
+    this.base = Rectangle;
+    this.base(x, y, w, h, theta);
+    this.outlet = outlet || null;
 };
+
+Portal.prototype = new Rectangle();
+
+//var Portal = function (x1, y1, w1, h1, theta1, x2, y2, w2, h2, theta2) {
+//    this.inlet = new Rectangle(x1, y1, w1, h1, theta1);
+//    this.outlet = new Rectangle(x2, y2, w2, h2, theta2);
+//    this.multiplier = 1;
+//};
 
 var portalFromJson = function (j) {
-    return new Portal(j.xin, j.yin, j.win, j.hin, j.thetain, j.xout, j.yout, j.wout, j.hout, j.thetaout);
+    var outlet = new Portal(j.xout, j.yout, j.wout, j.hout, j.thetaout),
+        inlet = new Portal(j.xin, j.yin, j.win, j.hin, j.thetain, outlet);
+    return [inlet, outlet];
 };
 
+Portal.prototype.hit = function (p) {
+    var i = 0, outlet = this.outlet, r = 10;
+    if (this.outlet) {
+        if (p.lineCollision(this.p1, this.p2, r)) {
+            //move the particle to the channel outlet
+            p.x = outlet.x + Math.random() * outlet.w;
+            p.y = outlet.y + outlet.h;
+            for (i = 0; i < p.numTracers; i += 1) {
+                p.trail[i].x = p.x;
+                p.trail[i].y = p.y;
+            }
+            return true;
+        }
+        return false;
+    } else {
+        return (p.lineCollision(this.p1, this.p2, r) ||
+                p.lineCollision(this.p2, this.p3, r) ||
+                p.lineCollision(this.p3, this.p4, r) ||
+                p.lineCollision(this.p4, this.p1, r));
+
+    }
+};
+/*
 Portal.prototype = {
     draw: function (canvas, color) {
         this.inlet.draw(canvas, color);
@@ -90,7 +158,7 @@ Portal.prototype = {
 
     hit: function (p) {
         var i = 0, r1 = this.inlet, r2 = this.outlet;
-        if (p.x < r1.x + r1.w && p.x > r1.x && p.y > r1.y && p.y < r1.y + r1.h) {
+        if (p.lineCollision(r1.p1, r1.p2, 10)) {
             //move the particle to the channel outlet
             p.x = r2.x + Math.random() * r2.w;
             p.y = r2.y + r2.h;
@@ -102,4 +170,4 @@ Portal.prototype = {
         }
         return false;
     }
-};
+};*/

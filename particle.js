@@ -66,11 +66,8 @@ Particle.prototype = {
             ua,
             ub;
             
-        if (denom === 0) {
-            return false;
-        } else {
+        if (denom !== 0) {
             ua = ((LineB2.x - LineB1.x) * (LineA1.y - LineB1.y) - (LineB2.y - LineB1.y) * (LineA1.x - LineB1.x)) / denom;
-            /* The following lines are only necessary if we are checking line segments instead of infinite-length lines */
 		    ub = ((LineA2.x - LineA1.x) * (LineA1.y - LineB1.y) - (LineA2.y - LineA1.y) * (LineA1.x - LineB1.x)) / denom;
 		    if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
 			    return null;
@@ -79,8 +76,37 @@ Particle.prototype = {
             this.y = LineA1.y + ua * (LineA2.y - LineA1.y);
             this.prevx = this.x;
             this.prevy = this.y;
-		    return true; //LineA1 + ua * (LineA2 – LineA1)
+		    return true;
         }
+        return false;
+    },
+
+    circleCollision: function (p1, p2) {
+        var LocalP1 = new Vector(p1.x - this.x, p1.y - this.y),
+            LocalP2 = new Vector(p2.x - this.x, p2.y - this.y),
+            P2MinusP1 = new Vector(LocalP2.x - LocalP1.x, LocalP2.y - LocalP1.y),
+            a = (P2MinusP1.x * P2MinusP1.x) + (P2MinusP1.y * P2MinusP1.y),
+            b = 2 * (P2MinusP1.x * LocalP1.x + P2MinusP1.y * LocalP1.y),
+            c = LocalP1.x * LocalP1.x + LocalP1.y * LocalP1.y - this.r * this.r,
+            delta = b * b - (4 * a * c),
+            u1,
+            u2,
+            SquareRootDelta;
+
+        if (delta === 0) {
+            u1 = -b / (2 * a);
+            if (u1 >= 0.0 && u1 <= 1.0) {
+                return true;
+            }
+        } else if (delta > 0) {
+            SquareRootDelta = Math.sqrt(delta);
+            u1 = (-b + SquareRootDelta) / (2 * a);
+            u2 = (-b - SquareRootDelta) / (2 * a);
+            if (u1 >= 0 && u1 <= 1.0 && u2 >= 0 && u2 <= 1.0) {
+                return true;
+            }
+        }
+        return false;
     }
 };
 
@@ -90,19 +116,4 @@ var Tracer = function (x, y) {
     this.age = 0;
 };
 
-var Influencer = function (x, y) {
-    this.x = x;
-    this.y = y;
-    this.force = 1;
-    this.radius = 10;
-};
 
-Influencer.prototype = {
-    draw: function (canvas, color) {
-        canvas.circle(this.x, this.y, this.radius, color);
-    }
-};
-
-var influencerFromJson = function (j) {
-    return new Influencer(j.x, j.y);
-};

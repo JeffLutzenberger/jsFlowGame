@@ -2,6 +2,7 @@
 
 //1024x768
 var level1 = {
+        'stars' : [500, 1000, 2000],
         'sources' : [{'x' : 100, 'y' : 0, 'w' : 100, 'vx' : 0, 'vy' : 0.5}],
         'nParticles' : 100,
         'influencers' : [{'x' : 100, 'y' : 200},
@@ -13,6 +14,7 @@ var level1 = {
     };
 
 var level2 = {
+        'stars' : [500, 1000, 2000],
         'sources' : [{'x' : 768 * 0.5 - 50, 'y' : 0, 'w' : 100, 'vx' : 0, 'vy' : 0.5}],
         'nParticles' : 100,
         'influencers' : [{'x' : 100, 'y' : 300},
@@ -25,6 +27,7 @@ var level2 = {
     };
 
 var level3 = {
+        'stars' : [500, 1000, 2000],
         'sources' : [{'x' : 768 * 0.5 - 50, 'y' : 0, 'w' : 100, 'vx' : 0, 'vy' : 0.5}],
         'nParticles' : 100,
         'influencers' : [{'x' : 100, 'y' : 300},
@@ -36,6 +39,7 @@ var level3 = {
     };
 
 var level4 = {
+        'stars' : [500, 1000, 2000],
         'sources' : [{'x' : 768 * 0.5 - 50, 'y' : 0, 'w' : 100, 'vx' : 0, 'vy' : 0.5}],
         'nParticles' : 100,
         'influencers' : [{'x' : 200, 'y' : 300},

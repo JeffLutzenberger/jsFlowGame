@@ -1,12 +1,14 @@
 'use strict';
 
 var Waterfall = function (canvas) {
+    this.stars = [];
     this.sources = [];
     this.influencers = [];
     this.portals = [];
     this.buckets = [];
     this.obstacles = [];
     this.particles = [];
+    this.nParticles = 0;
     this.canvas = canvas;
     this.score = 0;
     this.flux = 0;
@@ -15,7 +17,8 @@ var Waterfall = function (canvas) {
     this.level = 1;
     this.framerate = 60;
     this.frame = 0;
-    this.influcencer = -1;
+    this.interactableObjects = [];
+    this.interactable = null;
     this.mouseDown = false;
     this.h = 1024;
     this.w = 768;
@@ -24,6 +27,7 @@ var Waterfall = function (canvas) {
 Waterfall.prototype = {
     loadLevel: function (level) {
         var i = 0,
+            starList = level.stars,
             sourceList = level.sources,
             influencerList = level.influencers,
             portalList = level.portals,
@@ -35,16 +39,25 @@ Waterfall.prototype = {
             p;
         this.nParticles = level.nParticles;
         
+        for (i = 0; i < starList.length; i += 1) {
+            this.stars[i] = starList[i];
+        }
         for (i = 0; i < sourceList.length; i += 1) {
             this.sources[i] = sourceFromJson(sourceList[i]);
         }
 
         for (i = 0; i < influencerList.length; i += 1) {
             this.influencers[i] = influencerFromJson(influencerList[i]);
+            //add influencers to interactables list
+            //- for game play the player can only interact with influencers. 
+            //- for level editor the player can interact will all game objects
+            this.interactableObjects[i] = this.influencers[i];
         }
 
-        for (i = 0; i < portalList.length; i += 1) {
-            this.portals[i] = portalFromJson(portalList[i]);
+        for (i = 0; i < portalList.length * 2; i += 2) {
+            p = portalFromJson(portalList[i]);
+            this.portals[i] = p[0];
+            this.portals[i + 1] = p[1];
         }
 
         for (i = 0; i < bucketList.length; i += 1) {
@@ -54,6 +67,9 @@ Waterfall.prototype = {
         for (i = 0; i < obstacleList.length; i += 1) {
             this.obstacles[i] = new obstacleFromJson(obstacleList[i]);
         }
+    },
+
+    loadEditor: function () {
     },
 
     update: function () {
@@ -71,6 +87,8 @@ Waterfall.prototype = {
             this.canvas.clear();
         
             this.drawParticles();
+
+            this.drawSources();
         
             this.drawObstacles();
         
@@ -98,16 +116,17 @@ Waterfall.prototype = {
     },
 
     addParticle : function () {
-        var p = new Particle(this.sources[0].x + Math.random() * this.sources[0].w, this.sources[0].y);
-        p.vel.x = this.sources[0].vx;
-        p.vel.y = this.sources[0].vy;
+        var i = Math.floor(Math.random() * this.sources.length),
+            p = new Particle(this.sources[i].x  - this.sources[i].w * 0.5 + Math.random() * this.sources[i].w, this.sources[i].y);
+        p.vel.x = this.sources[i].vx;
+        p.vel.y = this.sources[i].vy;
         this.particles[this.particles.length] = p;
     },
 
     recycleParticle: function (p, vX, vY) {
-        var i = 0;
-        p.x = this.sources[0].x + Math.random() * this.sources[0].w;
-        p.y = this.sources[0].y;
+        var i = 0, j = Math.floor(Math.random() * this.sources.length);
+        p.x = this.sources[j].x - this.sources[j].w * 0.5 + Math.random() * this.sources[j].w;
+        p.y = this.sources[j].y;
         p.prevx = p.x;
         p.prevy = p.y;
         p.vel.x = vX;
@@ -183,6 +202,8 @@ Waterfall.prototype = {
         for (i = 0; i < this.buckets.length; i += 1) {
             b = this.buckets[i];
             if (b.hit(p)) {
+                //console.log(p);
+                //console.log(b);
                 this.score += 1;
                 this.sumFlux += p.vel.y;
                 this.recycleParticle(p, 0, this.sources[0].vy);
@@ -192,15 +213,15 @@ Waterfall.prototype = {
         return false;
     },
 
-    hitInfluencer: function (x, y) {
-        var i, influencer, hitSize = 10;
-        for (i = 0; i < this.influencers.length; i += 1) {
-            influencer = this.influencers[i];
-            if (x < influencer.x + hitSize && x > influencer.x - hitSize && y < influencer.y + hitSize && y > influencer.y - hitSize) {
-                return i;
+    hitInteractable: function (x, y) {
+        var i, p = new Particle(x, y);
+        for (i = 0; i < this.interactableObjects.length; i += 1) {
+            if (this.interactableObjects[i].bbHit(p)) {
+                this.interactable = this.interactableObjects[i];
+                return true;
             }
         }
-        return -1;
+        return false;
     },
 
     hitPortals: function (p) {
@@ -218,6 +239,14 @@ Waterfall.prototype = {
         for (i = 0; i < this.particles.length; i += 1) {
             color = 'rgba(0,153,255,1)';
             this.particles[i].draw(this.canvas, color);
+        }
+    },
+
+    drawSources : function () {
+        var i, o, alpha = 1,
+            color = 'rgba(100,100,100,' + alpha + ')';
+        for (i = 0; i < this.sources.length; i += 1) {
+            this.sources[i].draw(this.canvas, color);
         }
     },
 

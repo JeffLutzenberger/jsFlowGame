@@ -15,7 +15,7 @@ Canvas.prototype = {
     clear: function () {
         this.ctx.clearRect(0, 0, this.width, this.height);
     },
-    
+   
     circle: function (x, y, r, color) {
         this.ctx.fillStyle = color;
         this.ctx.beginPath();
