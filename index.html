@@ -4,13 +4,23 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name="author" content="Jeff Lutzenberger" />
     <meta name="description" content="Flow game protype" />
-
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+        body {
+          padding-top: 50px;
+        }
+        .starter-template {
+          padding: 40px 15px;
+          text-align: center;
+        }
+    </style>    
     <title>Flow Game</title>
 
     <!--<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>-->
     
     <script src="jquery-1.10.2.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
 
     <script type="text/javascript" charset="utf-8" src="vector.js"></script>
     <script type="text/javascript" charset="utf-8" src="particle.js"></script>
@@ -18,16 +28,53 @@
     <script type="text/javascript" charset="utf-8" src="levels.js"></script>
     <script type="text/javascript" charset="utf-8" src="canvas.js"></script>
     <script type="text/javascript" charset="utf-8" src="waterfall.js"></script>
+    <script type="text/javascript" charset="utf-8" src="editorui.js"></script>
     <script type="text/javascript" charset="utf-8" src="game.js"></script>
     <script type="text/javascript" charset="utf-8" src="main.js"></script>
 </head>
 <html>
 <body>
-<h1>Flow Game Prototype</h1>
-<h2>Drag the influencers to direct particles into the box.</h2>
-<canvas id="canvas" width="384" height="512" style="border:1px solid #c3c3c3;">
-    Your browser does not support the HTML5 canvas tag.
-</canvas>
-
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Flow Game Prototype</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active" id="main-menu-button"><a href="#">Main Menu</a></li>
+            <li id="level-editor-button"><a href="#editor">Level Editor</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+    <div class="container">
+        <div class="starter-template">
+            <div class="row">
+                <div class="col-md-5">
+                    <canvas id="canvas" width="384" height="512" style="border:1px solid #c3c3c3;">
+                        Your browser does not support the HTML5 canvas tag.
+                    </canvas>
+                </div>
+                <div class="col-md-5">
+                    <div class="row">
+                        <span id="bucket-button"></span>
+                        <span id="influencer-button"></span>
+                        <span id="obstacle-button"></span>
+                        <span id="portal-button"></span>
+                        <span id="source-button"></span>
+                    </div>
+                    <div class="row">
+                        <span id="play-button"></span>
+                        <span id="grid-button"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

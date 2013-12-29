@@ -24,9 +24,10 @@ Canvas.prototype = {
         this.ctx.fill();
     },
     
-    line: function (p1, p2, color) {
+    line: function (p1, p2, w, color) {
         this.ctx.strokeStyle = color;
         this.ctx.beginPath();
+        this.ctx.lineWidth = w;
         this.ctx.moveTo(p1.x * this.m, p1.y * this.m);
         this.ctx.lineTo(p2.x * this.m, p2.y * this.m);
         this.ctx.stroke();
@@ -43,6 +44,7 @@ Canvas.prototype = {
     rectangleOutline: function (x1, y1, w, h, color) {
         this.ctx.strokeStyle = color;
         this.ctx.beginPath();
+        this.ctx.lineWidth = 1;
         this.ctx.rect(x1 * this.m, y1 * this.m, w * this.m, h * this.m);
         this.ctx.stroke();
     },
@@ -51,5 +53,25 @@ Canvas.prototype = {
         this.ctx.fillStyle = color;
         this.ctx.font = fontSize + "px " + fontFamily;
         this.ctx.fillText(str, x * this.m, y * this.m);
+    },
+
+    grid: function (dx, dy, w, h, lineWeight, color) {
+        var i, nx = w / dx, ny = h / dy;
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = lineWeight;
+        for (i = 0; i < nx; i += 1) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(dx * i * this.m, 0);
+            this.ctx.lineTo(dx * i * this.m, h * this.m);
+            this.ctx.stroke();
+        }
+        for (i = 0; i < ny; i += 1) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, dy * i * this.m);
+            this.ctx.lineTo(w * this.m, dy * i * this.m);
+            this.ctx.stroke();
+        }
+
     }
+
 };

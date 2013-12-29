@@ -13,12 +13,36 @@ var GameController = function (canvas) {
     this.levelstats = [];
     this.levels = [];
     this.clockrate = 10; //ms
-    this.gameState = 'start';    
+    this.gameState = 'start';
     this.startPage = new StartPage(this.canvas);
     this.playPage = new PlayPage(this.canvas, this.waterfall);
     this.editorPage = new EditorPage(this.canvas, this.waterfall);
     this.interval = setInterval(this.update.bind(this), this.clockrate);
     this.startPage.setHandlers();
+
+    $("#main-menu-button").click($.proxy(function () {
+        //console.log(this);
+        this.startPage.selectedLevel = -1;
+        this.gameState = 'start';
+        this.startPage.setHandlers();
+        this.editorPage.hideUI();
+        $("#level-editor-button").toggleClass("active");
+        $("#main-menu-button").toggleClass("active");
+
+    }, this));
+    $("#level-editor-button").click($.proxy(function () {
+        //console.log(this);
+        this.waterfall.clear();
+        this.startPage.selectedLevel = -1;
+        this.gameState = 'editor';
+        this.editorPage.hideUI();
+        this.editorPage.showUI();
+        this.editorPage.setHandlers();
+        this.waterfall.loadEditor();
+        $("#level-editor-button").toggleClass("active");
+        $("#main-menu-button").toggleClass("active");
+    }, this));
+
 };
 
 GameController.prototype = {
@@ -44,15 +68,10 @@ GameController.prototype = {
 
     levelSelected: function (level) {
         var levels = [level1, level2, level3, level4];
-        if (level < levels.length) {
-            this.playPage.setHandlers();
-            this.gameState = 'play';
-            this.waterfall.loadLevel(levels[level]);
-        } else {
-            this.editorPage.setHandlers();
-            this.gameState = 'editor';
-            this.waterfall.loadEditor();
-        }
+        this.playPage.setHandlers();
+        this.editorPage.hideUI();
+        this.gameState = 'play';
+        this.waterfall.loadLevel(levels[level]);
     }
 
     //game states:
@@ -113,20 +132,27 @@ StartPage.prototype = {
     },
 
     createLevelButtons: function () {
-        var i = 0, x = this.margin, y = this.margin + 50, color = 'rgba(100,100,100,1)', level = "",
+        var i = 0,
+            x = this.margin,
+            y = this.margin + 50,
+            color = 'rgba(100,100,100,1)',
+            level = "",
             levels = [level1, level2, level3, level4];
 
         for (i = 0; i < levels.length; i += 1) {
             this.levels[i] = new Waterfall(this.canvas);
             this.levels[i].loadLevel(levels[i]);
         }
-        for (i = 0; i < levels.length + 1; i += 1) {
+        for (i = 0; i < levels.length; i += 1) {
             if (i > 0 && i % 3 === 0) {
                 x = this.margin;
                 y += this.margin;
                 y +=  this.buttonh;
             }
-            this.levelButtons[i] = {'x' : x, 'y' : y, 'w' : this.buttonw, 'h' : this.buttonh};
+            this.levelButtons[i] = {'x' : x,
+                                    'y' : y,
+                                    'w' : this.buttonw,
+                                    'h' : this.buttonh};
             x += this.margin;
             x += this.buttonw;
         }
@@ -143,24 +169,19 @@ StartPage.prototype = {
         for (i = 0; i < this.levelButtons.length; i += 1) {
             b = this.levelButtons[i];
             this.canvas.rectangleOutline(b.x, b.y, b.w, b.h, color);
-            if (i < this.levelButtons.length - 1) {
-                levelStr = "Level " + (i + 1);
-                this.canvas.text(b.x + 10, b.y - 20, color, 'arial', 16, levelStr);
-                //draw level
-                if (i < this.levels.length) {
-                    this.canvas.ctx.translate(b.x * this.canvas.m, b.y * this.canvas.m);
-                    this.canvas.ctx.scale(b.w / this.canvas.width * this.canvas.m, b.h / this.canvas.height * this.canvas.m);
-                    this.levels[i].drawObstacles();
-                    this.levels[i].drawPortals();
-                    this.levels[i].drawInfluencers();
-                    this.levels[i].drawBuckets();
-                    this.canvas.ctx.scale(this.canvas.width / b.w / this.canvas.m, this.canvas.height / b.h / this.canvas.m);
-                    this.canvas.ctx.translate(-b.x / 2, -b.y / 2);
-                }
-            } else {
-                levelStr = "Level Editor";
-                this.canvas.text(b.x + 10, b.y - 20, color, 'arial', 16, levelStr);
-            }
+            levelStr = "Level " + (i + 1);
+            this.canvas.text(b.x + 10, b.y - 20, color, 'arial', 16, levelStr);
+            //draw level
+            this.canvas.ctx.translate(b.x * this.canvas.m, b.y * this.canvas.m);
+            this.canvas.ctx.scale(b.w / this.canvas.width * this.canvas.m,
+                                  b.h / this.canvas.height * this.canvas.m);
+            this.levels[i].drawObstacles();
+            this.levels[i].drawPortals();
+            this.levels[i].drawInfluencers();
+            this.levels[i].drawBuckets();
+            this.canvas.ctx.scale(this.canvas.width / b.w / this.canvas.m,
+                                  this.canvas.height / b.h / this.canvas.m);
+            this.canvas.ctx.translate(-b.x / 2, -b.y / 2);
         }
         if (this.hoverLevel > -1) {
             color = 'rgba(0,0,255,1)';
@@ -222,15 +243,26 @@ PlayPage.prototype = {
 var EditorPage = function (canvas, waterfall) {
     this.canvas = canvas;
     this.waterfall = waterfall;
+    this.editorui = new EditorUI(waterfall);
 };
 
 EditorPage.prototype = {
+    hideUI: function () {
+        this.editorui.hide();
+    },
+    
+    showUI: function () {
+        this.editorui.show();
+    },
+
     setHandlers: function () {
         $('canvas').unbind();
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top));
+            //x = this.waterfall.snapx(x);
+            //y = this.waterfall.snapy(y);
             this.waterfall.mouseDown = true;
             this.waterfall.hitInteractable(x / this.canvas.m, y / this.canvas.m);
             //this.waterfall.influencer = this.waterfall.hitInfluencer(x / this.canvas.m, y / this.canvas.m);
@@ -250,6 +282,9 @@ EditorPage.prototype = {
             }
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top));
+            x = this.waterfall.snapx(x);
+            y = this.waterfall.snapy(y);
+
             if (this.waterfall.interactable) {
                 this.waterfall.interactable.setxy(x / this.canvas.m, y / this.canvas.m);
             }
@@ -265,7 +300,7 @@ EditorPage.prototype = {
                     this.waterfall.nParticles = 50;
                 } else {
                     this.waterfall.nParticles = 0;
-                    this.waterfall.particles = [];
+                    this.waterfall.particles.length = 0;
                 }
                 break;
             case 98: //b

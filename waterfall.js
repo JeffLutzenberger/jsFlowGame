@@ -20,11 +20,26 @@ var Waterfall = function (canvas) {
     this.interactableObjects = [];
     this.interactable = null;
     this.mouseDown = false;
+    this.showGrid = false;
     this.h = 1024;
     this.w = 768;
+    this.gridx = 24;
+    this.gridy = 16;
 };
 
 Waterfall.prototype = {
+    
+    clear: function () {
+        this.stars.length = 0;
+        this.sources.length = 0;
+        this.influencers.length = 0;
+        this.portals.length = 0;
+        this.buckets.length = 0;
+        this.obstacles.length = 0;
+        this.particles.length = 0;
+        this.interactableObjects.length = 0;
+    },
+
     loadLevel: function (level) {
         var i = 0,
             starList = level.stars,
@@ -70,6 +85,15 @@ Waterfall.prototype = {
     },
 
     loadEditor: function () {
+        var obj;
+        this.clear();
+        obj = new Source(300, 100, 100, 25, 0, 0, 0.5);
+        this.sources.push(obj);
+        this.interactableObjects.push(obj);
+        obj = new Bucket(300, 600, 100, 50, 0);
+        this.buckets.push(obj);
+        this.interactableObjects.push(obj);
+        //this.nParticles = 50;
     },
 
     update: function () {
@@ -77,14 +101,20 @@ Waterfall.prototype = {
 
         this.calculateFlux();
 
-        if (this.particles.length < this.nParticles) {
-            this.addParticle();
+        if (this.sources.length > 0) {
+            if (this.particles.length < this.nParticles) {
+                this.addParticle();
+            }
+       
+            this.moveParticles();
         }
-   
-        this.moveParticles();
         
         if (this.frame % this.framerate) {
             this.canvas.clear();
+
+            if (this.showGrid) {
+                this.drawGrid();
+            }
         
             this.drawParticles();
 
@@ -117,7 +147,7 @@ Waterfall.prototype = {
 
     addParticle : function () {
         var i = Math.floor(Math.random() * this.sources.length),
-            p = new Particle(this.sources[i].x  - this.sources[i].w * 0.5 + Math.random() * this.sources[i].w, this.sources[i].y);
+            p = new Particle(this.sources[i].x  - this.sources[i].w * 0.5 + Math.random() * this.sources[i].w, this.sources[i].y + this.sources[i].h * 0.5);
         p.vel.x = this.sources[i].vx;
         p.vel.y = this.sources[i].vy;
         this.particles[this.particles.length] = p;
@@ -126,7 +156,7 @@ Waterfall.prototype = {
     recycleParticle: function (p, vX, vY) {
         var i = 0, j = Math.floor(Math.random() * this.sources.length);
         p.x = this.sources[j].x - this.sources[j].w * 0.5 + Math.random() * this.sources[j].w;
-        p.y = this.sources[j].y;
+        p.y = this.sources[j].y + this.sources[i].h * 0.5;
         p.prevx = p.x;
         p.prevy = p.y;
         p.vel.x = vX;
@@ -147,8 +177,6 @@ Waterfall.prototype = {
     moveParticle: function (particle) {
         var i = 0, v2, d2, influencer;
 
-        particle.trace();
-
         particle.vel.y += this.sources[0].vy;
        
         for (i = 0; i < this.influencers.length; i += 1) {
@@ -163,6 +191,8 @@ Waterfall.prototype = {
         }
         
         particle.move();
+        
+        particle.trace();
         
         if (this.hitObstacles(particle)) {
             particle.move();
@@ -244,7 +274,7 @@ Waterfall.prototype = {
 
     drawSources : function () {
         var i, o, alpha = 1,
-            color = 'rgba(100,100,100,' + alpha + ')';
+            color = 'rgba(0,255,153,' + alpha + ')';
         for (i = 0; i < this.sources.length; i += 1) {
             this.sources[i].draw(this.canvas, color);
         }
@@ -290,5 +320,18 @@ Waterfall.prototype = {
         this.canvas.text(50, 100, color, fontFamily, fontSize, str);
         str = "flux " + parseInt(this.flux, 10);
         this.canvas.text(50, 150, color, fontFamily, fontSize, str);
+    },
+
+    snapx: function (x) {
+        return this.gridx * Math.round(x / this.gridx);
+    },
+
+    snapy: function (y) {
+        return this.gridy * Math.round(y / this.gridy);
+    },
+
+    drawGrid: function () {
+        var color = 'rgba(200,200,200,1)';
+        this.canvas.grid(this.gridx, this.gridy, this.w, this.h, 1, color);
     }
 };

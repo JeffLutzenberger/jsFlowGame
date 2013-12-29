@@ -11,7 +11,7 @@ var Particle = function (x, y) {
     this.radius = 5;
     this.trail = [];
     this.numTracers = 20;
-    this.tracerradius = 0.075;
+    this.traceWidth = 2;
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y);
@@ -53,7 +53,7 @@ Particle.prototype = {
             t2 = this.trail[i];
             alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
             color = 'rgba(0,153,255,' + alpha + ')';
-            canvas.line(t1, t2, color);
+            canvas.line(t1, t2, this.traceWidth, color);
         }
     },
 

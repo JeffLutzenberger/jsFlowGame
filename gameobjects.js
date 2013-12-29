@@ -141,34 +141,6 @@ Portal.prototype.hit = function (p) {
             return true;
         }
     }
-    /*} else {
-        return (p.lineCollision(this.p1, this.p2, r) ||
-                p.lineCollision(this.p2, this.p3, r) ||
-                p.lineCollision(this.p3, this.p4, r) ||
-                p.lineCollision(this.p4, this.p1, r));
-
-    }*/
     return false;
 };
-/*
-Portal.prototype = {
-    draw: function (canvas, color) {
-        this.inlet.draw(canvas, color);
-        this.outlet.draw(canvas, color);
-    },
 
-    hit: function (p) {
-        var i = 0, r1 = this.inlet, r2 = this.outlet;
-        if (p.lineCollision(r1.p1, r1.p2, 10)) {
-            //move the particle to the channel outlet
-            p.x = r2.x + Math.random() * r2.w;
-            p.y = r2.y + r2.h;
-            for (i = 0; i < p.numTracers; i += 1) {
-                p.trail[i].x = p.x;
-                p.trail[i].y = p.y;
-            }
-            return true;
-        }
-        return false;
-    }
-};*/
