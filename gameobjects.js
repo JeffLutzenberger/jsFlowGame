@@ -128,26 +128,27 @@ var portalFromJson = function (j) {
 };
 
 Portal.prototype.hit = function (p) {
-    var i = 0, outlet = this.outlet, r = 10;
+    var i = 0, r = 10;
     if (this.outlet) {
         if (p.lineCollision(this.p1, this.p2, r)) {
             //move the particle to the channel outlet
-            p.x = outlet.x + Math.random() * outlet.w;
-            p.y = outlet.y + outlet.h;
+            p.x = this.outlet.x - this.outlet.w * 0.5 + Math.random() * this.outlet.w;
+            p.y = this.outlet.y + this.outlet.h * 0.5;
             for (i = 0; i < p.numTracers; i += 1) {
                 p.trail[i].x = p.x;
                 p.trail[i].y = p.y;
             }
             return true;
         }
-        return false;
-    } else {
+    }
+    /*} else {
         return (p.lineCollision(this.p1, this.p2, r) ||
                 p.lineCollision(this.p2, this.p3, r) ||
                 p.lineCollision(this.p3, this.p4, r) ||
                 p.lineCollision(this.p4, this.p1, r));
 
-    }
+    }*/
+    return false;
 };
 /*
 Portal.prototype = {

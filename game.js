@@ -291,7 +291,7 @@ EditorPage.prototype = {
                 this.waterfall.portals.push(obj);
                 this.waterfall.portals.push(obj2);
                 this.waterfall.interactableObjects.push(obj);
-                this.waterfall.interactableObjects.push(obj22);
+                this.waterfall.interactableObjects.push(obj2);
                 break;
             case 115: //s
                 obj = new Source(200, 100, 100, 25, 0, 0, 0.5);

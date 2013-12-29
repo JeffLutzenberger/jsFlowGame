@@ -10,7 +10,7 @@ var level1 = {
                          {'x' : 100, 'y' : 400}],
         'portals' : [],
         'buckets' : [{'x' : 568, 'y' : 900, 'w' : 200, 'h' : 25}],
-        'obstacles' : [{'x' : 0, 'y' : 700, 'w' : 500, 'h' : 50, 'theta' : 0, 'reaction' : 1}]
+        'obstacles' : [{'x' : 250, 'y' : 700, 'w' : 500, 'h' : 50, 'theta' : 0, 'reaction' : 1}]
     };
 
 var level2 = {
@@ -47,6 +47,6 @@ var level4 = {
                          {'x' : 230, 'y' : 500}],
         'portals' : [{'xin' : 50, 'yin' : 300, 'win' : 100, 'hin': 25, 'thetain' : 0, 'xout' : 500, 'yout' : 400, 'wout' : 50, 'hout': 25, 'thetaout' : 0}],
         'buckets' : [{'x' : 500, 'y' : 600, 'w' : 100, 'h' : 25}],
-        'obstacles' : [{'x' : 200, 'y' : 300, 'w' : 400, 'h' : 10, 'theta' : 0, 'reaction' : 1}]
+        'obstacles' : [{'x' : 300, 'y' : 300, 'w' : 300, 'h' : 10, 'theta' : 0, 'reaction' : 1}]
     };
 
