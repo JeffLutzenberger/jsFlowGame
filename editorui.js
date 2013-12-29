@@ -53,6 +53,12 @@ EditorUI.prototype = {
             .click($.proxy(function () {
                 this.toggleGrid();
             }, this));
+
+        $("#save-button").append('<input type="button" value="Save">')
+            .button()
+            .click($.proxy(function () {
+                this.save();
+            }, this));
     },
     
     hide: function () {
@@ -70,6 +76,9 @@ EditorUI.prototype = {
         $("#play-button").off('click');
         $("#grid-button").html('');
         $("#grid-button").off('click');
+        $("#save-button").html('');
+        $("#save-button").off('click');
+
 
     },
 
@@ -119,5 +128,10 @@ EditorUI.prototype = {
     toggleGrid: function () {
         //show the grid...
         this.waterfall.showGrid = !this.waterfall.showGrid;
+    },
+
+    save: function () {
+        var json = JSON.stringify(this.waterfall.saveLevel(), undefined, 2);
+        $('#json').html('<pre>' + json + '</pre>');
     }
 };

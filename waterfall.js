@@ -333,5 +333,29 @@ Waterfall.prototype = {
     drawGrid: function () {
         var color = 'rgba(200,200,200,1)';
         this.canvas.grid(this.gridx, this.gridy, this.w, this.h, 1, color);
+    },
+
+    saveLevel: function () {
+        var level = {},
+            i = 0,
+            starList = level.stars,
+            sourceList = level.sources,
+            influencerList = level.influencers,
+            portalList = level.portals,
+            bucketList = level.buckets,
+            obstacleList = level.obstacles,
+            x = 0,
+            y = 0,
+            width = 0,
+            p;
+
+        level.nParticles = this.nParticles;
+        level.buckets = this.buckets;
+        level.influencers = this.influencers;
+        level.obstacles = this.obstacles;
+        level.portals = this.portals;
+        level.sources = this.sources;
+        level.stars = this.stars;
+        return level;
     }
 };
