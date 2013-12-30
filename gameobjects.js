@@ -13,10 +13,20 @@ var Rectangle = function (x, y, w, h, theta) {
 Rectangle.prototype = {
 
     updatePoints : function () {
-        this.p1 = new Vector(this.x - this.w / 2, this.y - this.h / 2);
-        this.p2 = new Vector(this.x + this.w / 2, this.y - this.h / 2);
-        this.p3 = new Vector(this.x + this.w / 2, this.y + this.h / 2);
-        this.p4 = new Vector(this.x - this.w / 2, this.y + this.h / 2);
+        var x = this.w * 0.5,
+            y = this.h * 0.5,
+            theta = Math.PI / 180 * this.theta,
+            x1 = Math.cos(theta) * x + Math.sin(theta) * y,
+            y1 = -Math.sin(theta) * x + Math.cos(theta) * y;
+
+        this.p1 = new Vector(this.x - x1, this.y - y1);
+        this.p2 = new Vector(this.x + x1, this.y - y1);
+        this.p3 = new Vector(this.x + x1, this.y + y1);
+        this.p4 = new Vector(this.x - x1, this.y + y1);
+        this.n1 = new Vector(this.p1.x - this.p4.x, this.p1.y - this.p4.y).normalize();
+        this.n2 = new Vector(this.p2.x - this.p1.x, this.p2.y - this.p1.y).normalize();
+        this.n3 = new Vector(this.p3.x - this.p2.x, this.p3.y - this.p2.y).normalize();
+        this.n4 = new Vector(this.p4.x - this.p3.x, this.p4.y - this.p3.y).normalize();
     },
 
     setxy: function (x, y) {
@@ -32,7 +42,6 @@ Rectangle.prototype = {
             //console.log("selected");
             canvas.rectangleOutline(this.x - this.w * 0.5, this.y - this.h * 0.5, this.w, this.h, 2, 'rgba(0,100,255,1)');
         }
-
     },
     
     bbHit : function (p) {
@@ -44,10 +53,19 @@ Rectangle.prototype = {
 
     hit : function (p) {
         var r = 10;
-        return (p.lineCollision(this.p1, this.p2, r) ||
-                p.lineCollision(this.p2, this.p3, r) ||
-                p.lineCollision(this.p3, this.p4, r) ||
-                p.lineCollision(this.p4, this.p1, r));
+        if (p.lineCollision(this.p1, this.p2, r)) {
+            return this.n1;
+        }
+        if (p.lineCollision(this.p2, this.p3, r)) {
+            return this.n2;
+        }
+        if (p.lineCollision(this.p3, this.p4, r)) {
+            return this.n3;
+        }
+        if (p.lineCollision(this.p4, this.p1, r)) {
+            return this.n4;
+        }
+        return undefined;
     },
 
     circleHit : function (p) {
@@ -73,7 +91,6 @@ Influencer.prototype.draw = function (canvas, color) {
     if (this.selected) {
         canvas.circleOutline(this.x, this.y, this.radius, 'rgba(0,100,255,1)');
     }
-
 };
 
 var influencerFromJson = function (j) {

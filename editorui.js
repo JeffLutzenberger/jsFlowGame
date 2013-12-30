@@ -11,7 +11,7 @@
 
 var EditorUI = function (waterfall) {
     this.waterfall = waterfall;
-    this.gameObjectForm = new GameObjectEditForm();
+    this.gameObjectForm = new GameObjectEditForm($.proxy(this.deleteObject, this));
 };
 
 EditorUI.prototype = {
@@ -79,6 +79,8 @@ EditorUI.prototype = {
         $("#grid-button").off('click');
         $("#save-button").html('');
         $("#save-button").off('click');
+        $("#delete-button").html('');
+        $("#delete-button").off('click');
         $("#json").html('');
     },
 
@@ -133,10 +135,21 @@ EditorUI.prototype = {
     save: function () {
         var json = JSON.stringify(this.waterfall.saveLevel(), undefined, 2);
         $('#json').html('<pre>' + json + '</pre>');
+    },
+
+    deleteObject: function () {
+        console.log(this);
+        if (this.waterfall.interactable) {
+            //deselect the interactable and delete it
+            //delete the interactable
+            console.log("delete callback");
+        }
     }
+
 };
 
-var GameObjectEditForm = function () {
+var GameObjectEditForm = function (deleteCallback) {
+    this.deleteObject = deleteCallback;
     //source form consists of
     // - x, y coords
     // - h, w
@@ -147,7 +160,7 @@ var GameObjectEditForm = function () {
 };
 
 function isNumber(n) {
-    return !isNaN(parseFloat(n)) && isFinite(n); 
+    return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 function isPositiveNumber(n) {
@@ -207,7 +220,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-        if (this.gameObject.vx != undefined) {
+        if (this.gameObject.vx !== undefined) {
             $("#object-form").append('vx: <input id="vx-input" type="text" value="' + this.gameObject.vx + '"></span><br>');
             $("#vx-input").change($.proxy(function () {
                 val = $("#vx-input").val();
@@ -218,7 +231,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-        if (this.gameObject.vy != undefined) {
+        if (this.gameObject.vy !== undefined) {
             $("#object-form").append('vx: <input id="vy-input" type="text" value="' + this.gameObject.vy + '"></span><br>');
             $("#vy-input").change($.proxy(function () {
                 val = $("#vy-input").val();
@@ -229,7 +242,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-        if (this.gameObject.force != undefined) {
+        if (this.gameObject.force !== undefined) {
             $("#object-form").append('force: <input id="force-input" type="text" value="' + this.gameObject.force + '"></span><br>');
             $("#force-input").change($.proxy(function () {
                 val = $("#force-input").val();
@@ -240,7 +253,10 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-
+        $("#object-form").append('<br><input id="delete-button" type="button" value="Delete">');
+        $("#delete-button").button().click($.proxy(function () {
+            this.deleteObject();
+        }, this));
 
     },
 

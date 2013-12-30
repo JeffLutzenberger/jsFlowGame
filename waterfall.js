@@ -52,8 +52,11 @@ Waterfall.prototype = {
             y = 0,
             width = 0,
             p;
+
+        this.clear();
+            
         this.nParticles = level.nParticles;
-        
+
         for (i = 0; i < starList.length; i += 1) {
             this.stars[i] = starList[i];
         }
@@ -212,12 +215,15 @@ Waterfall.prototype = {
     },
 
     hitObstacles: function (p) {
-        var i, o;
+        var i, o, h;
         for (i = 0; i < this.obstacles.length; i += 1) {
             o = this.obstacles[i];
-            if (o.hit(p)) {
+            h = o.hit(p);
+            if (h) {
                 if (o.reaction > 0) {
-                    p.vel.y *= -o.reaction;
+                    p.vel.x *= o.reaction * h.x;
+                    p.vel.y *= o.reaction * h.y;
+                    //p.vel.y *= -o.reaction;
                 } else {
                     this.recycleParticle(p, 0, this.sources[0].vy);
                 }

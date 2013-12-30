@@ -8,10 +8,10 @@ var Particle = function (x, y) {
     this.dir = new Vector(1, 0);
     this.vel = new Vector(1, 0);
     this.mass = this.inv_mass = 1;
-    this.radius = 5;
+    this.radius = 4;
     this.trail = [];
     this.numTracers = 20;
-    this.traceWidth = 2;
+    this.traceWidth = 1;
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y);
