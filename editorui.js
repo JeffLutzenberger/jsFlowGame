@@ -138,14 +138,30 @@ EditorUI.prototype = {
     },
 
     deleteObject: function () {
-        console.log(this);
-        if (this.waterfall.interactable) {
-            //deselect the interactable and delete it
-            //delete the interactable
-            console.log("delete callback");
+        var o = this.waterfall.interactable,
+            goType = o.gameObjectType(),
+            index;
+        if (goType === "Bucket") {
+            index = this.waterfall.buckets.indexOf(o);
+            this.waterfall.buckets.splice(index, 1);
+        }
+        if (goType === "Influencer") {
+            index = this.waterfall.influencers.indexOf(o);
+            this.waterfall.influencers.splice(index, 1);
+        }
+        if (goType === "Obstacle") {
+            index = this.waterfall.influencers.indexOf(o);
+            this.waterfall.influencers.splice(index, 1);
+        }
+        if (goType === "Portal") {
+            index = this.waterfall.portals.indexOf(o);
+            this.waterfall.portals.splice(index, 1);
+        }
+        if (goType === "Source") {
+            index = this.waterfall.sources.indexOf(o);
+            this.waterfall.sources.splice(index, 1);
         }
     }
-
 };
 
 var GameObjectEditForm = function (deleteCallback) {
