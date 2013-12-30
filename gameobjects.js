@@ -12,6 +12,10 @@ var Rectangle = function (x, y, w, h, theta) {
 
 Rectangle.prototype = {
 
+    gameObjectType : function () {
+        return Rectangle;
+    },
+
     updatePoints : function () {
         var x = this.w * 0.5,
             y = this.h * 0.5,
@@ -86,6 +90,10 @@ var Influencer = function (x, y) {
 
 Influencer.prototype = new Rectangle();
 
+Influencer.prototype.gameObjectType = function () {
+    return "Influencer";
+}
+
 Influencer.prototype.draw = function (canvas, color) {
     canvas.circle(this.x, this.y, this.radius, color);
     if (this.selected) {
@@ -106,6 +114,10 @@ function Source(x, y, w, h, theta, vx, vy) {
 
 Source.prototype = new Rectangle();
 
+Source.prototype.gameObjectType = function () {
+    return "Source";
+}
+
 var sourceFromJson = function (j) {
     return new Source(j.x, j.y, j.w, j.h, j.theta, j.vx, j.vy);
 };
@@ -117,6 +129,10 @@ function Bucket(x, y, w, h, theta, multiplier) {
 }
 
 Bucket.prototype = new Rectangle();
+
+Bucket.prototype.gameObjectType = function () {
+    return "Bucket";
+}
 
 var bucketFromJson = function (j) {
     return new Bucket(j.x, j.y, j.w, j.h, j.theta);
@@ -130,6 +146,11 @@ var Obstacle = function (x, y, w, h, theta, reaction) {
 
 Obstacle.prototype = new Rectangle();
 
+Obstacle.prototype.gameObjectType = function () {
+    return "Obstacle";
+}
+
+
 var obstacleFromJson = function (j) {
     return new Obstacle(j.x, j.y, j.w, j.h, j.theta, j.reaction);
 };
@@ -141,6 +162,11 @@ var Portal = function (x, y, w, h, theta, outlet) {
 };
 
 Portal.prototype = new Rectangle();
+
+Portal.prototype.gameObjectType = function () {
+    return "Portal";
+}
+
 
 //var Portal = function (x1, y1, w1, h1, theta1, x2, y2, w2, h2, theta2) {
 //    this.inlet = new Rectangle(x1, y1, w1, h1, theta1);

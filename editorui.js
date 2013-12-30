@@ -168,12 +168,13 @@ function isPositiveNumber(n) {
 }
 
 GameObjectEditForm.prototype = {
+
     show: function () {
-        var val;
-        $("#object-form").append('<span id="object-type">' + this.gameObject.constructor.name + '</span><br>');
+        var val, goType = this.gameObject.gameObjectType();
+        $("#object-form").append('<span id="object-type">' + goType + '</span><br>');
         $("#object-form").append('<span id="location-display">x: ' + this.gameObject.x + ' y: ' + this.gameObject.y + '</span><br>');
         
-        if (!this.gameObject.radius) {
+        if (goType !== "Influencer") {
             $("#object-form").append('w: <input id="w-input" type="text" value="' + this.gameObject.w + '"><br>');
             $("#w-input").change($.proxy(function (e) {
                 val = $("#w-input").val();
@@ -185,7 +186,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
         
-        if (!this.gameObject.radius) {
+        if (goType !== "Influencer") {
             $("#object-form").append('h: <input id="h-input" type="text" value="' + this.gameObject.h + '"></span><br>');
             $("#h-input").change($.proxy(function () {
                 val = $("#h-input").val();
@@ -196,7 +197,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
         
-        if (!this.gameObject.radius) {
+        if (goType !== "Influencer") {
             $("#object-form").append('theta: <input id="theta-input" type="text" value="' + this.gameObject.theta + '"></span><br>');
             $("#theta-input").change($.proxy(function () {
                 val = $("#theta-input").val();
@@ -207,7 +208,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-        if (this.gameObject.radius) {
+        if (goType === "Influencer") {
             $("#object-form").append('radius: <input id="radius-input" type="text" value="' + this.gameObject.radius + '"></span><br>');
             $("#radius-input").change($.proxy(function () {
                 val = $("#radius-input").val();
@@ -220,7 +221,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-        if (this.gameObject.vx !== undefined) {
+        if (goType === "Source") {
             $("#object-form").append('vx: <input id="vx-input" type="text" value="' + this.gameObject.vx + '"></span><br>');
             $("#vx-input").change($.proxy(function () {
                 val = $("#vx-input").val();
@@ -231,7 +232,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-        if (this.gameObject.vy !== undefined) {
+        if (goType === "Source") {
             $("#object-form").append('vy: <input id="vy-input" type="text" value="' + this.gameObject.vy + '"></span><br>');
             $("#vy-input").change($.proxy(function () {
                 val = $("#vy-input").val();
@@ -242,7 +243,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-        if (this.gameObject.force !== undefined) {
+        if (goType === "Influencer") {
             $("#object-form").append('force: <input id="force-input" type="text" value="' + this.gameObject.force + '"></span><br>');
             $("#force-input").change($.proxy(function () {
                 val = $("#force-input").val();
