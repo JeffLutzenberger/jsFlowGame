@@ -225,18 +225,18 @@ GameObjectEditForm.prototype = {
             $("#vx-input").change($.proxy(function () {
                 val = $("#vx-input").val();
                 if (isNumber(val)) {
-                    this.gameObject.vx = val;
+                    this.gameObject.vx = parseFloat(val);
                     this.gameObject.updatePoints();
                 }
             }, this));
         }
 
         if (this.gameObject.vy !== undefined) {
-            $("#object-form").append('vx: <input id="vy-input" type="text" value="' + this.gameObject.vy + '"></span><br>');
+            $("#object-form").append('vy: <input id="vy-input" type="text" value="' + this.gameObject.vy + '"></span><br>');
             $("#vy-input").change($.proxy(function () {
                 val = $("#vy-input").val();
                 if (isNumber(val)) {
-                    this.gameObject.vx = val;
+                    this.gameObject.vy = parseFloat(val);
                     this.gameObject.updatePoints();
                 }
             }, this));
