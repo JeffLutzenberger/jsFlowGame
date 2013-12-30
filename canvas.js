@@ -23,7 +23,16 @@ Canvas.prototype = {
         this.ctx.arc(x * this.m, y * this.m, r * this.m, 0, Math.PI * 2, false);
         this.ctx.fill();
     },
-    
+
+    circleOutline: function (x, y, r, lineWidth, color) {
+        this.ctx.fillStyle = color;
+        this.ctx.beginPath();
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.moveTo(x * this.m + r * this.m, y * this.m);
+        this.ctx.arc(x * this.m, y * this.m, r * this.m, 0, Math.PI * 2, false);
+        this.ctx.stroke();
+    },
+
     line: function (p1, p2, w, color) {
         this.ctx.strokeStyle = color;
         this.ctx.beginPath();
@@ -41,10 +50,10 @@ Canvas.prototype = {
         this.ctx.fill();
     },
 
-    rectangleOutline: function (x1, y1, w, h, color) {
+    rectangleOutline: function (x1, y1, w, h, lineWidth, color) {
         this.ctx.strokeStyle = color;
         this.ctx.beginPath();
-        this.ctx.lineWidth = 1;
+        this.ctx.lineWidth = lineWidth;
         this.ctx.rect(x1 * this.m, y1 * this.m, w * this.m, h * this.m);
         this.ctx.stroke();
     },

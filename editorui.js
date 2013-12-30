@@ -11,6 +11,7 @@
 
 var EditorUI = function (waterfall) {
     this.waterfall = waterfall;
+    this.gameObjectForm = new GameObjectEditForm();
 };
 
 EditorUI.prototype = {
@@ -78,8 +79,7 @@ EditorUI.prototype = {
         $("#grid-button").off('click');
         $("#save-button").html('');
         $("#save-button").off('click');
-
-
+        $("#json").html('');
     },
 
     addBucket: function () {
@@ -134,4 +134,128 @@ EditorUI.prototype = {
         var json = JSON.stringify(this.waterfall.saveLevel(), undefined, 2);
         $('#json').html('<pre>' + json + '</pre>');
     }
+};
+
+var GameObjectEditForm = function () {
+    //source form consists of
+    // - x, y coords
+    // - h, w
+    // - theta
+    // - vx, vy 
+    //this.gameObject = source;
+    this.gameObject = null;
+};
+
+function isNumber(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n); 
+}
+
+function isPositiveNumber(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n) && n >= 0;
+}
+
+GameObjectEditForm.prototype = {
+    show: function () {
+        var val;
+        $("#object-form").append('<span id="object-type">' + this.gameObject.constructor.name + '</span><br>');
+        $("#object-form").append('<span id="location-display">x: ' + this.gameObject.x + ' y: ' + this.gameObject.y + '</span><br>');
+        
+        if (!this.gameObject.radius) {
+            $("#object-form").append('w: <input id="w-input" type="text" value="' + this.gameObject.w + '"><br>');
+            $("#w-input").change($.proxy(function (e) {
+                val = $("#w-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.w = val;
+                    this.gameObject.updatePoints();
+                    console.log("w changed...");
+                }
+            }, this));
+        }
+        
+        if (!this.gameObject.radius) {
+            $("#object-form").append('h: <input id="h-input" type="text" value="' + this.gameObject.h + '"></span><br>');
+            $("#h-input").change($.proxy(function () {
+                val = $("#h-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.h = val;
+                    this.gameObject.updatePoints();
+                }
+            }, this));
+        }
+        
+        if (!this.gameObject.radius) {
+            $("#object-form").append('theta: <input id="theta-input" type="text" value="' + this.gameObject.theta + '"></span><br>');
+            $("#theta-input").change($.proxy(function () {
+                val = $("#theta-input").val();
+                if (isNumber(val)) {
+                    this.gameObject.theta = val;
+                    this.gameObject.updatePoints();
+                }
+            }, this));
+        }
+
+        if (this.gameObject.radius) {
+            $("#object-form").append('radius: <input id="radius-input" type="text" value="' + this.gameObject.radius + '"></span><br>');
+            $("#radius-input").change($.proxy(function () {
+                val = $("#radius-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.radius = val;
+                    this.gameObject.w = val;
+                    this.gameObject.h = val;
+                    this.gameObject.updatePoints();
+                }
+            }, this));
+        }
+
+        if (this.gameObject.vx != undefined) {
+            $("#object-form").append('vx: <input id="vx-input" type="text" value="' + this.gameObject.vx + '"></span><br>');
+            $("#vx-input").change($.proxy(function () {
+                val = $("#vx-input").val();
+                if (isNumber(val)) {
+                    this.gameObject.vx = val;
+                    this.gameObject.updatePoints();
+                }
+            }, this));
+        }
+
+        if (this.gameObject.vy != undefined) {
+            $("#object-form").append('vx: <input id="vy-input" type="text" value="' + this.gameObject.vy + '"></span><br>');
+            $("#vy-input").change($.proxy(function () {
+                val = $("#vy-input").val();
+                if (isNumber(val)) {
+                    this.gameObject.vx = val;
+                    this.gameObject.updatePoints();
+                }
+            }, this));
+        }
+
+        if (this.gameObject.force != undefined) {
+            $("#object-form").append('force: <input id="force-input" type="text" value="' + this.gameObject.force + '"></span><br>');
+            $("#force-input").change($.proxy(function () {
+                val = $("#force-input").val();
+                if (isNumber(val)) {
+                    this.gameObject.force = val;
+                    this.gameObject.updatePoints();
+                }
+            }, this));
+        }
+
+
+
+    },
+
+    hide: function () {
+        $("#object-form").html('');
+        $("#object-form").off();
+    },
+
+    updateLocation: function () {
+        //the object has moved so update the x and y coordinates
+        $("#location-display").html('x: ' + this.gameObject.x + ' y: ' + this.gameObject.y);
+    },
+
+    updateObject: function () {
+        //values have been modified in the form, see if we can update the object
+    }
+
 };

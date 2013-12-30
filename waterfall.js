@@ -245,9 +245,14 @@ Waterfall.prototype = {
 
     hitInteractable: function (x, y) {
         var i, p = new Particle(x, y);
+        if (this.interactable) {
+            this.interactable.selected = false;
+            this.interactable = undefined;
+        }
         for (i = 0; i < this.interactableObjects.length; i += 1) {
             if (this.interactableObjects[i].bbHit(p)) {
                 this.interactable = this.interactableObjects[i];
+                this.interactable.selected = true;
                 return true;
             }
         }

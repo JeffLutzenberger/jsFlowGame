@@ -22,6 +22,7 @@ var GameController = function (canvas) {
 
     $("#main-menu-button").click($.proxy(function () {
         //console.log(this);
+        this.waterfall.clear();
         this.startPage.selectedLevel = -1;
         this.gameState = 'start';
         this.startPage.setHandlers();
@@ -74,20 +75,6 @@ GameController.prototype = {
         this.waterfall.loadLevel(levels[level]);
     }
 
-    //game states:
-    //1. start 
-    //   - instructions)
-    //   - choose level
-    //2. next level screen
-    //   - choose star level (1, 2 or 3)
-    //3. play
-    //   - quit: go back to stat screen
-    //4. level complete
-    //   - stars and stats 
-    //   - once start level is achieved go back to start screen
-    //5. end 
-    //   - if all levels are completed with 3 stars then show this screen
-    //
 };
 
 var StartPage = function (canvas) {
@@ -160,15 +147,15 @@ StartPage.prototype = {
 
     drawInstructions: function () {
         //draw instructions and level selector buttons
-        var str = "Select a level to play";
-        this.canvas.text(20, 50, 'rgba(100,100,100,1)', 'arial', 16, str);
+        //var str = "Select a level to play";
+        //this.canvas.text(20, 50, 'rgba(100,100,100,1)', 'arial', 16, str);
     },
 
     drawLevels: function () {
         var i = 0, b, color = 'rgba(100,100,100,1)', levelStr = "";
         for (i = 0; i < this.levelButtons.length; i += 1) {
             b = this.levelButtons[i];
-            this.canvas.rectangleOutline(b.x, b.y, b.w, b.h, color);
+            this.canvas.rectangleOutline(b.x, b.y, b.w, b.h, 1, color);
             levelStr = "Level " + (i + 1);
             this.canvas.text(b.x + 10, b.y - 20, color, 'arial', 16, levelStr);
             //draw level
@@ -186,7 +173,7 @@ StartPage.prototype = {
         if (this.hoverLevel > -1) {
             color = 'rgba(0,0,255,1)';
             b = this.levelButtons[this.hoverLevel];
-            this.canvas.rectangleOutline(b.x, b.y, b.w, b.h, color);
+            this.canvas.rectangleOutline(b.x, b.y, b.w, b.h, 1, color);
         }
     },
 
@@ -216,7 +203,6 @@ PlayPage.prototype = {
                 y = Math.floor((e.pageY - $("#canvas").offset().top));
             this.waterfall.mouseDown = true;
             this.waterfall.hitInteractable(x / this.canvas.m, y / this.canvas.m);
-            //console.log(this.waterfall.interactable);
         }, this));
 
         $(document).bind('mouseup touchend', $.proxy(function (e) {
@@ -261,11 +247,13 @@ EditorPage.prototype = {
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top));
-            //x = this.waterfall.snapx(x);
-            //y = this.waterfall.snapy(y);
             this.waterfall.mouseDown = true;
             this.waterfall.hitInteractable(x / this.canvas.m, y / this.canvas.m);
-            //this.waterfall.influencer = this.waterfall.hitInfluencer(x / this.canvas.m, y / this.canvas.m);
+            this.editorui.gameObjectForm.gameObject = this.waterfall.interactable;
+            this.editorui.gameObjectForm.hide();
+            if (this.waterfall.interactable) {
+                this.editorui.gameObjectForm.show();
+            }
         }, this));
 
         $(document).bind('mouseup touchend', $.proxy(function (e) {
@@ -287,6 +275,7 @@ EditorPage.prototype = {
 
             if (this.waterfall.interactable) {
                 this.waterfall.interactable.setxy(x / this.canvas.m, y / this.canvas.m);
+                this.editorui.gameObjectForm.updateLocation();
             }
         }, this));
 
@@ -313,7 +302,7 @@ EditorPage.prototype = {
                 this.waterfall.influencers.push(obj);
                 this.waterfall.interactableObjects.push(obj);
                 break;
-             case 111: //o
+            case 111: //o
                 //add an obstacle
                 obj = new Obstacle(100, 100, 100, 25, 0, 1);
                 this.waterfall.obstacles.push(obj);

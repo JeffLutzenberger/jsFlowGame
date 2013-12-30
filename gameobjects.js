@@ -27,6 +27,12 @@ Rectangle.prototype = {
 
     draw: function (canvas, color) {
         canvas.rectangle(this.x - this.w * 0.5, this.y - this.h * 0.5, this.w, this.h, this.theta, color);
+        canvas.rectangleOutline(this.x - this.w * 0.5, this.y - this.h * 0.5, this.w, this.h, 1, 'rgba(100,100,100,1)');
+        if (this.selected) {
+            //console.log("selected");
+            canvas.rectangleOutline(this.x - this.w * 0.5, this.y - this.h * 0.5, this.w, this.h, 2, 'rgba(0,100,255,1)');
+        }
+
     },
     
     bbHit : function (p) {
@@ -64,6 +70,10 @@ Influencer.prototype = new Rectangle();
 
 Influencer.prototype.draw = function (canvas, color) {
     canvas.circle(this.x, this.y, this.radius, color);
+    if (this.selected) {
+        canvas.circleOutline(this.x, this.y, this.radius, 'rgba(0,100,255,1)');
+    }
+
 };
 
 var influencerFromJson = function (j) {
