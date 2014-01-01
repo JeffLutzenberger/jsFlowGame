@@ -12,6 +12,7 @@
 var EditorUI = function (waterfall) {
     this.waterfall = waterfall;
     this.gameObjectForm = new GameObjectEditForm($.proxy(this.deleteObject, this));
+    this.showInfluenceRing = true;
 };
 
 EditorUI.prototype = {
@@ -42,7 +43,13 @@ EditorUI.prototype = {
             .click($.proxy(function () {
                 this.addSource();
             }, this));
-        
+         
+        $("#sink-button").append('<input type="button" value="Sink">')
+            .button()
+            .click($.proxy(function () {
+                this.addSink();
+            }, this));
+
         $("#play-button").append('<input type="button" value="Play">')
             .button()
             .click($.proxy(function () {
@@ -53,6 +60,12 @@ EditorUI.prototype = {
             .button()
             .click($.proxy(function () {
                 this.toggleGrid();
+            }, this));
+
+        $("#influence-ring-button").append('<input type="button" value="Influence Rings">')
+            .button()
+            .click($.proxy(function () {
+                this.toggleInfluenceRings();
             }, this));
 
         $("#save-button").append('<input type="button" value="Save">')
@@ -73,6 +86,8 @@ EditorUI.prototype = {
         $("#portal-button").off('click');
         $("#source-button").html('');
         $("#source-button").off('click');
+        $("#sink-button").html('');
+        $("#sink-button").off('click');
         $("#play-button").html('');
         $("#play-button").off('click');
         $("#grid-button").html('');
@@ -91,11 +106,19 @@ EditorUI.prototype = {
     },
  
     addInfluencer: function () {
-        var obj = new Influencer(400, 100);
+        var obj = new Influencer(400, 100, 15, 100, -0.5);
+        obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.influencers.push(obj);
         this.waterfall.interactableObjects.push(obj);
     },
-   
+    
+    addSink: function () {
+        var obj = new Sink(400, 200, 15, 100, 1);
+        obj.showInfluenceRing = this.showInfluenceRing;
+        this.waterfall.sinks.push(obj);
+        this.waterfall.interactableObjects.push(obj);
+    },
+  
     addObstacle: function () {
         var obj = new Obstacle(100, 100, 100, 25, 0, 1);
         this.waterfall.obstacles.push(obj);
@@ -112,7 +135,7 @@ EditorUI.prototype = {
     },
 
     addSource: function () {
-        var obj = new Source(200, 100, 100, 25, 0, 0, 0.5);
+        var obj = new Source(200, 100, 100, 25, 0, 5);
         this.waterfall.sources.push(obj);
         this.waterfall.interactableObjects.push(obj);
     },
@@ -130,6 +153,19 @@ EditorUI.prototype = {
     toggleGrid: function () {
         //show the grid...
         this.waterfall.showGrid = !this.waterfall.showGrid;
+    },
+
+    toggleInfluenceRings: function () {
+        var i = 0, o;
+        this.showInfluenceRing = !this.showInfluenceRing;
+        for (i = 0; i < this.waterfall.influencers.length; i += 1) {
+            o = this.waterfall.influencers[i];
+            o.showInfluenceRing = this.showInfluenceRing;
+        }
+        for (i = 0; i < this.waterfall.sinks.length; i += 1) {
+            o = this.waterfall.sinks[i];
+            o.showInfluenceRing = this.showInfluenceRing;
+        }
     },
 
     save: function () {
@@ -150,8 +186,8 @@ EditorUI.prototype = {
             this.waterfall.influencers.splice(index, 1);
         }
         if (goType === "Obstacle") {
-            index = this.waterfall.influencers.indexOf(o);
-            this.waterfall.influencers.splice(index, 1);
+            index = this.waterfall.obstacles.indexOf(o);
+            this.waterfall.obstacles.splice(index, 1);
         }
         if (goType === "Portal") {
             index = this.waterfall.portals.indexOf(o);
@@ -160,6 +196,10 @@ EditorUI.prototype = {
         if (goType === "Source") {
             index = this.waterfall.sources.indexOf(o);
             this.waterfall.sources.splice(index, 1);
+        }
+        if (goType === "Sink") {
+            index = this.waterfall.sinks.indexOf(o);
+            this.waterfall.sinks.splice(index, 1);
         }
     }
 };
@@ -190,41 +230,7 @@ GameObjectEditForm.prototype = {
         $("#object-form").append('<span id="object-type">' + goType + '</span><br>');
         $("#object-form").append('<span id="location-display">x: ' + this.gameObject.x + ' y: ' + this.gameObject.y + '</span><br>');
         
-        if (goType !== "Influencer") {
-            $("#object-form").append('w: <input id="w-input" type="text" value="' + this.gameObject.w + '"><br>');
-            $("#w-input").change($.proxy(function (e) {
-                val = $("#w-input").val();
-                if (isPositiveNumber(val)) {
-                    this.gameObject.w = val;
-                    this.gameObject.updatePoints();
-                    console.log("w changed...");
-                }
-            }, this));
-        }
-        
-        if (goType !== "Influencer") {
-            $("#object-form").append('h: <input id="h-input" type="text" value="' + this.gameObject.h + '"></span><br>');
-            $("#h-input").change($.proxy(function () {
-                val = $("#h-input").val();
-                if (isPositiveNumber(val)) {
-                    this.gameObject.h = val;
-                    this.gameObject.updatePoints();
-                }
-            }, this));
-        }
-        
-        if (goType !== "Influencer") {
-            $("#object-form").append('theta: <input id="theta-input" type="text" value="' + this.gameObject.theta + '"></span><br>');
-            $("#theta-input").change($.proxy(function () {
-                val = $("#theta-input").val();
-                if (isNumber(val)) {
-                    this.gameObject.theta = val;
-                    this.gameObject.updatePoints();
-                }
-            }, this));
-        }
-
-        if (goType === "Influencer") {
+        if (goType === "Influencer" || goType === "Sink") {
             $("#object-form").append('radius: <input id="radius-input" type="text" value="' + this.gameObject.radius + '"></span><br>');
             $("#radius-input").change($.proxy(function () {
                 val = $("#radius-input").val();
@@ -235,31 +241,15 @@ GameObjectEditForm.prototype = {
                     this.gameObject.updatePoints();
                 }
             }, this));
-        }
-
-        if (goType === "Source") {
-            $("#object-form").append('vx: <input id="vx-input" type="text" value="' + this.gameObject.vx + '"></span><br>');
-            $("#vx-input").change($.proxy(function () {
-                val = $("#vx-input").val();
-                if (isNumber(val)) {
-                    this.gameObject.vx = parseFloat(val);
-                    this.gameObject.updatePoints();
+            $("#object-form").append('influence radius: <input id="influence-radius-input" type="text" value="' + this.gameObject.influenceRadius + '"></span><br>');
+            $("#influence-radius-input").change($.proxy(function () {
+                val = $("#influence-radius-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.influenceRadius = val;
+                    //this.gameObject.updatePoints();
                 }
             }, this));
-        }
 
-        if (goType === "Source") {
-            $("#object-form").append('vy: <input id="vy-input" type="text" value="' + this.gameObject.vy + '"></span><br>');
-            $("#vy-input").change($.proxy(function () {
-                val = $("#vy-input").val();
-                if (isNumber(val)) {
-                    this.gameObject.vy = parseFloat(val);
-                    this.gameObject.updatePoints();
-                }
-            }, this));
-        }
-
-        if (goType === "Influencer") {
             $("#object-form").append('force: <input id="force-input" type="text" value="' + this.gameObject.force + '"></span><br>');
             $("#force-input").change($.proxy(function () {
                 val = $("#force-input").val();
@@ -268,6 +258,48 @@ GameObjectEditForm.prototype = {
                     this.gameObject.updatePoints();
                 }
             }, this));
+
+        } else {
+            $("#object-form").append('w: <input id="w-input" type="text" value="' + this.gameObject.w + '"><br>');
+            $("#w-input").change($.proxy(function (e) {
+                val = $("#w-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.w = val;
+                    this.gameObject.updatePoints();
+                    console.log("w changed...");
+                }
+            }, this));
+            
+            $("#object-form").append('h: <input id="h-input" type="text" value="' + this.gameObject.h + '"></span><br>');
+            $("#h-input").change($.proxy(function () {
+                val = $("#h-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.h = val;
+                    this.gameObject.updatePoints();
+                }
+            }, this));
+            
+            $("#object-form").append('theta: <input id="theta-input" type="text" value="' + this.gameObject.theta + '"></span><br>');
+            $("#theta-input").change($.proxy(function () {
+                val = $("#theta-input").val();
+                if (isNumber(val)) {
+                    this.gameObject.theta = val;
+                    this.gameObject.updatePoints();
+                    console.log(this.gameObject);
+                }
+            }, this));
+        }
+       
+        if (goType === "Source") {
+            $("#object-form").append('particle speed: <input id="speed-input" type="text" value="' + this.gameObject.v + '"></span><br>');
+            $("#speed-input").change($.proxy(function () {
+                val = $("#speed-input").val();
+                if (isNumber(val)) {
+                    this.gameObject.v = parseFloat(val);
+                    this.gameObject.updatePoints();
+                }
+            }, this));
+            
         }
 
         $("#object-form").append('<br><input id="delete-button" type="button" value="Delete">');

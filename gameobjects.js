@@ -16,17 +16,28 @@ Rectangle.prototype = {
         return Rectangle;
     },
 
-    updatePoints : function () {
-        var x = this.w * 0.5,
-            y = this.h * 0.5,
-            theta = Math.PI / 180 * this.theta,
-            x1 = Math.cos(theta) * x + Math.sin(theta) * y,
-            y1 = -Math.sin(theta) * x + Math.cos(theta) * y;
+    rotatePoint : function (x, y, theta) {
+        var degtorad = Math.PI / 180,
+            x1 = Math.cos(theta * degtorad) * x + Math.sin(theta * degtorad) * y,
+            y1 = -Math.sin(theta * degtorad) * x + Math.cos(theta * degtorad) * y;
+        return new Vector(x1, y1);
+    },
 
-        this.p1 = new Vector(this.x - x1, this.y - y1);
-        this.p2 = new Vector(this.x + x1, this.y - y1);
-        this.p3 = new Vector(this.x + x1, this.y + y1);
-        this.p4 = new Vector(this.x - x1, this.y + y1);
+    updatePoints : function () {
+        var xl1 = -this.w * 0.5,
+            xl2 = this.w * 0.5,
+            yl1 = -this.h * 0.5,
+            yl2 = this.h * 0.5,
+            theta = Math.PI / 180 * this.theta,
+            pl1 = this.rotatePoint(xl1, yl1, this.theta),
+            pl2 = this.rotatePoint(xl2, yl1, this.theta),
+            pl3 = this.rotatePoint(xl2, yl2, this.theta),
+            pl4 = this.rotatePoint(xl1, yl2, this.theta);
+
+        this.p1 = new Vector(this.x + pl1.x, this.y + pl1.y);
+        this.p2 = new Vector(this.x + pl2.x, this.y + pl2.y);
+        this.p3 = new Vector(this.x + pl3.x, this.y + pl3.y);
+        this.p4 = new Vector(this.x + pl4.x, this.y + pl4.y);
         this.n1 = new Vector(this.p1.x - this.p4.x, this.p1.y - this.p4.y).normalize();
         this.n2 = new Vector(this.p2.x - this.p1.x, this.p2.y - this.p1.y).normalize();
         this.n3 = new Vector(this.p3.x - this.p2.x, this.p3.y - this.p2.y).normalize();
@@ -40,11 +51,10 @@ Rectangle.prototype = {
     },
 
     draw: function (canvas, color) {
-        canvas.rectangle(this.x - this.w * 0.5, this.y - this.h * 0.5, this.w, this.h, this.theta, color);
-        canvas.rectangleOutline(this.x - this.w * 0.5, this.y - this.h * 0.5, this.w, this.h, 1, 'rgba(100,100,100,1)');
+        canvas.rectangle(this.p1, this.p2, this.p3, this.p4, color);
+        canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 1, 'rgba(100,100,100,1)');
         if (this.selected) {
-            //console.log("selected");
-            canvas.rectangleOutline(this.x - this.w * 0.5, this.y - this.h * 0.5, this.w, this.h, 2, 'rgba(0,100,255,1)');
+            canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 2, 'rgba(0,100,255,1)');
         }
     },
     
@@ -80,46 +90,95 @@ Rectangle.prototype = {
     }
 };
 
-var Influencer = function (x, y) {
-    var radius = 15;
+var Influencer = function (x, y, r, influenceRadius, force) {
     this.base = Rectangle;
-    this.base(x, y, 2 * radius, 2 * radius, 0);
-    this.force = 1;
-    this.radius = radius;
+    this.radius = r || 15;
+    this.base(x, y, 2 * this.radius, 2 * this.radius, 0);
+    this.force = force || 1;
+    this.influenceRadius = influenceRadius || 100;
+    this.showInfluenceRing = false;
 };
 
 Influencer.prototype = new Rectangle();
 
 Influencer.prototype.gameObjectType = function () {
     return "Influencer";
-}
+};
 
 Influencer.prototype.draw = function (canvas, color) {
+    canvas.circle(this.x, this.y, this.radius * 2, 'rgba(0,153,255,0.25)');
     canvas.circle(this.x, this.y, this.radius, color);
+    //canvas.circleGradient(this.x, this.y, this.influenceRadius, color);
+    if (this.showInfluenceRing) {
+        canvas.circleOutline(this.x, this.y, this.influenceRadius, 1, color);
+    }
     if (this.selected) {
-        canvas.circleOutline(this.x, this.y, this.radius, 'rgba(0,100,255,1)');
+        canvas.circleOutline(this.x, this.y, this.radius, 2, 'rgba(0,100,255,0.25)');
     }
 };
 
 var influencerFromJson = function (j) {
-    return new Influencer(j.x, j.y);
+    return new Influencer(j.x, j.y, j.radius, j.influenceRadius, j.force);
 };
 
-function Source(x, y, w, h, theta, vx, vy) {
+var Sink = function (x, y, r, influenceRadius, force) {
+    this.base = Influencer;
+    this.base(x, y, r, influenceRadius, force);
+};
+
+Sink.prototype = new Influencer();
+
+Sink.prototype.gameObjectType = function () {
+    return "Sink";
+};
+
+Sink.prototype.hit = function (p) {
+    var v2 = new Vector(this.x - p.x, this.y - p.y),
+        d2 = v2.squaredLength();
+    return (d2 <= 2 * this.radius * this.radius);
+};
+
+Sink.prototype.contain = function (p) {
+    var v = new Vector(p.vel.x, p.vel.y),
+        c1 = new Particle(p.x, p.y, p.radius),
+        p1 = new Vector(p.prevx, p.prevy),
+        p2 = new Vector(p.x, p.y),
+        d1 = new Vector(p1.x - this.x, p2.y - this.y).length(),
+        d2 = new Vector(p2.x - this.x, p2.y - this.y).length(),
+        hitPoint;
+    if (d1 < d2) {
+        hitPoint = c1.circleCircleCollision(this.x, this.y, this.influenceRadius);
+        if (hitPoint) {
+            v = new Vector(this.x - hitPoint.x, this.y - hitPoint.y);
+            d1 = v.length() + 20;
+            //this algorithm returns true if the particle is inside the influence radius
+            //there should only be a collision if the particle circle overlaps the edge
+            //of the influence radius
+            if (d1 >= this.influenceRadius) {
+                return v.normalize();
+            }
+        }
+    }
+};
+
+var sinkFromJson = function (j) {
+    return new Sink(j.x, j.y, j.radius, j.influenceRadius, j.force);
+};
+
+function Source(x, y, w, h, theta, v) {
     this.base = Rectangle;
     this.base(x, y, w, h, theta);
-    this.vx = vx || 0;
-    this.vy = vy || 0.5;
+    this.v = v || 0.5;
 }
 
 Source.prototype = new Rectangle();
 
 Source.prototype.gameObjectType = function () {
     return "Source";
-}
+};
 
 var sourceFromJson = function (j) {
-    return new Source(j.x, j.y, j.w, j.h, j.theta, j.vx, j.vy);
+    return new Source(j.x, j.y, j.w, j.h, j.theta, j.v);
 };
 
 function Bucket(x, y, w, h, theta, multiplier) {
@@ -132,7 +191,7 @@ Bucket.prototype = new Rectangle();
 
 Bucket.prototype.gameObjectType = function () {
     return "Bucket";
-}
+};
 
 var bucketFromJson = function (j) {
     return new Bucket(j.x, j.y, j.w, j.h, j.theta);
@@ -141,15 +200,14 @@ var bucketFromJson = function (j) {
 var Obstacle = function (x, y, w, h, theta, reaction) {
     this.base = Rectangle;
     this.base(x, y, w, h, theta);
-    this.reaction = reaction;
+    this.reaction = reaction || 1;
 };
 
 Obstacle.prototype = new Rectangle();
 
 Obstacle.prototype.gameObjectType = function () {
     return "Obstacle";
-}
-
+};
 
 var obstacleFromJson = function (j) {
     return new Obstacle(j.x, j.y, j.w, j.h, j.theta, j.reaction);
@@ -165,14 +223,7 @@ Portal.prototype = new Rectangle();
 
 Portal.prototype.gameObjectType = function () {
     return "Portal";
-}
-
-
-//var Portal = function (x1, y1, w1, h1, theta1, x2, y2, w2, h2, theta2) {
-//    this.inlet = new Rectangle(x1, y1, w1, h1, theta1);
-//    this.outlet = new Rectangle(x2, y2, w2, h2, theta2);
-//    this.multiplier = 1;
-//};
+};
 
 var portalFromJson = function (j) {
     var outlet = new Portal(j.xout, j.yout, j.wout, j.hout, j.thetaout),

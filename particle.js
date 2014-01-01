@@ -1,6 +1,6 @@
 'use strict';
 
-var Particle = function (x, y) {
+var Particle = function (x, y, r) {
     this.x = x;
     this.y = y;
     this.prevx = x;
@@ -8,7 +8,7 @@ var Particle = function (x, y) {
     this.dir = new Vector(1, 0);
     this.vel = new Vector(1, 0);
     this.mass = this.inv_mass = 1;
-    this.radius = 4;
+    this.radius = r || 4;
     this.trail = [];
     this.numTracers = 20;
     this.traceWidth = 1;
@@ -47,11 +47,15 @@ Particle.prototype = {
     
     draw: function (canvas, color) {
         var i = 0, alpha = 1.0, t1, t2;
-        canvas.circle(this.x, this.y, this.radius, color);
+        canvas.circle(this.x, this.y, this.radius * 2, 'rgba(0,153,255,0.25)');
+        canvas.circle(this.x, this.y, this.radius, 'rgba(0,153,255,1)');
+        //canvas.circle(this.x, this.y, this.radius, color);
         for (i = 1; i < this.numTracers; i += 1) {
             t1 = this.trail[i - 1];
             t2 = this.trail[i];
             alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
+            //color = 'rgba(0,153,255,' + alpha * 0.25 + ')';
+            //canvas.line(t1, t2, this.traceWidth * 2, color);
             color = 'rgba(0,153,255,' + alpha + ')';
             canvas.line(t1, t2, this.traceWidth, color);
         }
@@ -87,7 +91,7 @@ Particle.prototype = {
             P2MinusP1 = new Vector(LocalP2.x - LocalP1.x, LocalP2.y - LocalP1.y),
             a = (P2MinusP1.x * P2MinusP1.x) + (P2MinusP1.y * P2MinusP1.y),
             b = 2 * (P2MinusP1.x * LocalP1.x + P2MinusP1.y * LocalP1.y),
-            c = LocalP1.x * LocalP1.x + LocalP1.y * LocalP1.y - this.r * this.r,
+            c = LocalP1.x * LocalP1.x + LocalP1.y * LocalP1.y - this.radius * this.radius,
             delta = b * b - (4 * a * c),
             u1,
             u2,
@@ -107,6 +111,20 @@ Particle.prototype = {
             }
         }
         return false;
+    },
+
+    circleCircleCollision: function (x1, y1, r1) {
+        var x2 = this.x,
+            y2 = this.y,
+            r2 = this.radius,
+            d = r1 + r2,
+            v12 = new Vector(x2 - x1, y2 - y1),
+            d12 = v12.length();
+        //console.log(d12);
+        //console.log(d);
+        if (d12 < d) {
+            return new Vector((x1 * r2 + x2 * r1) / (r1 + r2), (y1 * r2 + y2 * r1) / (r1 + r2));
+        }
     }
 };
 

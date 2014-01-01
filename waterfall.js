@@ -3,6 +3,7 @@
 var Waterfall = function (canvas) {
     this.stars = [];
     this.sources = [];
+    this.sinks = [];
     this.influencers = [];
     this.portals = [];
     this.buckets = [];
@@ -25,6 +26,8 @@ var Waterfall = function (canvas) {
     this.w = 768;
     this.gridx = 24;
     this.gridy = 16;
+    this.forceMultiplier = 1e5;
+    this.minDSquared = 1000;
 };
 
 Waterfall.prototype = {
@@ -32,6 +35,7 @@ Waterfall.prototype = {
     clear: function () {
         this.stars.length = 0;
         this.sources.length = 0;
+        this.sinks.length = 0;
         this.influencers.length = 0;
         this.portals.length = 0;
         this.buckets.length = 0;
@@ -44,6 +48,7 @@ Waterfall.prototype = {
         var i = 0,
             starList = level.stars,
             sourceList = level.sources,
+            sinkList = level.sinks,
             influencerList = level.influencers,
             portalList = level.portals,
             bucketList = level.buckets,
@@ -60,15 +65,17 @@ Waterfall.prototype = {
         for (i = 0; i < starList.length; i += 1) {
             this.stars[i] = starList[i];
         }
+
         for (i = 0; i < sourceList.length; i += 1) {
             this.sources[i] = sourceFromJson(sourceList[i]);
         }
 
+        for (i = 0; i < sinkList.length; i += 1) {
+            this.sinks[i] = sinkFromJson(sinkList[i]);
+        }
+
         for (i = 0; i < influencerList.length; i += 1) {
             this.influencers[i] = influencerFromJson(influencerList[i]);
-            //add influencers to interactables list
-            //- for game play the player can only interact with influencers. 
-            //- for level editor the player can interact will all game objects
             this.interactableObjects[i] = this.influencers[i];
         }
 
@@ -90,13 +97,15 @@ Waterfall.prototype = {
     loadEditor: function () {
         var obj;
         this.clear();
-        obj = new Source(300, 100, 100, 25, 0, 0, 0.5);
+        obj = new Source(400, 50, 50, 25, 0, 5);
         this.sources.push(obj);
         this.interactableObjects.push(obj);
         obj = new Bucket(300, 600, 100, 50, 0);
         this.buckets.push(obj);
         this.interactableObjects.push(obj);
-        //this.nParticles = 50;
+        obj = new Obstacle(300, 300, 100, 25, 45, 1);
+        this.obstacles.push(obj);
+        this.interactableObjects.push(obj);
     },
 
     update: function () {
@@ -122,6 +131,8 @@ Waterfall.prototype = {
             this.drawParticles();
 
             this.drawSources();
+
+            this.drawSinks();
         
             this.drawObstacles();
         
@@ -150,20 +161,32 @@ Waterfall.prototype = {
 
     addParticle : function () {
         var i = Math.floor(Math.random() * this.sources.length),
-            p = new Particle(this.sources[i].x  - this.sources[i].w * 0.5 + Math.random() * this.sources[i].w, this.sources[i].y + this.sources[i].h * 0.5);
-        p.vel.x = this.sources[i].vx;
-        p.vel.y = this.sources[i].vy;
+            p1 = this.sources[i].p3,
+            p2 = this.sources[i].p4,
+            v = new Vector(p2.x - p1.x, p2.y - p1.y),
+            x = p1.x + Math.random() * v.x,
+            y = p1.y + Math.random() * v.y,
+            p = new Particle(x, y);
+
+        p.vel.x = this.sources[i].v * this.sources[i].n3.x;
+        p.vel.y = this.sources[i].v * this.sources[i].n3.y;
         this.particles[this.particles.length] = p;
     },
 
-    recycleParticle: function (p, vX, vY) {
-        var i = 0, j = Math.floor(Math.random() * this.sources.length);
-        p.x = this.sources[j].x - this.sources[j].w * 0.5 + Math.random() * this.sources[j].w;
-        p.y = this.sources[j].y + this.sources[i].h * 0.5;
+    recycleParticle: function (p) {
+        var i = Math.floor(Math.random() * this.sources.length),
+            p1 = this.sources[i].p3,
+            p2 = this.sources[i].p4,
+            v = new Vector(p2.x - p1.x, p2.y - p1.y),
+            x = p1.x + Math.random() * v.x,
+            y = p1.y + Math.random() * v.y;
+
+        p.x = x;
+        p.y = y;
         p.prevx = p.x;
         p.prevy = p.y;
-        p.vel.x = vX;
-        p.vel.y = vY;
+        p.vel.x = this.sources[i].v * this.sources[i].n3.x;
+        p.vel.y = this.sources[i].v * this.sources[i].n3.y;
         for (i = 0; i < p.numTracers; i += 1) {
             p.trail[i].x = p.x;
             p.trail[i].y = p.y;
@@ -178,54 +201,42 @@ Waterfall.prototype = {
     },
 
     moveParticle: function (particle) {
-        var i = 0, v2, d2, influencer;
-
-        particle.vel.y += this.sources[0].vy;
-       
-        for (i = 0; i < this.influencers.length; i += 1) {
-            influencer = this.influencers[i];
-            v2 = new Vector(influencer.x - particle.x, influencer.y - particle.y);
-            d2 = v2.squaredLength();
-            d2 = 1e4 / d2;
-            v2 = v2.normalize();
-            v2 = v2.scalarMultiply(d2);
-            particle.vel.x -= v2.x;
-            particle.vel.y -= v2.y;
-        }
-        
+        var i = 0, v2, d2, res, influencer, sink, n, dot;
+              
         particle.move();
         
         particle.trace();
-        
+
+        this.hitSinks(particle);
+
+        this.hitInfluencers(particle);
+ 
         if (this.hitObstacles(particle)) {
             particle.move();
-            return;
         }
 
-        if (this.hitBuckets(particle)) {
-            return;
-        }
+        this.hitBuckets(particle);
 
         this.hitPortals(particle);
 
-        if (particle.y > this.h) {
+        if (particle.x < 0 || particle.x > this.w || particle.y < 0 || particle.y > this.h) {
             this.missed += 1;
-            this.recycleParticle(particle, 0, this.sources[0].vy);
+            this.recycleParticle(particle);
         }
     },
 
     hitObstacles: function (p) {
-        var i, o, h;
+        var i, o, h, dot;
         for (i = 0; i < this.obstacles.length; i += 1) {
             o = this.obstacles[i];
             h = o.hit(p);
             if (h) {
                 if (o.reaction > 0) {
-                    p.vel.x *= o.reaction * h.x;
-                    p.vel.y *= o.reaction * h.y;
-                    //p.vel.y *= -o.reaction;
+                    dot = 2 * p.vel.dot(h);
+                    p.vel.x -= dot * h.x;
+                    p.vel.y -= dot * h.y;
                 } else {
-                    this.recycleParticle(p, 0, this.sources[0].vy);
+                    this.recycleParticle(p);
                 }
                 return true;
             }
@@ -238,12 +249,52 @@ Waterfall.prototype = {
         for (i = 0; i < this.buckets.length; i += 1) {
             b = this.buckets[i];
             if (b.hit(p)) {
-                //console.log(p);
-                //console.log(b);
                 this.score += 1;
                 this.sumFlux += p.vel.y;
-                this.recycleParticle(p, 0, this.sources[0].vy);
+                this.recycleParticle(p);
                 return true;
+            }
+        }
+        return false;
+    },
+
+    hitInfluencers: function (p) {
+        var i, v2, d2, res, influencer;
+        for (i = 0; i < this.influencers.length; i += 1) {
+            influencer = this.influencers[i];
+            v2 = new Vector(influencer.x - p.x, influencer.y - p.y);
+            d2 = v2.squaredLength();
+            d2 = Math.max(this.minDSquared, d2);
+            if (d2 <= influencer.influenceRadius * influencer.influenceRadius) {
+                res = influencer.force;
+                v2 = v2.normalize();
+                v2 = v2.scalarMultiply(res);
+                p.vel.x -= v2.x;
+                p.vel.y -= v2.y;
+                return true;
+            }
+        }
+        return false;
+    },
+
+    hitSinks: function (p) {
+        var i, s, d2, v2, res;
+        for (i = 0; i < this.sinks.length; i += 1) {
+            s = this.sinks[i];
+            v2 = new Vector(s.x - p.x, s.y - p.y);
+            d2 = v2.squaredLength();
+            if (d2 <= s.influenceRadius * s.influenceRadius) {
+                res = -s.force * 1e4 / d2;
+                v2 = v2.normalize();
+                v2 = v2.scalarMultiply(res);
+                p.vel.x -= v2.x;
+                p.vel.y -= v2.y;
+                if (s.hit(p)) {
+                    this.score += 1;
+                    this.sumFlux += p.vel.length();
+                    this.recycleParticle(p);
+                    return true;
+                }
             }
         }
         return false;
@@ -288,6 +339,13 @@ Waterfall.prototype = {
             color = 'rgba(0,255,153,' + alpha + ')';
         for (i = 0; i < this.sources.length; i += 1) {
             this.sources[i].draw(this.canvas, color);
+        }
+    },
+
+    drawSinks : function () {
+        var i = 0, alpha = 1, color = 'rgba(0,153,153,' + alpha + ')';
+        for (i = 0; i < this.sinks.length; i += 1) {
+            this.sinks[i].draw(this.canvas, color);
         }
     },
 
@@ -342,29 +400,18 @@ Waterfall.prototype = {
     },
 
     drawGrid: function () {
-        var color = 'rgba(200,200,200,1)';
+        var color = 'rgba(80,80,80,1)';
         this.canvas.grid(this.gridx, this.gridy, this.w, this.h, 1, color);
     },
 
     saveLevel: function () {
-        var level = {},
-            i = 0,
-            starList = level.stars,
-            sourceList = level.sources,
-            influencerList = level.influencers,
-            portalList = level.portals,
-            bucketList = level.buckets,
-            obstacleList = level.obstacles,
-            x = 0,
-            y = 0,
-            width = 0,
-            p;
-
+        var level = {};
         level.nParticles = this.nParticles;
         level.buckets = this.buckets;
         level.influencers = this.influencers;
         level.obstacles = this.obstacles;
         level.portals = this.portals;
+        level.sinks = this.sinks;
         level.sources = this.sources;
         level.stars = this.stars;
         return level;

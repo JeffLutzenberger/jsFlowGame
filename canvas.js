@@ -25,9 +25,9 @@ Canvas.prototype = {
     },
 
     circleOutline: function (x, y, r, lineWidth, color) {
-        this.ctx.fillStyle = color;
-        this.ctx.beginPath();
+        this.ctx.strokeStyle = color;
         this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
         this.ctx.moveTo(x * this.m + r * this.m, y * this.m);
         this.ctx.arc(x * this.m, y * this.m, r * this.m, 0, Math.PI * 2, false);
         this.ctx.stroke();
@@ -42,19 +42,26 @@ Canvas.prototype = {
         this.ctx.stroke();
     },
 
-    rectangle: function (x1, y1, w, h, theta, color) {
+    rectangle: function (p1, p2, p3, p4, color) {
         this.ctx.fillStyle = color;
-        this.ctx.rotate(theta * this.degtorad);
         this.ctx.beginPath();
-        this.ctx.rect(x1 * this.m, y1 * this.m, w * this.m, h * this.m);
+        this.ctx.moveTo(p1.x * this.m, p1.y * this.m);
+        this.ctx.lineTo(p2.x * this.m, p2.y * this.m);
+        this.ctx.lineTo(p3.x * this.m, p3.y * this.m);
+        this.ctx.lineTo(p4.x * this.m, p4.y * this.m);
+        this.ctx.lineTo(p1.x * this.m, p1.y * this.m);
         this.ctx.fill();
     },
 
-    rectangleOutline: function (x1, y1, w, h, lineWidth, color) {
+    rectangleOutline: function (p1, p2, p3, p4, lineWidth, color) {
         this.ctx.strokeStyle = color;
-        this.ctx.beginPath();
         this.ctx.lineWidth = lineWidth;
-        this.ctx.rect(x1 * this.m, y1 * this.m, w * this.m, h * this.m);
+        this.ctx.beginPath();
+        this.ctx.moveTo(p1.x * this.m, p1.y * this.m);
+        this.ctx.lineTo(p2.x * this.m, p2.y * this.m);
+        this.ctx.lineTo(p3.x * this.m, p3.y * this.m);
+        this.ctx.lineTo(p4.x * this.m, p4.y * this.m);
+        this.ctx.lineTo(p1.x * this.m, p1.y * this.m);
         this.ctx.stroke();
     },
 
@@ -82,5 +89,4 @@ Canvas.prototype = {
         }
 
     }
-
 };

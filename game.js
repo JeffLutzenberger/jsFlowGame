@@ -68,7 +68,7 @@ GameController.prototype = {
     },
 
     levelSelected: function (level) {
-        var levels = [level1, level2, level3, level4];
+        //from levels.js
         this.playPage.setHandlers();
         this.editorPage.hideUI();
         this.gameState = 'play';
@@ -123,8 +123,7 @@ StartPage.prototype = {
             x = this.margin,
             y = this.margin + 50,
             color = 'rgba(100,100,100,1)',
-            level = "",
-            levels = [level1, level2, level3, level4];
+            level = "";
 
         for (i = 0; i < levels.length; i += 1) {
             this.levels[i] = new Waterfall(this.canvas);
@@ -152,10 +151,15 @@ StartPage.prototype = {
     },
 
     drawLevels: function () {
-        var i = 0, b, color = 'rgba(100,100,100,1)', levelStr = "";
+        var i = 0, b, color = 'rgba(100,100,100,1)', levelStr = "",
+            p1, p2, p3, p4;
         for (i = 0; i < this.levelButtons.length; i += 1) {
             b = this.levelButtons[i];
-            this.canvas.rectangleOutline(b.x, b.y, b.w, b.h, 1, color);
+            p1 = new Vector(b.x, b.y);
+            p2 = new Vector(b.x + b.w, b.y);
+            p3 = new Vector(b.x + b.w, b.y + b.h);
+            p4 = new Vector(b.x, b.y + b.h);
+            this.canvas.rectangleOutline(p1, p2, p3, p4, 1, color);
             levelStr = "Level " + (i + 1);
             this.canvas.text(b.x + 10, b.y - 20, color, 'arial', 16, levelStr);
             //draw level
@@ -166,6 +170,8 @@ StartPage.prototype = {
             this.levels[i].drawPortals();
             this.levels[i].drawInfluencers();
             this.levels[i].drawBuckets();
+            this.levels[i].drawSinks();
+            this.levels[i].drawSources();
             this.canvas.ctx.scale(this.canvas.width / b.w / this.canvas.m,
                                   this.canvas.height / b.h / this.canvas.m);
             this.canvas.ctx.translate(-b.x / 2, -b.y / 2);
@@ -173,7 +179,12 @@ StartPage.prototype = {
         if (this.hoverLevel > -1) {
             color = 'rgba(0,0,255,1)';
             b = this.levelButtons[this.hoverLevel];
-            this.canvas.rectangleOutline(b.x, b.y, b.w, b.h, 1, color);
+            p1 = new Vector(b.x, b.y);
+            p2 = new Vector(b.x + b.w, b.y);
+            p3 = new Vector(b.x + b.w, b.y + b.h);
+            p4 = new Vector(b.x, b.y + b.h);
+
+            this.canvas.rectangleOutline(p1, p2, p3, p4, 1, color);
         }
     },
 
