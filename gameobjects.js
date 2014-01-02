@@ -226,8 +226,9 @@ Portal.prototype.gameObjectType = function () {
 };
 
 var portalFromJson = function (j) {
-    var outlet = new Portal(j.xout, j.yout, j.wout, j.hout, j.thetaout),
-        inlet = new Portal(j.xin, j.yin, j.win, j.hin, j.thetain, outlet);
+    console.log(j);
+    var outlet = new Portal(j[0].x, j[0].y, j[0].w, j[0].h, j[0].theta),
+        inlet = new Portal(j[1].x, j[1].y, j[1].w, j[1].h, j[1].theta, outlet);
     return [inlet, outlet];
 };
 

@@ -1,13 +1,107 @@
 'use strict';
-//our ui for editing game objects
-//can edit the following:
-//- obstacle
-//- source
-//- portal
-//- influencers
-//
-//draw buttons to add game objects
-//draw json/serialize box to print out a level
+
+var EditorPage = function (canvas, waterfall) {
+    this.canvas = canvas;
+    this.waterfall = waterfall;
+    this.editorui = new EditorUI(waterfall);
+};
+
+EditorPage.prototype = {
+    hideUI: function () {
+        this.editorui.hide();
+    },
+    
+    showUI: function () {
+        this.editorui.show();
+    },
+
+    setHandlers: function () {
+        $('canvas').unbind();
+
+        $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
+            var x = Math.floor((e.pageX - $("#canvas").offset().left)),
+                y = Math.floor((e.pageY - $("#canvas").offset().top));
+            this.waterfall.mouseDown = true;
+            this.waterfall.hitInteractable(x / this.canvas.m, y / this.canvas.m);
+            this.editorui.gameObjectForm.gameObject = this.waterfall.interactable;
+            this.editorui.gameObjectForm.hide();
+            if (this.waterfall.interactable) {
+                this.editorui.gameObjectForm.show();
+            }
+        }, this));
+
+        $(document).bind('mouseup touchend', $.proxy(function (e) {
+            this.waterfall.mouseDown = false;
+            if (this.waterfall.hitObject) {
+                this.waterfall.hitObject.selected = false;
+            }
+            this.waterfall.hitObject = null;
+        }, this));
+
+        $('canvas').bind('mousemove touchmove', $.proxy(function (e) {
+            if (this.waterfall.mouseDown === false) {
+                return;
+            }
+            var x = Math.floor((e.pageX - $("#canvas").offset().left)),
+                y = Math.floor((e.pageY - $("#canvas").offset().top));
+            x = this.waterfall.snapx(x);
+            y = this.waterfall.snapy(y);
+
+            if (this.waterfall.interactable) {
+                this.waterfall.interactable.setxy(x / this.canvas.m, y / this.canvas.m);
+                this.editorui.gameObjectForm.updateLocation();
+            }
+        }, this));
+
+        $(document).bind('keypress', $.proxy(function (e) {
+            var obj, obj2;
+            console.log(e.keyCode);
+            switch (e.keyCode) {
+            case 32: //space
+                //toggle particles
+                if (this.waterfall.nParticles <= 0 && this.waterfall.sources.length > 0) {
+                    this.waterfall.nParticles = 50;
+                } else {
+                    this.waterfall.nParticles = 0;
+                    this.waterfall.particles.length = 0;
+                }
+                break;
+            case 98: //b
+                obj = new Bucket(100, 400, 100, 50, 0);
+                this.waterfall.buckets.push(obj);
+                this.waterfall.interactableObjects.push(obj);
+                break;
+            case 105: //i
+                obj = new Influencer(400, 100);
+                this.waterfall.influencers.push(obj);
+                this.waterfall.interactableObjects.push(obj);
+                break;
+            case 111: //o
+                //add an obstacle
+                obj = new Obstacle(100, 100, 100, 25, 0, 1);
+                this.waterfall.obstacles.push(obj);
+                this.waterfall.interactableObjects.push(obj);
+                break;
+            case 112: //p
+                //add an obstacle
+                obj = new Portal(300, 400, 100, 25, 0);
+                obj2 = new Portal(200, 300, 100, 25, 0, obj);
+                this.waterfall.portals.push(obj);
+                this.waterfall.portals.push(obj2);
+                this.waterfall.interactableObjects.push(obj);
+                this.waterfall.interactableObjects.push(obj2);
+                break;
+            case 115: //s
+                obj = new Source(200, 100, 100, 25, 0, 0, 0.5);
+                this.waterfall.sources.push(obj);
+                this.waterfall.interactableObjects.push(obj);
+                break;
+            default:
+                break;
+            }
+        }, this));
+    }
+};
 
 var EditorUI = function (waterfall) {
     this.waterfall = waterfall;
@@ -246,7 +340,6 @@ GameObjectEditForm.prototype = {
                 val = $("#influence-radius-input").val();
                 if (isPositiveNumber(val)) {
                     this.gameObject.influenceRadius = val;
-                    //this.gameObject.updatePoints();
                 }
             }, this));
 
@@ -285,7 +378,6 @@ GameObjectEditForm.prototype = {
                 if (isNumber(val)) {
                     this.gameObject.theta = val;
                     this.gameObject.updatePoints();
-                    console.log(this.gameObject);
                 }
             }, this));
         }
@@ -317,10 +409,5 @@ GameObjectEditForm.prototype = {
     updateLocation: function () {
         //the object has moved so update the x and y coordinates
         $("#location-display").html('x: ' + this.gameObject.x + ' y: ' + this.gameObject.y);
-    },
-
-    updateObject: function () {
-        //values have been modified in the form, see if we can update the object
     }
-
 };
