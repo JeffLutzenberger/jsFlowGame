@@ -105,7 +105,7 @@ EditorPage.prototype = {
 
 var EditorUI = function (waterfall) {
     this.waterfall = waterfall;
-    this.gameObjectForm = new GameObjectEditForm($.proxy(this.deleteObject, this));
+    this.gameObjectForm = new GameObjectEditForm(waterfall);
     this.showInfluenceRing = true;
 };
 
@@ -167,6 +167,13 @@ EditorUI.prototype = {
             .click($.proxy(function () {
                 this.save();
             }, this));
+        
+        $("#button-row-2").append('<input id="reset-button" type="button" value="Reset">');
+        $("#reset-button")
+            .button()
+            .click($.proxy(function () {
+                this.reset();
+            }, this));
     },
     
     hide: function () {
@@ -186,10 +193,14 @@ EditorUI.prototype = {
         $("#play-button").off('click');
         $("#grid-button").html('');
         $("#grid-button").off('click');
+        $("#influence-ring-button").html('');
+        $("#influence-ring-button").off('click');
         $("#save-button").html('');
         $("#save-button").off('click');
         $("#delete-button").html('');
         $("#delete-button").off('click');
+        $("#button-row-2").html('');
+        $("#button-row-2").off();
         $("#json").html('');
     },
 
@@ -262,50 +273,18 @@ EditorUI.prototype = {
         }
     },
 
+    reset: function () {
+        this.waterfall.score = 0;
+    },
+
     save: function () {
         var json = JSON.stringify(this.waterfall.saveLevel(), undefined, 2);
         $('#json').html('<pre>' + json + '</pre>');
-    },
-
-    deleteObject: function () {
-        var o = this.waterfall.interactable,
-            goType = o.gameObjectType(),
-            index;
-        if (goType === "Bucket") {
-            index = this.waterfall.buckets.indexOf(o);
-            this.waterfall.buckets.splice(index, 1);
-        }
-        if (goType === "Influencer") {
-            index = this.waterfall.influencers.indexOf(o);
-            this.waterfall.influencers.splice(index, 1);
-        }
-        if (goType === "Obstacle") {
-            index = this.waterfall.obstacles.indexOf(o);
-            this.waterfall.obstacles.splice(index, 1);
-        }
-        if (goType === "Portal") {
-            index = this.waterfall.portals.indexOf(o);
-            this.waterfall.portals.splice(index, 1);
-        }
-        if (goType === "Source") {
-            index = this.waterfall.sources.indexOf(o);
-            this.waterfall.sources.splice(index, 1);
-        }
-        if (goType === "Sink") {
-            index = this.waterfall.sinks.indexOf(o);
-            this.waterfall.sinks.splice(index, 1);
-        }
     }
 };
 
-var GameObjectEditForm = function (deleteCallback) {
-    this.deleteObject = deleteCallback;
-    //source form consists of
-    // - x, y coords
-    // - h, w
-    // - theta
-    // - vx, vy 
-    //this.gameObject = source;
+var GameObjectEditForm = function (waterfall) {
+    this.waterfall = waterfall;
     this.gameObject = null;
 };
 
@@ -359,7 +338,6 @@ GameObjectEditForm.prototype = {
                 if (isPositiveNumber(val)) {
                     this.gameObject.w = val;
                     this.gameObject.updatePoints();
-                    console.log("w changed...");
                 }
             }, this));
             
@@ -394,6 +372,12 @@ GameObjectEditForm.prototype = {
             
         }
 
+        $("#object-form").append('Interactable: <input id="interactable-input" type="checkbox" value="' + this.gameObject.interactable + '"></span><br>');
+        $("#interactable-input").change($.proxy(function () {
+            val = $("#interactable-input").prop('checked');
+            this.gameObject.interactable = val;
+        }, this));
+
         $("#object-form").append('<br><input id="delete-button" type="button" value="Delete">');
         $("#delete-button").button().click($.proxy(function () {
             this.deleteObject();
@@ -409,5 +393,36 @@ GameObjectEditForm.prototype = {
     updateLocation: function () {
         //the object has moved so update the x and y coordinates
         $("#location-display").html('x: ' + this.gameObject.x + ' y: ' + this.gameObject.y);
+    },
+    
+    deleteObject: function () {
+        console.log(this.waterfall.interactable);
+        var o = this.waterfall.interactable,
+            goType = o.gameObjectType(),
+            index;
+        if (goType === "Bucket") {
+            index = this.waterfall.buckets.indexOf(o);
+            this.waterfall.buckets.splice(index, 1);
+        }
+        if (goType === "Influencer") {
+            index = this.waterfall.influencers.indexOf(o);
+            this.waterfall.influencers.splice(index, 1);
+        }
+        if (goType === "Obstacle") {
+            index = this.waterfall.obstacles.indexOf(o);
+            this.waterfall.obstacles.splice(index, 1);
+        }
+        if (goType === "Portal") {
+            index = this.waterfall.portals.indexOf(o);
+            this.waterfall.portals.splice(index, 1);
+        }
+        if (goType === "Source") {
+            index = this.waterfall.sources.indexOf(o);
+            this.waterfall.sources.splice(index, 1);
+        }
+        if (goType === "Sink") {
+            index = this.waterfall.sinks.indexOf(o);
+            this.waterfall.sinks.splice(index, 1);
+        }
     }
 };

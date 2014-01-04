@@ -7,13 +7,6 @@ var Vector = function (x, y) {
 
 Vector.prototype = {
 
-    addNew: function (v) {
-        var nx, ny;
-        nx = this.x + v.x;
-        ny = this.y + v.y;
-        return new Vector(nx, ny);
-    },
-
     squaredLength: function () {
         return (this.x * this.x) + (this.y * this.y);
     },
@@ -44,4 +37,23 @@ Vector.prototype = {
     }
 };
 
+var VectorMath = {
+    squaredLength: function (v) {
+        return v.x * v.x + v.y *v.y;
+    },
 
+    length: function (v) {
+        return Math.sqrt(v.x * v.x + v.y * v.y);
+    },
+    
+    normalize: function (v) {
+        var l = 1/this.length();
+        v.x *= l;
+        v.y *= l;
+        return new Vector(v.x, v.y);
+    },
+
+    dot: function (v1, v2) {
+        return v1.x * v2.x + v1.y * v2.y;
+    }
+};

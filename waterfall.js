@@ -16,7 +16,10 @@ var Waterfall = function (canvas) {
     this.sumFlux = 0;
     this.missed = 0;
     this.level = 1;
-    this.framerate = 60;
+    this.clockrate = 10; //currently set in GameController with setInterval
+    this.framerate = 30; //fps (how often we draw)
+    this.dt = 0;
+    this.drawDt = 0;
     this.frame = 0;
     this.interactableObjects = [];
     this.interactable = null;
@@ -24,10 +27,15 @@ var Waterfall = function (canvas) {
     this.showGrid = false;
     this.h = 1024;
     this.w = 768;
+    this.zoom = 1;
     this.gridx = 24;
     this.gridy = 16;
     this.forceMultiplier = 1e5;
     this.minDSquared = 1000;
+    this.currentSizeFactor = 1;
+    this.sizeFactor = 1;
+    this.currentDrawTime = 0;
+    this.lastDrawTime = 0;
 };
 
 Waterfall.prototype = {
@@ -108,8 +116,10 @@ Waterfall.prototype = {
         this.interactableObjects.push(obj);
     },
 
-    update: function () {
+    update: function (dt) {
         var i = 0, color, p;
+
+        this.dt = dt;
 
         this.calculateFlux();
 
@@ -121,9 +131,22 @@ Waterfall.prototype = {
             this.moveParticles();
         }
         
-        if (this.frame % this.framerate) {
+        this.drawDt += this.dt;
+
+        if (this.drawDt > this.framerate) {
+            this.currentDrawTime = new Date().getTime();
+            
+            this.lastDrawTime = this.currentDrawTime;
+            
+            this.drawDt = 0;
+            
             this.canvas.clear();
 
+            this.canvas.ctx.restore();
+            this.canvas.ctx.save();
+            //this.canvas.ctx.translate(this.w*0.125, 100);
+            //this.canvas.ctx.scale(0.5, 0.5);
+            //this.canvas.ctx.translate(this.w*0.25, this.h*0.25)
             if (this.showGrid) {
                 this.drawGrid();
             }
@@ -144,18 +167,20 @@ Waterfall.prototype = {
 
             this.drawScore();
         }
-        
     },
     
     calculateFlux : function () {
+        var i, sizeFactor = 1;
         this.frame += 1;
         if (this.frame > 1e6) {
             this.frame = 1e6;
         }
 
-        if (this.frame % (this.framerate * 3) === 0) {
-            this.flux = this.sumFlux / 3;
+        if (this.frame % this.framerate * 2 === 0) {
+            this.flux = this.sumFlux;
             this.sumFlux = 0;
+            //adjust sink size...
+            this.sizeFactor = Math.min(1 + this.score / 1000 * 2, 3);
         }
     },
 
@@ -167,7 +192,6 @@ Waterfall.prototype = {
             x = p1.x + Math.random() * v.x,
             y = p1.y + Math.random() * v.y,
             p = new Particle(x, y);
-
         p.vel.x = this.sources[i].v * this.sources[i].n3.x;
         p.vel.y = this.sources[i].v * this.sources[i].n3.y;
         this.particles[this.particles.length] = p;
@@ -179,18 +203,10 @@ Waterfall.prototype = {
             p2 = this.sources[i].p4,
             v = new Vector(p2.x - p1.x, p2.y - p1.y),
             x = p1.x + Math.random() * v.x,
-            y = p1.y + Math.random() * v.y;
-
-        p.x = x;
-        p.y = y;
-        p.prevx = p.x;
-        p.prevy = p.y;
-        p.vel.x = this.sources[i].v * this.sources[i].n3.x;
-        p.vel.y = this.sources[i].v * this.sources[i].n3.y;
-        for (i = 0; i < p.numTracers; i += 1) {
-            p.trail[i].x = p.x;
-            p.trail[i].y = p.y;
-        }
+            y = p1.y + Math.random() * v.y,
+            vx = this.sources[i].v * this.sources[i].n3.x,
+            vy = this.sources[i].v * this.sources[i].n3.y;
+        p.recycle(x, y, vx, vy);
     },
 
     moveParticles: function (particle) {
@@ -219,7 +235,9 @@ Waterfall.prototype = {
 
         this.hitPortals(particle);
 
-        if (particle.x < 0 || particle.x > this.w || particle.y < 0 || particle.y > this.h) {
+        //if (particle.x < -2 * this.w || particle.x > 2 * this.w || particle.y < -2 * this.h || particle.y > 2 * this.h) {
+        //use age instead...
+        if (particle.age > 500) {
             this.missed += 1;
             this.recycleParticle(particle);
         }
@@ -232,9 +250,10 @@ Waterfall.prototype = {
             h = o.hit(p);
             if (h) {
                 if (o.reaction > 0) {
-                    dot = 2 * p.vel.dot(h);
-                    p.vel.x -= dot * h.x;
-                    p.vel.y -= dot * h.y;
+                    p.bounce(h);
+                    //dot = 2 * p.vel.dot(h);
+                    //p.vel.x -= dot * h.x;
+                    //p.vel.y -= dot * h.y;
                 } else {
                     this.recycleParticle(p);
                 }
@@ -250,7 +269,7 @@ Waterfall.prototype = {
             b = this.buckets[i];
             if (b.hit(p)) {
                 this.score += 1;
-                this.sumFlux += p.vel.y;
+                this.sumFlux += 1;//p.vel.y;
                 this.recycleParticle(p);
                 return true;
             }
@@ -265,14 +284,12 @@ Waterfall.prototype = {
             v2 = new Vector(influencer.x - p.x, influencer.y - p.y);
             d2 = v2.squaredLength();
             d2 = Math.max(this.minDSquared, d2);
-            if (d2 <= influencer.influenceRadius * influencer.influenceRadius) {
-                res = influencer.force;
-                v2 = v2.normalize();
-                v2 = v2.scalarMultiply(res);
-                p.vel.x -= v2.x;
-                p.vel.y -= v2.y;
-                return true;
-            }
+            res = influencer.force * 1e4 / d2;
+            res = Math.min(res, 2);
+            v2 = v2.normalize();
+            v2 = v2.scalarMultiply(res);
+            p.vel.x -= v2.x;
+            p.vel.y -= v2.y;
         }
         return false;
     },
@@ -281,21 +298,21 @@ Waterfall.prototype = {
         var i, s, d2, v2, res;
         for (i = 0; i < this.sinks.length; i += 1) {
             s = this.sinks[i];
+            if (s.hit(p)) {
+                s.hitsThisFrame += 1;
+                this.score += 1;
+                this.sumFlux += 1;//p.vel.length();
+                this.recycleParticle(p);
+                return true;
+            }
             v2 = new Vector(s.x - p.x, s.y - p.y);
             d2 = v2.squaredLength();
-            if (d2 <= s.influenceRadius * s.influenceRadius) {
-                res = -s.force * 1e4 / d2;
-                v2 = v2.normalize();
-                v2 = v2.scalarMultiply(res);
-                p.vel.x -= v2.x;
-                p.vel.y -= v2.y;
-                if (s.hit(p)) {
-                    this.score += 1;
-                    this.sumFlux += p.vel.length();
-                    this.recycleParticle(p);
-                    return true;
-                }
-            }
+            res = s.force * 1e4 * s.sizeFactor / d2;
+            res = Math.min(res, 2);
+            v2 = v2.normalize();
+            v2 = v2.scalarMultiply(-res);
+            p.vel.x -= v2.x;
+            p.vel.y -= v2.y;
         }
         return false;
     },
@@ -345,6 +362,7 @@ Waterfall.prototype = {
     drawSinks : function () {
         var i = 0, alpha = 1, color = 'rgba(0,153,153,' + alpha + ')';
         for (i = 0; i < this.sinks.length; i += 1) {
+            this.sinks[i].sizeFactor = this.sizeFactor;
             this.sinks[i].draw(this.canvas, color);
         }
     },

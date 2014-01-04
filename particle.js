@@ -1,10 +1,12 @@
 'use strict';
-
+//check here for a pretty good particle / quadtree tutorial
+//http://gamedevelopment.tutsplus.com/tutorials/make-your-game-pop-with-particle-effects-and-quadtrees--gamedev-2138
 var Particle = function (x, y, r) {
     this.x = x;
     this.y = y;
     this.prevx = x;
     this.prevy = y;
+    this.age = 0;
     this.dir = new Vector(1, 0);
     this.vel = new Vector(1, 0);
     this.mass = this.inv_mass = 1;
@@ -21,11 +23,33 @@ var Particle = function (x, y, r) {
 
 Particle.prototype = {
 
-    move : function (p) {
+    recycle : function (x, y, vx, vy) {
+        var i = 0;
+        this.x = x;
+        this.y = y;
+        this.prevx = x;
+        this.prevy = y;
+        this.age = 0;
+        this.vel.x = vx;
+        this.vel.y = vy;
+        for (i = 0; i < this.numTracers; i += 1) {
+            this.trail[i].x = x;
+            this.trail[i].y = y;
+        }
+    },
+ 
+    move : function () {
         this.prevx = this.x;
         this.prevy = this.y;
         this.x += this.vel.x;
         this.y += this.vel.y;
+        this.age += 1;
+    },
+
+    bounce : function (n) {
+        var dot = 2 * VectorMath.dot(this.vel, n);
+        this.vel.x -= dot * n.x;
+        this.vel.y -= dot * n.y;
     },
 
     distanceSquared: function (p) {
@@ -120,8 +144,6 @@ Particle.prototype = {
             d = r1 + r2,
             v12 = new Vector(x2 - x1, y2 - y1),
             d12 = v12.length();
-        //console.log(d12);
-        //console.log(d);
         if (d12 < d) {
             return new Vector((x1 * r2 + x2 * r1) / (r1 + r2), (y1 * r2 + y2 * r1) / (r1 + r2));
         }

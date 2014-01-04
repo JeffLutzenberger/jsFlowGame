@@ -3,6 +3,13 @@
 var PlayPage = function (canvas, waterfall) {
     this.canvas = canvas;
     this.waterfall = waterfall;
+    //level set 1
+    //random generation
+    // - must get x pts
+    // - sink grows and shrinks based on (flux)
+    // - max size of sink based on waterfall.nParticles)
+    // - min size == ~10
+    //
 };
 
 PlayPage.prototype = {

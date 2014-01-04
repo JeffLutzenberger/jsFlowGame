@@ -7,6 +7,7 @@ var Rectangle = function (x, y, w, h, theta) {
     this.h = h || 100;
     this.theta = theta || 0;
     this.selected = false;
+    this.interactable = false;
     this.updatePoints();
 };
 
@@ -96,7 +97,9 @@ var Influencer = function (x, y, r, influenceRadius, force) {
     this.base(x, y, 2 * this.radius, 2 * this.radius, 0);
     this.force = force || 1;
     this.influenceRadius = influenceRadius || 100;
+    this.sizeFactor = 1;
     this.showInfluenceRing = false;
+    this.hitsThisFrame = 0;
 };
 
 Influencer.prototype = new Rectangle();
@@ -106,14 +109,31 @@ Influencer.prototype.gameObjectType = function () {
 };
 
 Influencer.prototype.draw = function (canvas, color) {
-    canvas.circle(this.x, this.y, this.radius * 2, 'rgba(0,153,255,0.25)');
-    canvas.circle(this.x, this.y, this.radius, color);
+    var flashFactor = 0.05,
+        flashAlpha;
+    canvas.circle(this.x, this.y, this.radius * 2 * this.sizeFactor, 'rgba(0,153,255,0.25)');
+    canvas.circle(this.x, this.y, this.radius * this.sizeFactor, color);
     //canvas.circleGradient(this.x, this.y, this.influenceRadius, color);
     if (this.showInfluenceRing) {
-        canvas.circleOutline(this.x, this.y, this.influenceRadius, 1, color);
+        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color);
     }
     if (this.selected) {
-        canvas.circleOutline(this.x, this.y, this.radius, 2, 'rgba(0,100,255,0.25)');
+        canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, 'rgba(0,100,255,0.25)');
+    }
+    if (this.hitsThisFrame > 0) {
+        if (this.hitsThisFrame > 0.5 / flashFactor) {
+            this.hitsThisFrame = 0.5 / flashFactor;
+        }
+        flashAlpha = this.hitsThisFrame * flashFactor;
+        canvas.circle(
+            this.x,
+            this.y,
+            this.radius * 4 * this.sizeFactor,
+            'rgba(255, 255, 255, ' + flashAlpha + ')'
+        );
+        if (this.hitsThisFrame > 0) {
+            this.hitsThisFrame -= 1;
+        }
     }
 };
 
@@ -135,7 +155,7 @@ Sink.prototype.gameObjectType = function () {
 Sink.prototype.hit = function (p) {
     var v2 = new Vector(this.x - p.x, this.y - p.y),
         d2 = v2.squaredLength();
-    return (d2 <= 2 * this.radius * this.radius);
+    return (d2 <= 2 * this.radius * this.radius * this.sizeFactor * this.sizeFactor);
 };
 
 Sink.prototype.contain = function (p) {

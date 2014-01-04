@@ -2,13 +2,16 @@
 
 var GameController = function (canvas) {    
     this.canvas = canvas;
-    this.waterfall = new Waterfall(canvas);
     this.debug = false;
     this.influencer = -1;
     this.levelstats = [];
     this.levels = [];
     this.clockrate = 10; //ms
+    this.dt = 0;
+    this.currentTime = 0;
+    this.lastTime = 0;
     this.gameState = 'start';
+    this.waterfall = new Waterfall(canvas);
     this.menuPage = new MenuPage(this.canvas);
     this.playPage = new PlayPage(this.canvas, this.waterfall);
     this.editorPage = new EditorPage(this.canvas, this.waterfall);
@@ -44,6 +47,12 @@ var GameController = function (canvas) {
 GameController.prototype = {
 
     update: function () {
+        //console.log(this.timer.getTime());
+        //console.log(this.lastTime);
+        this.currentTime = new Date().getTime();
+        this.dt = this.currentTime - this.lastTime;
+        this.lastTime = this.currentTime;
+        //console.log(this.dt);
         if (this.gameState === 'start') {
             if (this.menuPage.selectedLevel > -1) {
                 this.levelSelected(this.menuPage.selectedLevel);
@@ -51,12 +60,12 @@ GameController.prototype = {
                 this.menuPage.update();
             }
         } else if (this.gameState === 'play') {
-            this.waterfall.update();
+            this.waterfall.update(this.dt);
         } else if (this.gameState === 'complete') {
             //do level complete
             alert('level complete');
         } else if (this.gameState === 'editor') {
-            this.waterfall.update();
+            this.waterfall.update(this.dt);
         }
     },
 
