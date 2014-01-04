@@ -30,8 +30,19 @@ var Waterfall = function (canvas) {
     this.zoom = 1;
     this.gridx = 24;
     this.gridy = 16;
-    this.forceMultiplier = 1e5;
+    this.forceMultiplier = 1e4;
+    this.maxParticleSpeed = 2;
+    this.maxParticleAge = 500;
+    this.maxSizeFactor = 3;
     this.minDSquared = 1000;
+    this.particleColor = 'rgba(0,153,255,1)';
+    this.sourceColor = 'rgba(0,255,153,1)';
+    this.sinkColor =  'rgba(0,153,153,1)';
+    this.influencerColor = 'rgba(0,153,255,1)';
+    this.obstacleColor = 'rgba(100,100,100,1)';
+    this.gridColor = 'rgba(80,80,80,1)';
+    this.portalColor = 'rgba(255,153,0,1)';
+    this.scoreTextColor = 'rgba(100,100,100,1)';
     this.currentSizeFactor = 1;
     this.sizeFactor = 1;
     this.currentDrawTime = 0;
@@ -180,7 +191,7 @@ Waterfall.prototype = {
             this.flux = this.sumFlux;
             this.sumFlux = 0;
             //adjust sink size...
-            this.sizeFactor = Math.min(1 + this.score / 1000 * 2, 3);
+            this.sizeFactor = Math.min(1 + this.score / 1000 * 2, this.maxSizeFactor);
         }
     },
 
@@ -235,9 +246,7 @@ Waterfall.prototype = {
 
         this.hitPortals(particle);
 
-        //if (particle.x < -2 * this.w || particle.x > 2 * this.w || particle.y < -2 * this.h || particle.y > 2 * this.h) {
-        //use age instead...
-        if (particle.age > 500) {
+        if (particle.age > this.maxParticleAge) {
             this.missed += 1;
             this.recycleParticle(particle);
         }
@@ -251,9 +260,6 @@ Waterfall.prototype = {
             if (h) {
                 if (o.reaction > 0) {
                     p.bounce(h);
-                    //dot = 2 * p.vel.dot(h);
-                    //p.vel.x -= dot * h.x;
-                    //p.vel.y -= dot * h.y;
                 } else {
                     this.recycleParticle(p);
                 }
@@ -269,7 +275,7 @@ Waterfall.prototype = {
             b = this.buckets[i];
             if (b.hit(p)) {
                 this.score += 1;
-                this.sumFlux += 1;//p.vel.y;
+                this.sumFlux += 1;
                 this.recycleParticle(p);
                 return true;
             }
@@ -284,8 +290,8 @@ Waterfall.prototype = {
             v2 = new Vector(influencer.x - p.x, influencer.y - p.y);
             d2 = v2.squaredLength();
             d2 = Math.max(this.minDSquared, d2);
-            res = influencer.force * 1e4 / d2;
-            res = Math.min(res, 2);
+            res = influencer.force * this.forceMultiplier / d2;
+            res = Math.min(res, this.maxParticleSpeed);
             v2 = v2.normalize();
             v2 = v2.scalarMultiply(res);
             p.vel.x -= v2.x;
@@ -301,14 +307,14 @@ Waterfall.prototype = {
             if (s.hit(p)) {
                 s.hitsThisFrame += 1;
                 this.score += 1;
-                this.sumFlux += 1;//p.vel.length();
+                this.sumFlux += 1;
                 this.recycleParticle(p);
                 return true;
             }
             v2 = new Vector(s.x - p.x, s.y - p.y);
             d2 = v2.squaredLength();
-            res = s.force * 1e4 * s.sizeFactor / d2;
-            res = Math.min(res, 2);
+            res = s.force * this.forceMultiplier * s.sizeFactor / d2;
+            res = Math.min(res, this.maxParticleSpeed);
             v2 = v2.normalize();
             v2 = v2.scalarMultiply(-res);
             p.vel.x -= v2.x;
@@ -344,23 +350,21 @@ Waterfall.prototype = {
     },
 
     drawParticles : function () {
-        var i = 0, color;
+        var i = 0, color = this.particleColor;
         for (i = 0; i < this.particles.length; i += 1) {
-            color = 'rgba(0,153,255,1)';
             this.particles[i].draw(this.canvas, color);
         }
     },
 
     drawSources : function () {
-        var i, o, alpha = 1,
-            color = 'rgba(0,255,153,' + alpha + ')';
+        var i, o, color = this.sourceColor;
         for (i = 0; i < this.sources.length; i += 1) {
             this.sources[i].draw(this.canvas, color);
         }
     },
 
     drawSinks : function () {
-        var i = 0, alpha = 1, color = 'rgba(0,153,153,' + alpha + ')';
+        var i = 0, color = this.sinkColor;
         for (i = 0; i < this.sinks.length; i += 1) {
             this.sinks[i].sizeFactor = this.sizeFactor;
             this.sinks[i].draw(this.canvas, color);
@@ -368,7 +372,7 @@ Waterfall.prototype = {
     },
 
     drawInfluencers : function () {
-        var i = 0, alpha = 1, color = 'rgba(0,153,255,' + alpha + ')';
+        var i = 0, color = this.influencerColor;
         for (i = 0; i < this.influencers.length; i += 1) {
             this.influencers[i].draw(this.canvas, color);
         }
@@ -383,23 +387,21 @@ Waterfall.prototype = {
     },
 
     drawObstacles : function () {
-        var i, o, alpha = 1,
-            color = 'rgba(100,100,100,' + alpha + ')';
+        var i, o, color = this.obstacleColor;
         for (i = 0; i < this.obstacles.length; i += 1) {
             this.obstacles[i].draw(this.canvas, color);
         }
     },
 
     drawPortals : function () {
-        var i, c, alpha = 1,
-            color = 'rgba(255,153,0,' + alpha + ')';
+        var i, c, color = this.portalColor;
         for (i = 0; i < this.portals.length; i += 1) {
             this.portals[i].draw(this.canvas, color);
         }
     },
     
     drawScore : function () {
-        var i, b, alpha = 1.0, color = 'rgba(100,100,100,' + alpha + ')',
+        var i, b, color = this.scoreTextColor,
             fontFamily = 'arial', fontSize = 16, str;
         str = "caught " + this.score;
         this.canvas.text(50, 50, color, fontFamily, fontSize, str);
@@ -418,7 +420,7 @@ Waterfall.prototype = {
     },
 
     drawGrid: function () {
-        var color = 'rgba(80,80,80,1)';
+        var color = this.gridColor;
         this.canvas.grid(this.gridx, this.gridy, this.w, this.h, 1, color);
     },
 
