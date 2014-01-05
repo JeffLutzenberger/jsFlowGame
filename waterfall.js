@@ -27,7 +27,9 @@ var Waterfall = function (canvas) {
     this.showGrid = false;
     this.h = 1024;
     this.w = 768;
-    this.zoom = 1;
+    this.zoom = 0.25;
+    this.camerax = this.w * 0.5;
+    this.cameray = this.h * 0.5;
     this.gridx = 24;
     this.gridy = 16;
     this.forceMultiplier = 1e4;
@@ -63,7 +65,7 @@ Waterfall.prototype = {
         this.interactableObjects.length = 0;
     },
 
-    loadLevel: function (level) {
+    loadLevel: function (level, x, y) {
         var i = 0,
             starList = level.stars,
             sourceList = level.sources,
@@ -72,10 +74,11 @@ Waterfall.prototype = {
             portalList = level.portals,
             bucketList = level.buckets,
             obstacleList = level.obstacles,
-            x = 0,
-            y = 0,
             width = 0,
             p;
+
+        x = x || 0;
+        y = y || 0;
 
         this.clear();
             
@@ -87,14 +90,21 @@ Waterfall.prototype = {
 
         for (i = 0; i < sourceList.length; i += 1) {
             this.sources[i] = sourceFromJson(sourceList[i]);
+            this.sources[i].x += x;
+            this.sources[i].y += y;
         }
 
         for (i = 0; i < sinkList.length; i += 1) {
             this.sinks[i] = sinkFromJson(sinkList[i]);
+            this.sinks[i].x += x;
+            this.sinks[i].y += y;
+
         }
 
         for (i = 0; i < influencerList.length; i += 1) {
             this.influencers[i] = influencerFromJson(influencerList[i]);
+            this.influencers[i].x += x;
+            this.influencers[i].y += y;
             this.interactableObjects[i] = this.influencers[i];
         }
 
@@ -102,14 +112,22 @@ Waterfall.prototype = {
             p = portalFromJson(portalList[i]);
             this.portals[i] = p[0];
             this.portals[i + 1] = p[1];
+            this.portals[i].x += x;
+            this.portals[i].y += y;
+            this.portals[i + 1].x += x;
+            this.portals[i + 1].y += y;
         }
 
         for (i = 0; i < bucketList.length; i += 1) {
-            this.buckets[i] = new bucketFromJson(bucketList[i]);
+            this.buckets[i] = new bucketFromJson(bucketList[i], this.x, this.y);
+            this.buckets[i].x += x;
+            this.buckets[i].y += y;
         }
 
         for (i = 0; i < obstacleList.length; i += 1) {
-            this.obstacles[i] = new obstacleFromJson(obstacleList[i]);
+            this.obstacles[i] = new obstacleFromJson(obstacleList[i], this.x, this.y);
+            this.obstacles[i].x += x;
+            this.obstacles[i].y += y;
         }
     },
 
@@ -149,15 +167,20 @@ Waterfall.prototype = {
             
             this.lastDrawTime = this.currentDrawTime;
             
-            this.drawDt = 0;
-            
-            this.canvas.clear();
+            this.drawDt = 0; 
 
+            //save draw state
+            //translate and zoom
             this.canvas.ctx.restore();
+
+            this.canvas.clear();
+            
             this.canvas.ctx.save();
-            //this.canvas.ctx.translate(this.w*0.125, 100);
-            //this.canvas.ctx.scale(0.5, 0.5);
-            //this.canvas.ctx.translate(this.w*0.25, this.h*0.25)
+            
+            this.canvas.ctx.translate(this.camerax * this.canvas.m, this.cameray * this.canvas.m);
+            
+            this.canvas.ctx.scale(this.zoom, this.zoom);
+            
             if (this.showGrid) {
                 this.drawGrid();
             }

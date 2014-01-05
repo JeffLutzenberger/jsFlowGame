@@ -1,6 +1,6 @@
 'use strict';
 
-var GameController = function (canvas) {    
+var GameController = function (canvas) {
     this.canvas = canvas;
     this.debug = false;
     this.influencer = -1;
@@ -19,7 +19,6 @@ var GameController = function (canvas) {
     this.menuPage.setHandlers();
 
     $("#main-menu-button").click($.proxy(function () {
-        //console.log(this);
         this.waterfall.clear();
         this.menuPage.selectedLevel = -1;
         this.gameState = 'start';
@@ -30,14 +29,12 @@ var GameController = function (canvas) {
 
     }, this));
     $("#level-editor-button").click($.proxy(function () {
-        //console.log(this);
         this.waterfall.clear();
         this.menuPage.selectedLevel = -1;
         this.gameState = 'editor';
         this.editorPage.hideUI();
         this.editorPage.showUI();
         this.editorPage.setHandlers();
-        this.waterfall.loadEditor();
         $("#level-editor-button").toggleClass("active");
         $("#main-menu-button").toggleClass("active");
     }, this));
@@ -47,12 +44,9 @@ var GameController = function (canvas) {
 GameController.prototype = {
 
     update: function () {
-        //console.log(this.timer.getTime());
-        //console.log(this.lastTime);
         this.currentTime = new Date().getTime();
         this.dt = this.currentTime - this.lastTime;
         this.lastTime = this.currentTime;
-        //console.log(this.dt);
         if (this.gameState === 'start') {
             if (this.menuPage.selectedLevel > -1) {
                 this.levelSelected(this.menuPage.selectedLevel);

@@ -1,7 +1,6 @@
 'use strict';
 
 var MenuPage = function (canvas) {
-    var i = 0;
     this.canvas = canvas;
     this.selectedLevel = -1;
     this.levelButtons = [];

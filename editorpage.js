@@ -3,6 +3,7 @@
 var EditorPage = function (canvas, waterfall) {
     this.canvas = canvas;
     this.waterfall = waterfall;
+    this.waterfall.loadEditor();
     this.editorui = new EditorUI(waterfall);
 };
 
@@ -70,17 +71,20 @@ EditorPage.prototype = {
                 obj = new Bucket(100, 400, 100, 50, 0);
                 this.waterfall.buckets.push(obj);
                 this.waterfall.interactableObjects.push(obj);
+                this.editorui.selectObject(obj);
                 break;
             case 105: //i
                 obj = new Influencer(400, 100);
                 this.waterfall.influencers.push(obj);
                 this.waterfall.interactableObjects.push(obj);
+                this.editorui.selectObject(obj);
                 break;
             case 111: //o
                 //add an obstacle
                 obj = new Obstacle(100, 100, 100, 25, 0, 1);
                 this.waterfall.obstacles.push(obj);
                 this.waterfall.interactableObjects.push(obj);
+                this.editorui.selectObject(obj);
                 break;
             case 112: //p
                 //add an obstacle
@@ -90,11 +94,13 @@ EditorPage.prototype = {
                 this.waterfall.portals.push(obj2);
                 this.waterfall.interactableObjects.push(obj);
                 this.waterfall.interactableObjects.push(obj2);
+                this.editorui.selectObject(obj);
                 break;
             case 115: //s
                 obj = new Source(200, 100, 100, 25, 0, 0, 0.5);
                 this.waterfall.sources.push(obj);
                 this.waterfall.interactableObjects.push(obj);
+                this.editorui.selectObject(obj);
                 break;
             default:
                 break;
@@ -208,6 +214,7 @@ EditorUI.prototype = {
         var obj = new Bucket(100, 400, 100, 50, 0);
         this.waterfall.buckets.push(obj);
         this.waterfall.interactableObjects.push(obj);
+        this.selectObject(obj);
     },
  
     addInfluencer: function () {
@@ -215,6 +222,7 @@ EditorUI.prototype = {
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.influencers.push(obj);
         this.waterfall.interactableObjects.push(obj);
+        this.selectObject(obj);
     },
     
     addSink: function () {
@@ -222,12 +230,14 @@ EditorUI.prototype = {
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.sinks.push(obj);
         this.waterfall.interactableObjects.push(obj);
+        this.selectObject(obj);
     },
   
     addObstacle: function () {
         var obj = new Obstacle(100, 100, 100, 25, 0, 1);
         this.waterfall.obstacles.push(obj);
         this.waterfall.interactableObjects.push(obj);
+        this.selectObject(obj);
     },
 
     addPortal: function () {
@@ -237,12 +247,14 @@ EditorUI.prototype = {
         this.waterfall.portals.push(obj2);
         this.waterfall.interactableObjects.push(obj);
         this.waterfall.interactableObjects.push(obj2);
+        this.selectObject(obj);
     },
 
     addSource: function () {
         var obj = new Source(200, 100, 100, 25, 0, 5);
         this.waterfall.sources.push(obj);
         this.waterfall.interactableObjects.push(obj);
+        this.selectObject(obj);
     },
 
     togglePlay: function () {
@@ -280,6 +292,19 @@ EditorUI.prototype = {
     save: function () {
         var json = JSON.stringify(this.waterfall.saveLevel(), undefined, 2);
         $('#json').html('<pre>' + json + '</pre>');
+    },
+
+    selectObject: function (o) {
+        if (this.waterfall.interactable) {
+            this.waterfall.interactable.selected = false;
+        }
+        this.waterfall.interactable = o;
+        o.selected = true;
+        this.gameObjectForm.gameObject = this.waterfall.interactable;
+        this.gameObjectForm.hide();
+        if (this.waterfall.interactable) {
+            this.gameObjectForm.show();
+        }
     }
 };
 

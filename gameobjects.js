@@ -111,15 +111,7 @@ Influencer.prototype.gameObjectType = function () {
 Influencer.prototype.draw = function (canvas, color) {
     var flashFactor = 0.05,
         flashAlpha;
-    canvas.circle(this.x, this.y, this.radius * 2 * this.sizeFactor, 'rgba(0,153,255,0.25)');
-    canvas.circle(this.x, this.y, this.radius * this.sizeFactor, color);
-    //canvas.circleGradient(this.x, this.y, this.influenceRadius, color);
-    if (this.showInfluenceRing) {
-        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color);
-    }
-    if (this.selected) {
-        canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, 'rgba(0,100,255,0.25)');
-    }
+
     if (this.hitsThisFrame > 0) {
         if (this.hitsThisFrame > 0.5 / flashFactor) {
             this.hitsThisFrame = 0.5 / flashFactor;
@@ -134,6 +126,15 @@ Influencer.prototype.draw = function (canvas, color) {
         if (this.hitsThisFrame > 0) {
             this.hitsThisFrame -= 1;
         }
+    }
+
+    canvas.circle(this.x, this.y, this.radius * 2 * this.sizeFactor, 'rgba(0,153,255,0.25)');
+    canvas.circle(this.x, this.y, this.radius * this.sizeFactor, color);
+    if (this.showInfluenceRing) {
+        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color);
+    }
+    if (this.selected) {
+        canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, 'rgba(0,100,255,0.25)');
     }
 };
 
@@ -181,7 +182,7 @@ Sink.prototype.contain = function (p) {
     }
 };
 
-var sinkFromJson = function (j) {
+var sinkFromJson = function (j){
     return new Sink(j.x, j.y, j.radius, j.influenceRadius, j.force);
 };
 
