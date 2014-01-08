@@ -113,8 +113,8 @@ Influencer.prototype.draw = function (canvas, color) {
         flashAlpha;
 
     if (this.hitsThisFrame > 0) {
-        if (this.hitsThisFrame > 0.5 / flashFactor) {
-            this.hitsThisFrame = 0.5 / flashFactor;
+        if (this.hitsThisFrame > 0.25 / flashFactor) {
+            this.hitsThisFrame = 0.25 / flashFactor;
         }
         flashAlpha = this.hitsThisFrame * flashFactor;
         canvas.circle(
@@ -130,9 +130,9 @@ Influencer.prototype.draw = function (canvas, color) {
 
     canvas.circle(this.x, this.y, this.radius * 2 * this.sizeFactor, 'rgba(0,153,255,0.25)');
     canvas.circle(this.x, this.y, this.radius * this.sizeFactor, color);
-    if (this.showInfluenceRing) {
+    //if (this.showInfluenceRing) {
         canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color);
-    }
+    //}
     if (this.selected) {
         canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, 'rgba(0,100,255,0.25)');
     }

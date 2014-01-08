@@ -1,13 +1,35 @@
 'use strict';
 
-var EditorPage = function (canvas, waterfall) {
+var EditorPage = function (canvas) {
     this.canvas = canvas;
-    this.waterfall = waterfall;
-    this.waterfall.loadEditor();
-    this.editorui = new EditorUI(waterfall);
+    this.camera = new Camera(canvas);
+    this.waterfall = new Waterfall(canvas);
+    this.editorui = new EditorUI(this.waterfall);
+    this.drawDt = 0;
+    this.framerate = 30;
+    this.currentDrawTime = 0;
+    this.lastDrawTime = 0;
+    this.camera.setExtents(768, 1024);
+    this.camera.setCenter(768 * 0.5, 1024 * 0.5);
+
 };
 
 EditorPage.prototype = {
+
+    init: function () {
+        var obj;
+        this.waterfall.clear();
+        obj = new Source(400, 50, 50, 25, 0, 5);
+        this.waterfall.sources.push(obj);
+        this.waterfall.interactableObjects.push(obj);
+        obj = new Bucket(300, 600, 100, 50, 0);
+        this.waterfall.buckets.push(obj);
+        this.waterfall.interactableObjects.push(obj);
+        obj = new Obstacle(300, 300, 100, 25, 45, 1);
+        this.waterfall.obstacles.push(obj);
+        this.waterfall.interactableObjects.push(obj);
+    },
+
     hideUI: function () {
         this.editorui.hide();
     },
@@ -21,12 +43,14 @@ EditorPage.prototype = {
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-                y = Math.floor((e.pageY - $("#canvas").offset().top));
+                y = Math.floor((e.pageY - $("#canvas").offset().top)),
+                p = this.camera.screenToWorld(x, y);
             this.waterfall.mouseDown = true;
-            this.waterfall.hitInteractable(x / this.canvas.m, y / this.canvas.m);
+            this.waterfall.hitInteractable(p.x, p.y);
             this.editorui.gameObjectForm.gameObject = this.waterfall.interactable;
             this.editorui.gameObjectForm.hide();
             if (this.waterfall.interactable) {
+                console.log(this.waterfall.interactable);
                 this.editorui.gameObjectForm.show();
             }
         }, this));
@@ -44,12 +68,13 @@ EditorPage.prototype = {
                 return;
             }
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-                y = Math.floor((e.pageY - $("#canvas").offset().top));
-            x = this.waterfall.snapx(x);
-            y = this.waterfall.snapy(y);
+                y = Math.floor((e.pageY - $("#canvas").offset().top)),
+                p = this.camera.screenToWorld(x, y);
+            x = this.waterfall.snapx(p.x);
+            y = this.waterfall.snapy(p.y);
 
             if (this.waterfall.interactable) {
-                this.waterfall.interactable.setxy(x / this.canvas.m, y / this.canvas.m);
+                this.waterfall.interactable.setxy(x, y);
                 this.editorui.gameObjectForm.updateLocation();
             }
         }, this));
@@ -106,6 +131,32 @@ EditorPage.prototype = {
                 break;
             }
         }, this));
+    },
+
+    update: function (dt) {
+        this.waterfall.update(dt);
+        this.draw(dt);
+    },
+
+    draw: function (dt) {
+        this.drawDt += dt;
+        if (this.drawDt > this.framerate) {
+            
+            this.currentDrawTime = new Date().getTime();
+            
+            this.lastDrawTime = this.currentDrawTime;
+            
+            this.drawDt = 0;
+
+            this.camera.reset();
+            
+            this.camera.show();
+            //this.camera.zoom(1);
+            
+            //this.camera.move(0, 0);
+            
+            this.waterfall.draw();
+        }
     }
 };
 

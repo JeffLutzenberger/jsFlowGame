@@ -7,7 +7,7 @@ var Canvas = function (canvas) {
     this.width = this.canvas.width;
     this.height = this.canvas.height;
     this.degtorad = Math.PI / 180;
-    this.m = this.canvas.width / 768;
+    this.m = 1;
 };
 
 Canvas.prototype = {
@@ -16,6 +16,14 @@ Canvas.prototype = {
         this.ctx.clearRect(0, 0, this.width, this.height);
     },
    
+    push: function () {
+        this.ctx.save();
+    },
+
+    pop: function () {
+        this.ctx.restore();
+    },
+
     circle: function (x, y, r, color) {
         this.ctx.fillStyle = color;
         this.ctx.beginPath();
@@ -90,3 +98,65 @@ Canvas.prototype = {
 
     }
 };
+
+var Camera = function (canvas) {
+    this.canvas = canvas;
+    this.viewportWidth = this.canvas.width;
+    this.viewportHeight = this.canvas.height;
+    this.center = new Vector(0, 0);
+    this.scaleConstant = 1;
+    this.zoomFactor = 1;
+};
+
+Camera.prototype = {
+
+    push: function () {
+        this.canvas.ctx.save();
+    },
+
+    pop: function () {
+        this.canvas.ctx.restore();
+    },
+
+    setExtents: function (w, h) {
+        this.viewportWidth = w;
+        this.viewportHeight = h;
+        this.zoomFactor = this.canvas.width / w;
+    },
+
+    setZoom: function (x) {
+        this.zoomFactor = x;
+        this.viewportWidth = this.zoomFactor / this.canvas.width;
+        this.viewportHeight = this.zoomFactor / this.canvas.height;
+    },
+
+    setCenter: function (x, y) {
+        this.center.x = x;
+        this.center.y = y;
+    },
+
+    show: function () {
+        this.canvas.ctx.scale(this.zoomFactor, this.zoomFactor);
+        this.canvas.ctx.translate(-this.center.x, -this.center.y);
+    },
+
+    reset: function () {
+        this.pop();
+        this.canvas.clear();
+        this.push();
+        //move the viewport center to 0,0
+        this.canvas.ctx.translate(this.canvas.width * 0.5,
+                                  this.canvas.height * 0.5);
+    },
+
+    screenToWorld: function (x, y) {
+        //screen for canvas is 0, 0 with y down
+        //our world coords are also y down
+        var upperleftx = this.center.x - this.viewportWidth * 0.5,
+            upperlefty = this.center.y - this.viewportHeight * 0.5,
+            x1 = x / this.canvas.width * this.viewportWidth + upperleftx,
+            y1 = y / this.canvas.height * this.viewportHeight + upperlefty;
+        return new Vector(x1, y1);
+    }
+};
+

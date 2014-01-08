@@ -83,18 +83,18 @@ MenuPage.prototype = {
             levelStr = "Level " + (i + 1);
             this.canvas.text(b.x + 10, b.y - 20, color, 'arial', 16, levelStr);
             //draw level
-            this.canvas.ctx.translate(b.x * this.canvas.m, b.y * this.canvas.m);
-            this.canvas.ctx.scale(b.w / this.canvas.width * this.canvas.m,
-                                  b.h / this.canvas.height * this.canvas.m);
+            //this.canvas.ctx.translate(b.x * this.canvas.m, b.y * this.canvas.m);
+            //this.canvas.ctx.scale(b.w / this.canvas.width * this.canvas.m,
+            //                      b.h / this.canvas.height * this.canvas.m);
             this.levels[i].drawObstacles();
             this.levels[i].drawPortals();
             this.levels[i].drawInfluencers();
             this.levels[i].drawBuckets();
             this.levels[i].drawSinks();
             this.levels[i].drawSources();
-            this.canvas.ctx.scale(this.canvas.width / b.w / this.canvas.m,
-                                  this.canvas.height / b.h / this.canvas.m);
-            this.canvas.ctx.translate(-b.x / 2, -b.y / 2);
+            //this.canvas.ctx.scale(this.canvas.width / b.w / this.canvas.m,
+            //                      this.canvas.height / b.h / this.canvas.m);
+            //this.canvas.ctx.translate(-b.x / 2, -b.y / 2);
         }
         if (this.hoverLevel > -1) {
             color = 'rgba(0,0,255,1)';

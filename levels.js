@@ -4,6 +4,7 @@
 
 var levels = [
 {
+    //level0
   "nParticles": 50,
   "buckets": [],
   "influencers": [
@@ -236,7 +237,7 @@ var levels = [
   ],
   "stars": []
 },
-
+//level1
 {
   "nParticles": 50,
   "buckets": [],
@@ -515,6 +516,446 @@ var levels = [
       "n4": {
         "x": -1,
         "y": 0
+      },
+      "v": 5
+    }
+  ],
+  "stars": []
+},
+    //level2
+{
+  "nParticles": 50,
+  "buckets": [],
+  "influencers": [
+    {
+      "radius": 15,
+      "x": 216,
+      "y": 336,
+      "w": 30,
+      "h": 30,
+      "theta": 0,
+      "selected": false,
+      "interactable": false,
+      "p1": {
+        "x": 201,
+        "y": 321
+      },
+      "p2": {
+        "x": 231,
+        "y": 321
+      },
+      "p3": {
+        "x": 231,
+        "y": 351
+      },
+      "p4": {
+        "x": 201,
+        "y": 351
+      },
+      "n1": {
+        "x": 0,
+        "y": -1
+      },
+      "n2": {
+        "x": 1,
+        "y": 0
+      },
+      "n3": {
+        "x": 0,
+        "y": 1
+      },
+      "n4": {
+        "x": -1,
+        "y": 0
+      },
+      "force": "0.5",
+      "influenceRadius": 100,
+      "sizeFactor": 1,
+      "showInfluenceRing": true,
+      "hitsThisFrame": 0
+    },
+    {
+      "radius": 15,
+      "x": 480,
+      "y": 544,
+      "w": 30,
+      "h": 30,
+      "theta": 0,
+      "selected": true,
+      "interactable": true,
+      "p1": {
+        "x": 465,
+        "y": 529
+      },
+      "p2": {
+        "x": 495,
+        "y": 529
+      },
+      "p3": {
+        "x": 495,
+        "y": 559
+      },
+      "p4": {
+        "x": 465,
+        "y": 559
+      },
+      "n1": {
+        "x": 0,
+        "y": -1
+      },
+      "n2": {
+        "x": 1,
+        "y": 0
+      },
+      "n3": {
+        "x": 0,
+        "y": 1
+      },
+      "n4": {
+        "x": -1,
+        "y": 0
+      },
+      "force": -0.5,
+      "influenceRadius": 100,
+      "sizeFactor": 1,
+      "showInfluenceRing": true,
+      "hitsThisFrame": 0
+    }
+  ],
+  "obstacles": [],
+  "portals": [],
+  "sinks": [
+    {
+      "radius": 15,
+      "x": 432,
+      "y": 816,
+      "w": 30,
+      "h": 30,
+      "theta": 0,
+      "selected": false,
+      "interactable": false,
+      "p1": {
+        "x": 417,
+        "y": 801
+      },
+      "p2": {
+        "x": 447,
+        "y": 801
+      },
+      "p3": {
+        "x": 447,
+        "y": 831
+      },
+      "p4": {
+        "x": 417,
+        "y": 831
+      },
+      "n1": {
+        "x": 0,
+        "y": -1
+      },
+      "n2": {
+        "x": 1,
+        "y": 0
+      },
+      "n3": {
+        "x": 0,
+        "y": 1
+      },
+      "n4": {
+        "x": -1,
+        "y": 0
+      },
+      "force": 1,
+      "influenceRadius": 100,
+      "sizeFactor": 1.428,
+      "showInfluenceRing": true,
+      "hitsThisFrame": 0
+    }
+  ],
+  "sources": [
+    {
+      "x": 384,
+      "y": 64,
+      "w": "50",
+      "h": 25,
+      "theta": 0,
+      "selected": false,
+      "interactable": false,
+      "p1": {
+        "x": 359,
+        "y": 51.5
+      },
+      "p2": {
+        "x": 409,
+        "y": 51.5
+      },
+      "p3": {
+        "x": 409,
+        "y": 76.5
+      },
+      "p4": {
+        "x": 359,
+        "y": 76.5
+      },
+      "n1": {
+        "x": 0,
+        "y": -1
+      },
+      "n2": {
+        "x": 1,
+        "y": 0
+      },
+      "n3": {
+        "x": 0,
+        "y": 1
+      },
+      "n4": {
+        "x": -1,
+        "y": 0
+      },
+      "v": 5
+    }
+  ],
+  "stars": []
+},
+    //level 3
+{
+  "nParticles": 50,
+  "buckets": [],
+  "influencers": [
+    {
+      "radius": 15,
+      "x": 264,
+      "y": 336,
+      "w": 30,
+      "h": 30,
+      "theta": 0,
+      "selected": false,
+      "interactable": false,
+      "p1": {
+        "x": 249,
+        "y": 321
+      },
+      "p2": {
+        "x": 279,
+        "y": 321
+      },
+      "p3": {
+        "x": 279,
+        "y": 351
+      },
+      "p4": {
+        "x": 249,
+        "y": 351
+      },
+      "n1": {
+        "x": 0,
+        "y": -1
+      },
+      "n2": {
+        "x": 1,
+        "y": 0
+      },
+      "n3": {
+        "x": 0,
+        "y": 1
+      },
+      "n4": {
+        "x": -1,
+        "y": 0
+      },
+      "force": -0.5,
+      "influenceRadius": 100,
+      "sizeFactor": 1,
+      "showInfluenceRing": true,
+      "hitsThisFrame": 0
+    },
+    {
+      "radius": 15,
+      "x": 456,
+      "y": 624,
+      "w": 30,
+      "h": 30,
+      "theta": 0,
+      "selected": false,
+      "interactable": false,
+      "p1": {
+        "x": 441,
+        "y": 609
+      },
+      "p2": {
+        "x": 471,
+        "y": 609
+      },
+      "p3": {
+        "x": 471,
+        "y": 639
+      },
+      "p4": {
+        "x": 441,
+        "y": 639
+      },
+      "n1": {
+        "x": 0,
+        "y": -1
+      },
+      "n2": {
+        "x": 1,
+        "y": 0
+      },
+      "n3": {
+        "x": 0,
+        "y": 1
+      },
+      "n4": {
+        "x": -1,
+        "y": 0
+      },
+      "force": "-1",
+      "influenceRadius": 100,
+      "sizeFactor": 1,
+      "showInfluenceRing": true,
+      "hitsThisFrame": 0
+    },
+    {
+      "radius": 15,
+      "x": 144,
+      "y": 688,
+      "w": 30,
+      "h": 30,
+      "theta": 0,
+      "selected": false,
+      "interactable": false,
+      "p1": {
+        "x": 129,
+        "y": 673
+      },
+      "p2": {
+        "x": 159,
+        "y": 673
+      },
+      "p3": {
+        "x": 159,
+        "y": 703
+      },
+      "p4": {
+        "x": 129,
+        "y": 703
+      },
+      "n1": {
+        "x": 0,
+        "y": -1
+      },
+      "n2": {
+        "x": 1,
+        "y": 0
+      },
+      "n3": {
+        "x": 0,
+        "y": 1
+      },
+      "n4": {
+        "x": -1,
+        "y": 0
+      },
+      "force": "0.5",
+      "influenceRadius": 100,
+      "sizeFactor": 1,
+      "showInfluenceRing": true,
+      "hitsThisFrame": 0
+    },
+    {
+      "radius": 15,
+      "x": 576,
+      "y": 304,
+      "w": 30,
+      "h": 30,
+      "theta": 0,
+      "selected": true,
+      "interactable": false,
+      "p1": {
+        "x": 561,
+        "y": 289
+      },
+      "p2": {
+        "x": 591,
+        "y": 289
+      },
+      "p3": {
+        "x": 591,
+        "y": 319
+      },
+      "p4": {
+        "x": 561,
+        "y": 319
+      },
+      "n1": {
+        "x": 0,
+        "y": -1
+      },
+      "n2": {
+        "x": 1,
+        "y": 0
+      },
+      "n3": {
+        "x": 0,
+        "y": 1
+      },
+      "n4": {
+        "x": -1,
+        "y": 0
+      },
+      "force": -0.5,
+      "influenceRadius": 100,
+      "sizeFactor": 1,
+      "showInfluenceRing": true,
+      "hitsThisFrame": 0
+    }
+  ],
+  "obstacles": [],
+  "portals": [],
+  "sinks": [],
+  "sources": [
+    {
+      "x": 96,
+      "y": 544,
+      "w": "50",
+      "h": 25,
+      "theta": "90",
+      "selected": false,
+      "interactable": false,
+      "p1": {
+        "x": 83.5,
+        "y": 569
+      },
+      "p2": {
+        "x": 83.5,
+        "y": 519
+      },
+      "p3": {
+        "x": 108.5,
+        "y": 519
+      },
+      "p4": {
+        "x": 108.5,
+        "y": 569
+      },
+      "n1": {
+        "x": -1,
+        "y": 0
+      },
+      "n2": {
+        "x": 0,
+        "y": -1
+      },
+      "n3": {
+        "x": 1,
+        "y": 0
+      },
+      "n4": {
+        "x": 0,
+        "y": 1
       },
       "v": 5
     }

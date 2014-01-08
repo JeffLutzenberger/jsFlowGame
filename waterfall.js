@@ -16,7 +16,6 @@ var Waterfall = function (canvas) {
     this.sumFlux = 0;
     this.missed = 0;
     this.level = 1;
-    this.clockrate = 10; //currently set in GameController with setInterval
     this.framerate = 30; //fps (how often we draw)
     this.dt = 0;
     this.drawDt = 0;
@@ -27,9 +26,6 @@ var Waterfall = function (canvas) {
     this.showGrid = false;
     this.h = 1024;
     this.w = 768;
-    this.zoom = 0.25;
-    this.camerax = this.w * 0.5;
-    this.cameray = this.h * 0.5;
     this.gridx = 24;
     this.gridy = 16;
     this.forceMultiplier = 1e4;
@@ -92,12 +88,14 @@ Waterfall.prototype = {
             this.sources[i] = sourceFromJson(sourceList[i]);
             this.sources[i].x += x;
             this.sources[i].y += y;
+            this.sources[i].updatePoints();
         }
 
         for (i = 0; i < sinkList.length; i += 1) {
             this.sinks[i] = sinkFromJson(sinkList[i]);
             this.sinks[i].x += x;
             this.sinks[i].y += y;
+            this.sinks[i].updatePoints();
 
         }
 
@@ -105,6 +103,7 @@ Waterfall.prototype = {
             this.influencers[i] = influencerFromJson(influencerList[i]);
             this.influencers[i].x += x;
             this.influencers[i].y += y;
+            this.influencers[i].updatePoints();
             this.interactableObjects[i] = this.influencers[i];
         }
 
@@ -114,35 +113,105 @@ Waterfall.prototype = {
             this.portals[i + 1] = p[1];
             this.portals[i].x += x;
             this.portals[i].y += y;
+            this.portals[i].updatePoints();
             this.portals[i + 1].x += x;
             this.portals[i + 1].y += y;
+            this.portals[i + 1].updatePoints();
         }
 
         for (i = 0; i < bucketList.length; i += 1) {
             this.buckets[i] = new bucketFromJson(bucketList[i], this.x, this.y);
             this.buckets[i].x += x;
             this.buckets[i].y += y;
+            this.buckets[i].updatePoints();
         }
 
         for (i = 0; i < obstacleList.length; i += 1) {
             this.obstacles[i] = new obstacleFromJson(obstacleList[i], this.x, this.y);
             this.obstacles[i].x += x;
             this.obstacles[i].y += y;
+            this.obstacles[i].updatePoints();
         }
     },
+    
+    addLevel: function (level, x, y) {
+        var i = 0,
+            starList = level.stars,
+            sourceList = level.sources,
+            sinkList = level.sinks,
+            influencerList = level.influencers,
+            portalList = level.portals,
+            bucketList = level.buckets,
+            obstacleList = level.obstacles,
+            width = 0,
+            p,
+            o;
 
-    loadEditor: function () {
-        var obj;
-        this.clear();
-        obj = new Source(400, 50, 50, 25, 0, 5);
-        this.sources.push(obj);
-        this.interactableObjects.push(obj);
-        obj = new Bucket(300, 600, 100, 50, 0);
-        this.buckets.push(obj);
-        this.interactableObjects.push(obj);
-        obj = new Obstacle(300, 300, 100, 25, 45, 1);
-        this.obstacles.push(obj);
-        this.interactableObjects.push(obj);
+        x = x || 0;
+        y = y || 0;
+
+        //this.clear();
+            
+        //this.nParticles += level.nParticles;
+
+        //for (i = 0; i < starList.length; i += 1) {
+        //    this.stars.push(starList[i]);
+        //}
+
+        for (i = 0; i < sourceList.length; i += 1) {
+            o = sourceFromJson(sourceList[i]);
+            o.x += x;
+            o.y += y;
+            o.updatePoints();
+            this.sources.push(o);
+        }
+
+        for (i = 0; i < sinkList.length; i += 1) {
+            o = sinkFromJson(sinkList[i]);
+            o.x += x;
+            o.y += y;
+            o.updatePoints();
+            this.sinks.push(o);
+        }
+
+        for (i = 0; i < influencerList.length; i += 1) {
+            o = influencerFromJson(influencerList[i]);
+            o.x += x;
+            o.y += y;
+            o.updatePoints();
+            this.influencers.push(o);
+            this.interactableObjects.push(o);
+        }
+
+        for (i = 0; i < portalList.length * 2; i += 2) {
+            p = portalFromJson(portalList[i]);
+            o = p[0];
+            o.x += x;
+            o.y += y;
+            o.updatePoints();
+            this.portals.push(o);
+            o = p[1];
+            o.x += x;
+            o.y += y;
+            o.updatePoints();
+            this.portals.push(o);
+        }
+
+        for (i = 0; i < bucketList.length; i += 1) {
+            o = new bucketFromJson(bucketList[i]);
+            o.x += x;
+            o.y += y;
+            o.updatePoints();
+            this.buckets.push(o);
+        }
+
+        for (i = 0; i < obstacleList.length; i += 1) {
+            o = new obstacleFromJson(obstacleList[i]);
+            o.x += x;
+            o.y += y;
+            o.updatePoints();
+            this.obstacles.push(o);
+        }
     },
 
     update: function (dt) {
@@ -156,50 +225,7 @@ Waterfall.prototype = {
             if (this.particles.length < this.nParticles) {
                 this.addParticle();
             }
-       
             this.moveParticles();
-        }
-        
-        this.drawDt += this.dt;
-
-        if (this.drawDt > this.framerate) {
-            this.currentDrawTime = new Date().getTime();
-            
-            this.lastDrawTime = this.currentDrawTime;
-            
-            this.drawDt = 0; 
-
-            //save draw state
-            //translate and zoom
-            this.canvas.ctx.restore();
-
-            this.canvas.clear();
-            
-            this.canvas.ctx.save();
-            
-            this.canvas.ctx.translate(this.camerax * this.canvas.m, this.cameray * this.canvas.m);
-            
-            this.canvas.ctx.scale(this.zoom, this.zoom);
-            
-            if (this.showGrid) {
-                this.drawGrid();
-            }
-        
-            this.drawParticles();
-
-            this.drawSources();
-
-            this.drawSinks();
-        
-            this.drawObstacles();
-        
-            this.drawPortals();
-        
-            this.drawInfluencers();
-
-            this.drawBuckets();
-
-            this.drawScore();
         }
     },
     
@@ -213,7 +239,6 @@ Waterfall.prototype = {
         if (this.frame % this.framerate * 2 === 0) {
             this.flux = this.sumFlux;
             this.sumFlux = 0;
-            //adjust sink size...
             this.sizeFactor = Math.min(1 + this.score / 1000 * 2, this.maxSizeFactor);
         }
     },
@@ -432,6 +457,28 @@ Waterfall.prototype = {
         this.canvas.text(50, 100, color, fontFamily, fontSize, str);
         str = "flux " + parseInt(this.flux, 10);
         this.canvas.text(50, 150, color, fontFamily, fontSize, str);
+    },
+
+    draw: function () {
+        if (this.showGrid) {
+            this.drawGrid();
+        }
+    
+        this.drawParticles();
+
+        this.drawSources();
+
+        this.drawSinks();
+    
+        this.drawObstacles();
+    
+        this.drawPortals();
+    
+        this.drawInfluencers();
+
+        this.drawBuckets();
+
+        this.drawScore();
     },
 
     snapx: function (x) {
