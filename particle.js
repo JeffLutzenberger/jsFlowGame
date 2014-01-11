@@ -12,8 +12,9 @@ var Particle = function (x, y, r) {
     this.mass = this.inv_mass = 1;
     this.radius = r || 4;
     this.trail = [];
-    this.numTracers = 20;
+    this.numTracers = 30;
     this.traceWidth = 1;
+    this.color = [0, 153, 255, 1];
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y);
@@ -70,18 +71,16 @@ Particle.prototype = {
     },
     
     draw: function (canvas, color) {
-        var i = 0, alpha = 1.0, t1, t2;
-        canvas.circle(this.x, this.y, this.radius * 2, 'rgba(0,153,255,0.25)');
-        canvas.circle(this.x, this.y, this.radius, 'rgba(0,153,255,1)');
-        //canvas.circle(this.x, this.y, this.radius, color);
+        var i = 0, alpha = 1.0, t1, t2,
+            c = this.color;
+        canvas.circle(this.x, this.y, this.radius * 2, c, 0.25);
+        canvas.circle(this.x, this.y, this.radius, c, 1);
         for (i = 1; i < this.numTracers; i += 1) {
             t1 = this.trail[i - 1];
             t2 = this.trail[i];
             alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
-            //color = 'rgba(0,153,255,' + alpha * 0.25 + ')';
-            //canvas.line(t1, t2, this.traceWidth * 2, color);
             color = 'rgba(0,153,255,' + alpha + ')';
-            canvas.line(t1, t2, this.traceWidth, color);
+            canvas.line(t1, t2, this.traceWidth, c, alpha);
         }
     },
 
@@ -157,3 +156,52 @@ var Tracer = function (x, y) {
 };
 
 
+var PassiveParticle = function (x, y, r) {
+    this.x = x;
+    this.y = y;
+    this.prevx = x;
+    this.prevy = y;
+    this.age = 0;
+    this.dir = new Vector(1, 0);
+    this.vel = new Vector(1, 0);
+    this.mass = this.inv_mass = 1;
+    this.radius = r || 4;
+    this.color = [0, 153, 255, 1];
+};
+
+
+var ParticleSystem = function (x, y, image) {
+    this.x = x;
+    this.y = y;
+    this.dieRate = 10;
+    this.image = image;
+    this.speed = 0.02;
+    this.alpha = 1.0;
+    this.particles = [];
+};
+
+ParticleSystem.prototype = {
+
+    // ParticleEmitter().init function
+    // xScale = number between 0  and 1. 0 = on left side 1 = on top
+    // yScale = number between 0  and 1. 0 = on top 1 = on bottom
+    // particles = number of particles
+    // image = smoke graphic for each particle
+    init: function (x, y, nParticles, image) {
+        var i = 0;
+        this.x = x;
+        this.y = y;
+        this.image = image;
+        this.dieRate = 0.95;
+        for (i = 0; i < nParticles; i += 1) {
+            this.particles.push(new PassiveParticle(x, y, 1));
+        }
+    },
+ 
+    update: function (dt) {
+        var i = 0;
+        for (i = 0; i < this.particles.length; i += 1) {
+            this.particles[i].update(dt);
+        }
+    }
+};

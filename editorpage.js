@@ -11,7 +11,6 @@ var EditorPage = function (canvas) {
     this.lastDrawTime = 0;
     this.camera.setExtents(768, 1024);
     this.camera.setCenter(768 * 0.5, 1024 * 0.5);
-
 };
 
 EditorPage.prototype = {

@@ -34,17 +34,20 @@ var Waterfall = function (canvas) {
     this.maxSizeFactor = 3;
     this.minDSquared = 1000;
     this.particleColor = 'rgba(0,153,255,1)';
-    this.sourceColor = 'rgba(0,255,153,1)';
-    this.sinkColor =  'rgba(0,153,153,1)';
-    this.influencerColor = 'rgba(0,153,255,1)';
-    this.obstacleColor = 'rgba(100,100,100,1)';
-    this.gridColor = 'rgba(80,80,80,1)';
-    this.portalColor = 'rgba(255,153,0,1)';
-    this.scoreTextColor = 'rgba(100,100,100,1)';
+    this.sourceColor = [0, 255, 153];//'rgba(0,255,153,1)';
+    this.sinkColor =  [0, 153, 153];//'rgba(0,153,153,1)';
+    this.influencerColor = [0, 153, 255];//'rgba(0,153,255,1)';
+    this.obstacleColor = [100, 100, 100];//'rgba(100,100,100,1)';
+    this.gridColor = [80, 80, 80];//'rgba(80,80,80,1)';
+    this.portalColor = [255, 153, 0];//'rgba(255,153,0,1)';
+    this.scoreTextColor = [100, 100, 100];//'rgba(100,100,100,1)';
     this.currentSizeFactor = 1;
     this.sizeFactor = 1;
     this.currentDrawTime = 0;
     this.lastDrawTime = 0;
+    //smoke image
+    this.smokeImage = new Image();
+    this.smokeImage.src = 'smoke.png';
 };
 
 Waterfall.prototype = {
@@ -349,16 +352,18 @@ Waterfall.prototype = {
     },
 
     hitSinks: function (p) {
-        var i, s, d2, v2, res;
+        var i, s, d2, v2, res, hit = false;
         for (i = 0; i < this.sinks.length; i += 1) {
             s = this.sinks[i];
             if (s.hit(p)) {
-                s.hitsThisFrame += 1;
+                s.update(this.dt, true);
+                //s.hitsThisFrame += 1;
                 this.score += 1;
                 this.sumFlux += 1;
                 this.recycleParticle(p);
                 return true;
             }
+            s.update(this.dt, false);
             v2 = new Vector(s.x - p.x, s.y - p.y);
             d2 = v2.squaredLength();
             res = s.force * this.forceMultiplier * s.sizeFactor / d2;
@@ -411,18 +416,19 @@ Waterfall.prototype = {
         }
     },
 
-    drawSinks : function () {
+    drawSinks : function (dt) {
         var i = 0, color = this.sinkColor;
         for (i = 0; i < this.sinks.length; i += 1) {
-            this.sinks[i].sizeFactor = this.sizeFactor;
-            this.sinks[i].draw(this.canvas, color);
+            //this.sinks[i].sizeFactor = this.sizeFactor;
+            this.sinks[i].draw(this.canvas, color, dt);
+            //this.canvas.drawImage(this.smokeImage, this.sinks[i].x, this.sinks[i].y, 100, 100);
         }
     },
 
-    drawInfluencers : function () {
+    drawInfluencers : function (dt) {
         var i = 0, color = this.influencerColor;
         for (i = 0; i < this.influencers.length; i += 1) {
-            this.influencers[i].draw(this.canvas, color);
+            this.influencers[i].draw(this.canvas, color, dt);
         }
     },
 
@@ -459,7 +465,7 @@ Waterfall.prototype = {
         this.canvas.text(50, 150, color, fontFamily, fontSize, str);
     },
 
-    draw: function () {
+    draw: function (dt) {
         if (this.showGrid) {
             this.drawGrid();
         }
@@ -468,13 +474,13 @@ Waterfall.prototype = {
 
         this.drawSources();
 
-        this.drawSinks();
+        this.drawSinks(dt);
     
         this.drawObstacles();
     
         this.drawPortals();
     
-        this.drawInfluencers();
+        this.drawInfluencers(dt);
 
         this.drawBuckets();
 

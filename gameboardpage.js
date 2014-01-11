@@ -29,7 +29,6 @@ var GameboardPage = function (canvas) {
     this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
     this.finalZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
-    
 };
 
 GameboardPage.prototype = {
@@ -55,7 +54,7 @@ GameboardPage.prototype = {
             var obj, obj2;
             //console.log(e.keyCode);
             switch (e.keyCode) {
-            case 45: //space
+            case 45: //minus
                 this.home();
                 break;
             default:
@@ -113,7 +112,7 @@ GameboardPage.prototype = {
         y = 1024 + h * 0.5;
         r = new Rectangle(x, y, 768, 1024, 0);
         this.levelButtons.push(r);
-        //level1
+/*        //level1
         this.waterfall.addLevel(levels[1], 0, 1024);
         x = w * 0.5;
         y = 1024 + h * 0.5;
@@ -131,7 +130,7 @@ GameboardPage.prototype = {
         y = h * 0.5;
         r = new Rectangle(x, y, 768, 1024, 0);
         this.levelButtons.push(r);
-
+*/
     },
      
     levelButtonHit: function (x, y) {
@@ -197,9 +196,7 @@ GameboardPage.prototype = {
             
             this.currentDrawTime = new Date().getTime();
             
-            this.lastDrawTime = this.currentDrawTime;
-            
-            this.drawDt = 0;
+            this.lastDrawTime = this.currentDrawTime; 
 
             this.camera.reset();
             
@@ -219,8 +216,9 @@ GameboardPage.prototype = {
                     b = this.levelButtons[this.hoverLevel];
                 this.canvas.rectangleOutline(b.p1, b.p2, b.p3, b.p4, 4, color);
             }
+            this.waterfall.draw(this.drawDt);
 
-            this.waterfall.draw();
+            this.drawDt = 0;
         }
     }
 };
