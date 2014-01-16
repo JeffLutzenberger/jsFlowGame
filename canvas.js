@@ -12,8 +12,13 @@ var Canvas = function (canvas) {
 
 Canvas.prototype = {
 
-    clear: function () {
+    clear: function (bgColor) {
         this.ctx.clearRect(0, 0, this.width, this.height);
+        if (bgColor) {
+            //this.ctx.fillStyle = bgColor;
+            //this.ctx.rect(0, 0, this.width, this.height);
+            //this.ctx.fill();
+        }
     },
    
     push: function () {
@@ -171,9 +176,9 @@ Camera.prototype = {
         this.canvas.ctx.translate(-this.center.x, -this.center.y);
     },
 
-    reset: function () {
+    reset: function (bgColor) {
         this.pop();
-        this.canvas.clear();
+        this.canvas.clear(bgColor);
         this.push();
         //move the viewport center to 0,0
         this.canvas.ctx.translate(this.canvas.width * 0.5,

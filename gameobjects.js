@@ -58,7 +58,7 @@ Rectangle.prototype = {
             canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 2, 'rgba(0,100,255,1)');
         }
     },
-    
+
     bbHit : function (p) {
         return (p.x >= this.x - this.w * 0.5 &&
                 p.x <= this.x + this.w * 0.5 &&
@@ -160,6 +160,7 @@ var influencerFromJson = function (j) {
 var Sink = function (x, y, r, influenceRadius, force) {
     this.base = Influencer;
     this.base(x, y, r, influenceRadius, force);
+    this.nebula = new NebulaGenerator(300, 300);
 };
 
 Sink.prototype = new Influencer();

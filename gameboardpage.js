@@ -24,7 +24,8 @@ var GameboardPage = function (canvas) {
     this.zoomTransition = false;
     this.loadLevels();
     this.camera.setExtents(768 * 3, 1024 * 3);
-    this.camera.setCenter(768 * 3 * 0.5, 1024 * 3 * 0.5);
+    //this.camera.setCenter(768 * 3 * 0.5, 1024 * 3 * 0.5);
+    this.camera.setCenter(0, 0);
     this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
@@ -107,9 +108,9 @@ GameboardPage.prototype = {
     loadLevels: function () {
         var w = 768, h = 1024, r, x, y;
         //level0
-        this.waterfall.loadLevel(levels[0], 768, 1024);
-        x = 768 + w * 0.5;
-        y = 1024 + h * 0.5;
+        this.waterfall.loadLevel(levels[0], -w * 0.5, -h * 0.5);
+        x = 0;
+        y = 0;
         r = new Rectangle(x, y, 768, 1024, 0);
         this.levelButtons.push(r);
 /*        //level1
@@ -183,7 +184,7 @@ GameboardPage.prototype = {
         this.playMode = false;
         this.zoomTransition = true;
         this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
-        this.finalZoomCenter = new Vector(768 * 3 * 0.5, 1024 * 3 * 0.5);
+        this.finalZoomCenter = new Vector(0, 0);
         this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
         this.finalZoomExtents = new Vector(768 * 3, 1024 * 3);
         this.zoomTime = 0;
@@ -198,18 +199,23 @@ GameboardPage.prototype = {
             
             this.lastDrawTime = this.currentDrawTime; 
 
-            this.camera.reset();
-            
-            this.camera.show();
+            this.camera.reset(this.waterfall.bgColor);
 
-            if (!this.playMode) {
+            //this.camera.push();
+            //this.waterfall.backgroundeffect.draw(this.canvas);
+            //this.camera.pop();
+
+            this.camera.show();
+           
+            //this.canvas.ctx.putImageData(this.waterfall.traileffect.buffer, 0, 0);
+            /*if (!this.playMode) {
                 this.canvas.grid(this.gridDx,
                              this.gridDy,
                              this.gridWidth,
                              this.gridHeight,
                              1,
                              'rgba(125,125,125,1)');
-            }
+            }*/
 
             if (this.hoverLevel > -1) {
                 var color = 'rgba(100,100,255,1)',
@@ -217,7 +223,6 @@ GameboardPage.prototype = {
                 this.canvas.rectangleOutline(b.p1, b.p2, b.p3, b.p4, 4, color);
             }
             this.waterfall.draw(this.drawDt);
-
             this.drawDt = 0;
         }
     }

@@ -34,6 +34,7 @@ var Waterfall = function (canvas) {
     this.maxSizeFactor = 3;
     this.minDSquared = 1000;
     this.particleColor = 'rgba(0,153,255,1)';
+    this.bgColor = 'rbga(100, 0, 0, 1)';
     this.sourceColor = [0, 255, 153];//'rgba(0,255,153,1)';
     this.sinkColor =  [0, 153, 153];//'rgba(0,153,153,1)';
     this.influencerColor = [0, 153, 255];//'rgba(0,153,255,1)';
@@ -48,6 +49,9 @@ var Waterfall = function (canvas) {
     //smoke image
     this.smokeImage = new Image();
     this.smokeImage.src = 'smoke.png';
+    //this.traileffect = new TrailEffect(this.canvas);
+    //this.nebula = new NebulaGenerator(this.canvas);
+    this.backgroundeffect = new BackgroundEffect(this.w * 0.5, this.h * 0.5, 5, [0, 0, 0]); 
 };
 
 Waterfall.prototype = {
@@ -275,6 +279,7 @@ Waterfall.prototype = {
         var i = 0;
         for (i = 0; i < this.particles.length; i += 1) {
             this.moveParticle(this.particles[i]);
+            //this.traileffect.update(this.particles[i]);
         }
     },
 
@@ -361,6 +366,20 @@ Waterfall.prototype = {
                 this.score += 1;
                 this.sumFlux += 1;
                 this.recycleParticle(p);
+                s.nebula.createNebula(this.dt, 150, 150);
+                /*
+                $.extend(this.nebula.options, this.nebula.presets.x);
+                this.nebula.options.red = 1.0;
+                this.nebula.options.green =  0.3;
+                this.nebula.options.blue = 0.3;
+                this.nebula.createNebula(this.dt, 768 * 0.25, 1025 * 0.25);
+
+                $.extend(this.nebula.options, this.nebula.defaultOptions);
+                this.nebula.options.red = 0.3;
+                this.nebula.options.green =  0.3;
+                this.nebula.options.blue = 1.0;
+                this.nebula.createNebula(this.dt, 768 * 0.25, 1025 * 0.25);
+                */
                 return true;
             }
             s.update(this.dt, false);
@@ -402,6 +421,18 @@ Waterfall.prototype = {
         return false;
     },
 
+    drawBackground: function (dt) {
+        //var i = 0;
+        //for (i = 0; i < this.sinks.length; i += 1) {
+        //    this.canvas.ctx.drawImage(this.sinks[i].nebula.getCanvas(),
+        //                              this.sinks[i].x - 150,
+        //                              this.sinks[i].y - 150);
+        //}
+        this.backgroundeffect.update(dt);
+        this.backgroundeffect.draw(this.canvas);
+        //this.backgroundeffect.update(dt);
+    },
+
     drawParticles : function () {
         var i = 0, color = this.particleColor;
         for (i = 0; i < this.particles.length; i += 1) {
@@ -421,6 +452,7 @@ Waterfall.prototype = {
         for (i = 0; i < this.sinks.length; i += 1) {
             //this.sinks[i].sizeFactor = this.sizeFactor;
             this.sinks[i].draw(this.canvas, color, dt);
+
             //this.canvas.drawImage(this.smokeImage, this.sinks[i].x, this.sinks[i].y, 100, 100);
         }
     },
@@ -466,10 +498,12 @@ Waterfall.prototype = {
     },
 
     draw: function (dt) {
+        this.drawBackground(dt);
+
         if (this.showGrid) {
             this.drawGrid();
         }
-    
+
         this.drawParticles();
 
         this.drawSources();
@@ -484,7 +518,7 @@ Waterfall.prototype = {
 
         this.drawBuckets();
 
-        this.drawScore();
+        //this.drawScore();
     },
 
     snapx: function (x) {

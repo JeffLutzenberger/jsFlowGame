@@ -13,6 +13,7 @@ var EditorPage = function (canvas) {
     this.camera.setCenter(768 * 0.5, 1024 * 0.5);
 };
 
+
 EditorPage.prototype = {
 
     init: function () {
@@ -32,7 +33,7 @@ EditorPage.prototype = {
     hideUI: function () {
         this.editorui.hide();
     },
-    
+
     showUI: function () {
         this.editorui.show();
     },
@@ -140,20 +141,20 @@ EditorPage.prototype = {
     draw: function (dt) {
         this.drawDt += dt;
         if (this.drawDt > this.framerate) {
-            
+
             this.currentDrawTime = new Date().getTime();
-            
+
             this.lastDrawTime = this.currentDrawTime;
-            
+
             this.drawDt = 0;
 
             this.camera.reset();
-            
+
             this.camera.show();
             //this.camera.zoom(1);
-            
+
             //this.camera.move(0, 0);
-            
+
             this.waterfall.draw();
         }
     }
@@ -193,7 +194,7 @@ EditorUI.prototype = {
             .click($.proxy(function () {
                 this.addSource();
             }, this));
-         
+
         $("#sink-button").append('<input type="button" value="Sink">')
             .button()
             .click($.proxy(function () {
@@ -205,7 +206,7 @@ EditorUI.prototype = {
             .click($.proxy(function () {
                 this.togglePlay();
             }, this));
-        
+
         $("#grid-button").append('<input type="button" value="Grid">')
             .button()
             .click($.proxy(function () {
@@ -223,7 +224,7 @@ EditorUI.prototype = {
             .click($.proxy(function () {
                 this.save();
             }, this));
-        
+
         $("#button-row-2").append('<input id="reset-button" type="button" value="Reset">');
         $("#reset-button")
             .button()
@@ -231,7 +232,7 @@ EditorUI.prototype = {
                 this.reset();
             }, this));
     },
-    
+
     hide: function () {
         $("#bucket-button").html('');
         $("#bucket-button").off('click');
@@ -266,7 +267,7 @@ EditorUI.prototype = {
         this.waterfall.interactableObjects.push(obj);
         this.selectObject(obj);
     },
- 
+
     addInfluencer: function () {
         var obj = new Influencer(400, 100, 15, 100, -0.5);
         obj.showInfluenceRing = this.showInfluenceRing;
@@ -274,7 +275,7 @@ EditorUI.prototype = {
         this.waterfall.interactableObjects.push(obj);
         this.selectObject(obj);
     },
-    
+
     addSink: function () {
         var obj = new Sink(400, 200, 15, 100, 1);
         obj.showInfluenceRing = this.showInfluenceRing;
@@ -282,7 +283,7 @@ EditorUI.prototype = {
         this.waterfall.interactableObjects.push(obj);
         this.selectObject(obj);
     },
-  
+
     addObstacle: function () {
         var obj = new Obstacle(100, 100, 100, 25, 0, 1);
         this.waterfall.obstacles.push(obj);
@@ -377,7 +378,7 @@ GameObjectEditForm.prototype = {
         var val, goType = this.gameObject.gameObjectType();
         $("#object-form").append('<span id="object-type">' + goType + '</span><br>');
         $("#object-form").append('<span id="location-display">x: ' + this.gameObject.x + ' y: ' + this.gameObject.y + '</span><br>');
-        
+
         if (goType === "Influencer" || goType === "Sink") {
             $("#object-form").append('radius: <input id="radius-input" type="text" value="' + this.gameObject.radius + '"></span><br>');
             $("#radius-input").change($.proxy(function () {
@@ -415,7 +416,7 @@ GameObjectEditForm.prototype = {
                     this.gameObject.updatePoints();
                 }
             }, this));
-            
+
             $("#object-form").append('h: <input id="h-input" type="text" value="' + this.gameObject.h + '"></span><br>');
             $("#h-input").change($.proxy(function () {
                 val = $("#h-input").val();
@@ -424,7 +425,7 @@ GameObjectEditForm.prototype = {
                     this.gameObject.updatePoints();
                 }
             }, this));
-            
+
             $("#object-form").append('theta: <input id="theta-input" type="text" value="' + this.gameObject.theta + '"></span><br>');
             $("#theta-input").change($.proxy(function () {
                 val = $("#theta-input").val();
@@ -434,7 +435,7 @@ GameObjectEditForm.prototype = {
                 }
             }, this));
         }
-       
+
         if (goType === "Source") {
             $("#object-form").append('particle speed: <input id="speed-input" type="text" value="' + this.gameObject.v + '"></span><br>');
             $("#speed-input").change($.proxy(function () {
@@ -444,7 +445,7 @@ GameObjectEditForm.prototype = {
                     this.gameObject.updatePoints();
                 }
             }, this));
-            
+
         }
 
         $("#object-form").append('Interactable: <input id="interactable-input" type="checkbox" value="' + this.gameObject.interactable + '"></span><br>');
@@ -469,7 +470,7 @@ GameObjectEditForm.prototype = {
         //the object has moved so update the x and y coordinates
         $("#location-display").html('x: ' + this.gameObject.x + ' y: ' + this.gameObject.y);
     },
-    
+
     deleteObject: function () {
         console.log(this.waterfall.interactable);
         var o = this.waterfall.interactable,
