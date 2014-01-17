@@ -35,6 +35,8 @@ var Waterfall = function (canvas) {
     this.minDSquared = 1000;
     this.particleColor = 'rgba(0,153,255,1)';
     this.bgColor = 'rbga(100, 0, 0, 1)';
+    this.blueColor = [0, 153, 255];
+    this.greenColor = [0, 153, 153];
     this.sourceColor = [0, 255, 153];//'rgba(0,255,153,1)';
     this.sinkColor =  [0, 153, 153];//'rgba(0,153,153,1)';
     this.influencerColor = [0, 153, 255];//'rgba(0,153,255,1)';
@@ -422,15 +424,8 @@ Waterfall.prototype = {
     },
 
     drawBackground: function (dt) {
-        //var i = 0;
-        //for (i = 0; i < this.sinks.length; i += 1) {
-        //    this.canvas.ctx.drawImage(this.sinks[i].nebula.getCanvas(),
-        //                              this.sinks[i].x - 150,
-        //                              this.sinks[i].y - 150);
-        //}
-        this.backgroundeffect.update(dt);
-        this.backgroundeffect.draw(this.canvas);
         //this.backgroundeffect.update(dt);
+        //this.backgroundeffect.draw(this.canvas);
     },
 
     drawParticles : function () {

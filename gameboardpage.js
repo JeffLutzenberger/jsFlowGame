@@ -222,7 +222,9 @@ GameboardPage.prototype = {
                     b = this.levelButtons[this.hoverLevel];
                 this.canvas.rectangleOutline(b.p1, b.p2, b.p3, b.p4, 4, color);
             }
+            
             this.waterfall.draw(this.drawDt);
+            
             this.drawDt = 0;
         }
     }

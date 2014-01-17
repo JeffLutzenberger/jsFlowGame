@@ -7,7 +7,8 @@ var BackgroundEffect = function (w, h, nParticles, bgcolor) {
     this.particles = [];
     this.nParticles = nParticles;
     this.radius = 50;
-    this.speed = 0.5;
+    this.speed = 5;
+    this.lifetime = 20;
     this.color = [255, 255, 255];
     this.alpha = 0.05;
     this.composite = 'lighter';
@@ -17,6 +18,7 @@ var BackgroundEffect = function (w, h, nParticles, bgcolor) {
     this.buffercanvas = document.createElement('canvas');
     this.buffercanvas.width = w;
     this.buffercanvas.height = h;
+    this.canvas = new Canvas(this.buffercanvas);
     this.ctx = this.buffercanvas.getContext('2d');
     this.ctx.fillStyle = bgcolor;
     this.ctx.rect(0, 0, w, h);
@@ -32,8 +34,6 @@ BackgroundEffect.prototype = {
             p = new Particle(Math.random() * this.width,
                              Math.random() * this.height,
                              this.radius);
-            console.log(this.width);
-            console.log(this.height);
             p.vel.x = Math.random() * this.speed * ((Math.random() < 0.5) ? -1 : 1);
             p.vel.y = Math.random() * this.speed * ((Math.random() < 0.5) ? -1 : 1);
             console.log(p);
@@ -46,59 +46,33 @@ BackgroundEffect.prototype = {
         for (i = 0; i < this.nParticles; i += 1) {
             this.checkBounds(this.particles[i]);
             this.particles[i].move();
-            //console.log(this.particles[i]);
         }
     },
 
     draw: function (canvas) {
-        var drawtomaincanvas = true;
         var i, radius = 50;
-        if (!drawtomaincanvas) {
-            this.ctx.fillStyle = 'black';//this.bgcolor;
-            this.ctx.rect(0, 0, this.width, this.height);
-            this.ctx.fill();
-        }
 
+        this.canvas.clear(this.bgcolor);
         for (i = 0; i < this.nParticles; i += 1) {
-            /*canvas.radialGradient(this.x,
-                                  this.y,
+            this.canvas.circle(this.particles[i].x,
+                               this.particles[i].y,
+                               this.radius,
+                               this.color,
+                               this.alpha);
+            /*this.canvas.radialGradient(this.particles[i].x,
+                                  this.particles[i].y,
+                                  this.radius * 0.25,
                                   this.radius,
-                                  this.radius * 4,
                                   this.color,
                                   this.color,
-                                  0.5,
-                                  0);*/
-            if (drawtomaincanvas) {
-                /*canvas.circle(this.particles[i].x,
-                              this.particles[i].y,
-                              this.radius,
-                              this.color,
-                              this.alpha);*/
-                canvas.radialGradient(this.particles[i].x,
-                                      this.particles[i].y,
-                                      this.radius,
-                                      this.radius * 5,
-                                      this.color,
-                                      this.color,
-                                      0.05,
-                                      0.0);
- 
-            } else {
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.particles[i].x + this.radius, this.particles[i].y);
-                this.ctx.arc(this.particles[i].x, this.particles[i].y, this.radius, 0, Math.PI * 2, false);
-                this.ctx.fill();
-            }
-
-            //console.log(this.x, this.y);
-            
+                                  0.1,
+                                  0.0);*/
         }
 
         //stackBlurCanvasRGBA( this.ctx, 0, 0, this.width, this.height, radius);
         //this.ctx.putImageData(this.imgdata, 0, 0);
         //return this.buffercanvas;
-        //canvas.ctx.drawImage(this.buffercanvas, -this.width * 0.25, -this.height * 0.25);
+        canvas.ctx.drawImage(this.canvas.canvas, -768 * 3 * 0.5, -1024 * 3 * 0.5, 768 * 3, 1024 * 3);
         //canvas.ctx.drawImage(this.buffercanvas, -this.width * 0.5, -this.height * 0.5);
     },
 
