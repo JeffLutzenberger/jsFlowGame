@@ -157,51 +157,6 @@ var influencerFromJson = function (j) {
     return new Influencer(j.x, j.y, j.radius, j.influenceRadius, j.force);
 };
 
-var Sink = function (x, y, r, influenceRadius, force) {
-    this.base = Influencer;
-    this.base(x, y, r, influenceRadius, force);
-    this.nebula = new NebulaGenerator(300, 300);
-};
-
-Sink.prototype = new Influencer();
-
-Sink.prototype.gameObjectType = function () {
-    return "Sink";
-};
-
-Sink.prototype.hit = function (p) {
-    var v2 = new Vector(this.x - p.x, this.y - p.y),
-        d2 = v2.squaredLength();
-    return (d2 <= 2 * this.radius * this.radius * this.sizeFactor * this.sizeFactor);
-};
-
-Sink.prototype.contain = function (p) {
-    var v = new Vector(p.vel.x, p.vel.y),
-        c1 = new Particle(p.x, p.y, p.radius),
-        p1 = new Vector(p.prevx, p.prevy),
-        p2 = new Vector(p.x, p.y),
-        d1 = new Vector(p1.x - this.x, p2.y - this.y).length(),
-        d2 = new Vector(p2.x - this.x, p2.y - this.y).length(),
-        hitPoint;
-    if (d1 < d2) {
-        hitPoint = c1.circleCircleCollision(this.x, this.y, this.influenceRadius);
-        if (hitPoint) {
-            v = new Vector(this.x - hitPoint.x, this.y - hitPoint.y);
-            d1 = v.length() + 20;
-            //this algorithm returns true if the particle is inside the influence radius
-            //there should only be a collision if the particle circle overlaps the edge
-            //of the influence radius
-            if (d1 >= this.influenceRadius) {
-                return v.normalize();
-            }
-        }
-    }
-};
-
-var sinkFromJson = function (j){
-    return new Sink(j.x, j.y, j.radius, j.influenceRadius, j.force);
-};
-
 function Source(x, y, w, h, theta, v) {
     this.base = Rectangle;
     this.base(x, y, w, h, theta);

@@ -230,6 +230,10 @@ Waterfall.prototype = {
 
         this.calculateFlux();
 
+        for (i = 0; i < this.sinks.length; i += 1) {
+            this.sinks[i].updateOrbitals(dt);
+        }
+ 
         if (this.sources.length > 0) {
             if (this.particles.length < this.nParticles) {
                 this.addParticle();
@@ -368,7 +372,9 @@ Waterfall.prototype = {
                 this.score += 1;
                 this.sumFlux += 1;
                 this.recycleParticle(p);
-                s.nebula.createNebula(this.dt, 150, 150);
+                s.addEnergy();
+                //this.curTrap = Math.max(this.maxTrap, this.curTrap + 1);
+                //s.nebula.createNebula(this.dt, 150, 150);
                 /*
                 $.extend(this.nebula.options, this.nebula.presets.x);
                 this.nebula.options.red = 1.0;

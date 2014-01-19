@@ -48,7 +48,7 @@ var levels = [
         "x": -1,
         "y": 0
       },
-      "force": "0.5",
+      "force": "0.25",
       "influenceRadius": 100,
       "sizeFactor": 1,
       "showInfluenceRing": true,
@@ -94,7 +94,7 @@ var levels = [
         "x": -1,
         "y": 0
       },
-      "force": "0.5",
+      "force": "0.25",
       "influenceRadius": 100,
       "sizeFactor": 1,
       "showInfluenceRing": true,
@@ -157,7 +157,7 @@ var levels = [
       "y": 32,
       "w": "48",
       "h": "32",
-      "theta": "45",
+      "theta": "0",
       "selected": false,
       "p1": {
         "x": 355.7157287525381,
@@ -198,7 +198,7 @@ var levels = [
       "y": 992,
       "w": "48",
       "h": "32",
-      "theta": "225",
+      "theta": "180",
       "selected": false,
       "p1": {
         "x": 412.2842712474619,
