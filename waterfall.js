@@ -33,12 +33,12 @@ var Waterfall = function (canvas) {
     this.maxParticleAge = 500;
     this.maxSizeFactor = 3;
     this.minDSquared = 1000;
-    this.particleColor = 'rgba(0,153,255,1)';
+    this.particleColor = [0, 153, 255];//'rgba(0,153,255,1)';
     this.bgColor = 'rbga(100, 0, 0, 1)';
     this.blueColor = [0, 153, 255];
     this.greenColor = [0, 153, 153];
     this.sourceColor = [0, 255, 153];//'rgba(0,255,153,1)';
-    this.sinkColor =  [0, 153, 153];//'rgba(0,153,153,1)';
+    this.sinkColor =  [0, 255, 0];//'rgba(0,153,153,1)';
     this.influencerColor = [0, 153, 255];//'rgba(0,153,255,1)';
     this.obstacleColor = [100, 100, 100];//'rgba(100,100,100,1)';
     this.gridColor = [80, 80, 80];//'rgba(80,80,80,1)';
@@ -53,7 +53,7 @@ var Waterfall = function (canvas) {
     this.smokeImage.src = 'smoke.png';
     //this.traileffect = new TrailEffect(this.canvas);
     //this.nebula = new NebulaGenerator(this.canvas);
-    this.backgroundeffect = new BackgroundEffect(this.w * 0.5, this.h * 0.5, 5, [0, 0, 0]); 
+    //this.backgroundeffect = new BackgroundEffect(this.w * 0.5, this.h * 0.5, 5, [0, 0, 0]); 
 };
 
 Waterfall.prototype = {
@@ -231,7 +231,7 @@ Waterfall.prototype = {
         this.calculateFlux();
 
         for (i = 0; i < this.sinks.length; i += 1) {
-            this.sinks[i].updateOrbitals(dt);
+            this.sinks[i].update(dt);
         }
  
         if (this.sources.length > 0) {
@@ -367,7 +367,7 @@ Waterfall.prototype = {
         for (i = 0; i < this.sinks.length; i += 1) {
             s = this.sinks[i];
             if (s.hit(p)) {
-                s.update(this.dt, true);
+                //s.update(this.dt, true);
                 //s.hitsThisFrame += 1;
                 this.score += 1;
                 this.sumFlux += 1;
@@ -390,7 +390,7 @@ Waterfall.prototype = {
                 */
                 return true;
             }
-            s.update(this.dt, false);
+            //s.update(this.dt, false);
             v2 = new Vector(s.x - p.x, s.y - p.y);
             d2 = v2.squaredLength();
             res = s.force * this.forceMultiplier * s.sizeFactor / d2;

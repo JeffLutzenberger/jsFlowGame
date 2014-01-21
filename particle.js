@@ -14,7 +14,6 @@ var Particle = function (x, y, r) {
     this.trail = [];
     this.numTracers = 30;
     this.traceWidth = 1;
-    this.color = [0, 153, 255, 1];
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y);
@@ -72,14 +71,15 @@ Particle.prototype = {
     
     draw: function (canvas, color) {
         var i = 0, alpha = 1.0, t1, t2,
-            c = this.color;
+            c = color;
         canvas.circle(this.x, this.y, this.radius * 2, c, 0.25);
         canvas.circle(this.x, this.y, this.radius, c, 1);
+        canvas.circle(this.x, this.y, this.radius * 0.5, [255, 255, 255], 1);
         for (i = 1; i < this.numTracers; i += 1) {
             t1 = this.trail[i - 1];
             t2 = this.trail[i];
             alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
-            color = 'rgba(0,153,255,' + alpha + ')';
+            //color = 'rgba(0,153,255,' + alpha + ')';
             canvas.line(t1, t2, this.traceWidth, c, alpha);
         }
     },
@@ -156,7 +156,7 @@ var Tracer = function (x, y) {
 };
 
 
-var PassiveParticle = function (x, y, r) {
+var PassiveParticle = function (x, y, r, numTracers) {
     this.x = x;
     this.y = y;
     this.prevx = x;
@@ -166,9 +166,73 @@ var PassiveParticle = function (x, y, r) {
     this.vel = new Vector(1, 0);
     this.mass = this.inv_mass = 1;
     this.radius = r || 4;
-    this.color = [0, 153, 255, 1];
+    this.trail = [];
+    this.numTracers = numTracers || 0;
+    this.traceWidth = 1;
+    var i = 0, t;
+    for (i = 0; i < this.numTracers; i += 1) {
+        t = new Tracer(this.x, this.y);
+        this.trail.push(t);
+    }
 };
 
+PassiveParticle.prototype = {
+
+    move : function (dt) {
+        this.prevx = this.x;
+        this.prevy = this.y;
+        this.x += this.vel.x * dt;
+        this.y += this.vel.y * dt;
+        this.age += dt;
+    },
+
+    recycle : function (x, y, vx, vy) {
+        var i = 0;
+        this.x = x;
+        this.y = y;
+        this.prevx = x;
+        this.prevy = y;
+        this.age = 0;
+        this.vel.x = vx;
+        this.vel.y = vy;
+        for (i = 0; i < this.numTracers; i += 1) {
+            this.trail[i].x = x;
+            this.trail[i].y = y;
+        }
+    },
+
+    trace: function () {
+        var i = 0, n = this.numTracers;
+        for (i = 0; i < n; i += 1) {
+            this.trail[i].age += 1;
+        }
+        if (n > 0) {
+            this.trail.unshift(this.trail.pop());
+            this.trail[0].x = this.x;
+            this.trail[0].y = this.y;
+            this.trail[0].age = 0;
+        }
+    },
+ 
+    update: function (dt) {
+        this.move(dt);
+    },
+
+    draw: function (canvas, color, alpha) {
+        var i = 0, t1, t2, c = color;
+        alpha = alpha || 1.0;
+        this.trace();
+        canvas.circle(this.x, this.y, this.radius * 2, c, 0.25 * alpha);
+        canvas.circle(this.x, this.y, this.radius, c, alpha);
+        for (i = 1; i < this.numTracers; i += 1) {
+            t1 = this.trail[i - 1];
+            t2 = this.trail[i];
+            alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
+            canvas.line(t1, t2, this.traceWidth, c, alpha);
+        }
+    }
+ 
+};
 
 var ParticleSystem = function (x, y, image) {
     this.x = x;
@@ -177,31 +241,62 @@ var ParticleSystem = function (x, y, image) {
     this.image = image;
     this.speed = 0.02;
     this.alpha = 1.0;
+    this.maxAge = 5000;
     this.particles = [];
+    this.pool = [];
+    this.active = [];
 };
 
 ParticleSystem.prototype = {
 
-    // ParticleEmitter().init function
-    // xScale = number between 0  and 1. 0 = on left side 1 = on top
-    // yScale = number between 0  and 1. 0 = on top 1 = on bottom
-    // particles = number of particles
-    // image = smoke graphic for each particle
-    init: function (x, y, nParticles, image) {
+    init: function (x, y, nParticles, nTracers, image) {
         var i = 0;
         this.x = x;
         this.y = y;
         this.image = image;
         this.dieRate = 0.95;
+        this.maxAge = 5000;
         for (i = 0; i < nParticles; i += 1) {
-            this.particles.push(new PassiveParticle(x, y, 1));
+            this.pool.push(new PassiveParticle(x, y, 5, nTracers));
         }
     },
- 
+    
+    burst: function (x, y, speed, nParticles) {
+        var i = 0, theta, p;
+        this.speed = speed;
+        for (i = 0; i < nParticles; i += 1) {
+            if (this.pool.length <= 0) {
+                break;
+            }
+            theta = Math.random() * Math.PI * 2;
+            p = this.pool.pop();
+            p.recycle(x,
+                      y,
+                      Math.sin(theta) * speed,
+                      Math.cos(theta) * speed);
+            this.active.push(p);
+        }
+    },
+
     update: function (dt) {
-        var i = 0;
-        for (i = 0; i < this.particles.length; i += 1) {
-            this.particles[i].update(dt);
+        var i = 0, theta, p;
+        for (i = this.active.length - 1; i >= 0; i -= 1) {
+            this.active[i].update(dt);
+            //console.log(this.active[i].age);
+            if (this.active[i].age > this.maxAge) {
+                p = this.active.splice(i, 1)[0];
+                p.recycle(this.x, this.y, 0, 0);
+                this.pool.push(p);
+            }
+        }
+    },
+
+    draw: function (canvas, color) {
+        var i = 0, alpha;
+        for (i = 0; i < this.active.length; i += 1) {
+            alpha = 1 - this.active[i].age / this.maxAge;
+            this.active[i].draw(canvas, color, alpha);
+            //this.active[i].trace();
         }
     }
 };

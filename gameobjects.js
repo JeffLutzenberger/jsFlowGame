@@ -145,7 +145,16 @@ Influencer.prototype.draw = function (canvas, color, dt) {
                           0);
     canvas.circle(this.x, this.y, this.radius * 2 * this.sizeFactor, color, 0.25);
     canvas.circle(this.x, this.y, this.radius * this.sizeFactor, color, 0.25);
+    canvas.radialGradient(this.x,
+                          this.y,
+                          this.radius * this.sizeFactor * 0.25,
+                          this.radius * 1.5 * this.sizeFactor,
+                          [255, 255, 255],
+                          color,
+                          0.9,
+                          0.0);
     if (this.showInfluenceRing) {
+        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, [255, 255, 255], 0.9);
         canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color, 1);
     }
     if (this.selected) {

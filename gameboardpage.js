@@ -23,7 +23,7 @@ var GameboardPage = function (canvas) {
     this.finalZoomFactor = 1;
     this.zoomTransition = false;
     this.loadLevels();
-    this.camera.setExtents(768 * 3, 1024 * 3);
+    this.camera.setExtents(768, 1024);
     //this.camera.setCenter(768 * 3 * 0.5, 1024 * 3 * 0.5);
     this.camera.setCenter(0, 0);
     this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
