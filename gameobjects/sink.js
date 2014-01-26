@@ -33,6 +33,8 @@ var Sink = function (x, y, r, influenceRadius, force) {
     this.grabber = new Rectangle(x + Math.cos(this.theta) * this.r,
                                  y + Math.sin(this.theta) * this.r,
                                  20, 20, 0);
+    this.grabberFadeLength = 1000;
+    this.grabberFadeDt = 0;
     this.lockeSizeFactor = 0;
     this.pulsar = new ParticleSystem(this.x, this.y);
     this.pulsar.init(this.x, this.y, 200, 10);
@@ -79,8 +81,6 @@ Sink.prototype.hitGrabber = function (p) {
     var r = new Rectangle(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
                           this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
                           20, 20, 0);
-    console.log(p);
-    console.log(r);
     return r.bbHit(p);
 };
 
@@ -92,7 +92,6 @@ Sink.prototype.moveGrabber = function (p) {
     if (v.x < 0) {
         this.theta -= Math.PI;
     }
-    console.log("move grabber...");
 };
 
 Sink.prototype.contain = function (p) {
@@ -123,22 +122,19 @@ Sink.prototype.update = function (dt, hit) {
     if (this.energy / this.maxEnergy >= this.levelUpEnergyFactor && this.leveledUp === false && this.levelUpCallback) {
         //level up: create some new random objects
         this.leveledUp = true;
-        this.levelUpCallback();
+        $(document).trigger('levelup');
+        //this.levelUpCallback();
     }
     if (this.leveledUp) {
+        //start grabber fade
+        if (this.grabberFadeDt < this.grabberFadeLength) {
+            this.grabberFadeDt += dt;
+        } else {
+            this.grabberFadeDt = this.grabberFadeLength;
+        }
         this.energy = this.levelUpEnergyFactor * this.maxEnergy;
     }
-    /*if (this.energy / this.maxEnergy >= 0.9) {
-        this.continuousPulse = true;
-        this.pulsedt += dt;
-        if (this.pulsedt >= this.pulseRate) {
-            this.pulsedt = 0;
-            this.pulsar.burst(this.x, this.y, 0.5, this.burstSize);
-        }
-    } else {
-        this.continuousPulse = false;
-    }*/
-    
+       
     this.continuousPulse = true;
     this.pulsedt += dt;
     
@@ -153,16 +149,13 @@ Sink.prototype.update = function (dt, hit) {
     }
 
     this.ringpulsedt += dt;
-    //console.log(this.pulsedt);
-    //this.ringpulselength = this.pulseRates[this.getOrbitalShell()];
     if (this.ringpulsedt > this.ringpulselength) {
         this.ringpulsedt = 0;
         this.pulsar.burst(this.x, this.y, 0.5, this.burstSize);
     }
 
-    //console.log(this.flashdt);
     this.updateOrbitals(dt);
-    this.pulsar.update(dt);
+    //this.pulsar.update(dt);
 };
 
 Sink.prototype.getOrbitalShell = function () {
@@ -223,6 +216,13 @@ Sink.prototype.drawOrbitals = function (canvas, color) {
     }
 };
 
+Sink.prototype.drawPulseRing = function (canvas, color) {
+    var r = this.ringpulsedt * this.radius * 0.05,
+        alpha = 1 - this.ringpulsedt / this.ringpulselength;
+    canvas.circleOutline(this.x, this.y, r, 10, [255, 255, 255], alpha * 0.15);
+    canvas.circleOutline(this.x, this.y, r, 20, color, alpha * 0.25);
+};
+
 Sink.prototype.tonemap = function (n) {
     var exposure = 1.0;
     return (1 - Math.pow(2, -n * 0.005 * exposure)) * 255;
@@ -262,7 +262,8 @@ Sink.prototype.draw = function (canvas, color) {
         intensity = 1000,
         i,
         radius,
-        alpha;
+        alpha,
+        grabberAlpha;
     this.sizeFactor = 1 + this.radius * this.energy / 1000;
 
     canvas.radialGradient(this.x,
@@ -291,7 +292,8 @@ Sink.prototype.draw = function (canvas, color) {
     if (this.leveledUp) {
         //draw the a pulsing outer ring to indicate this sink has been locked in
         radius = this.radius * this.sizeFactor;
-        alpha = 1;//Math.sin(this.ringpulsedt / this.ringpulselength * Math.PI) + 0.2;
+        //alpha = 1;//Math.sin(this.ringpulsedt / this.ringpulselength * Math.PI) + 0.2;
+        alpha = this.grabberFadeDt / this.grabberFadeLength;
         canvas.radialGradient(this.x,
                               this.y,
                               radius,
@@ -310,21 +312,23 @@ Sink.prototype.draw = function (canvas, color) {
                               40,
                               color,
                               color,
-                              0.5,
+                              0.5 * alpha,
                               0);
         canvas.circle(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
                       this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
-                      20, color, 1.0);
+                      20, color, alpha);
         canvas.radialGradient(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
                               this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
                               5,
                               50,
                               [255, 255, 255],
                               color,
-                              1.0,
+                              alpha,
                               0.0);
     } else {
-        this.pulsar.draw(canvas, color);
+        //this.pulsar.draw(canvas, color);
+        //draw pulse ring...
+        this.drawPulseRing(canvas, color);
         if (this.flashdt >= 0 && this.flashdt < this.flashlength) {
             alpha = this.getOrbitalShell() / this.maxOrbitals * 0.75;
             alpha *= Math.sin(this.flashdt / this.flashlength * Math.PI) * 0.5;
@@ -358,6 +362,17 @@ Sink.prototype.draw = function (canvas, color) {
     }
 
     this.drawOrbitals(canvas, c);
+};
+
+
+Sink.prototype.serialize = function () {
+    var obj = {};
+    obj.x = this.x;
+    obj.y = this.y;
+    obj.radius = this.radius;
+    obj.influenceRadius = this.influenceRadius;
+    obj.force = this.force;
+    return obj;
 };
 
 var sinkFromJson = function (j) {

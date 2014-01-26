@@ -26,15 +26,7 @@ Influencer.prototype.gameObjectType = function () {
 };
 
 Influencer.prototype.update = function (dt, hit) {
-    /*if (hit) {
-        this.sizeFactor = Math.min(this.maxSizeFactor, this.sizeFactor + this.growthFactor);
-        this.hitAlpha = Math.min(this.maxHitAlpha, this.hitAlpha + this.growthFactor);
-    }
-    this.hitAlpha = Math.max(0.0, this.hitAlpha - this.decayFactor);
-    this.sizeFactor = Math.max(1.0, this.sizeFactor - this.decayFactor);
-    */
     this.pulsedt += dt;
-    //console.log(this.pulsedt);
     if (this.pulsedt > this.pulselength) {
         this.pulsedt = 0;
     }
@@ -47,13 +39,6 @@ Influencer.prototype.draw = function (canvas, color, dt) {
         radius = this.radius,
         alpha;
 
-    /*canvas.circle(
-        this.x,
-        this.y,
-        this.radius * 4 * this.sizeFactor,
-        [255, 255, 255],
-        this.hitAlpha
-    );*/
     canvas.radialGradient(this.x,
                           this.y,
                           this.radius,
@@ -73,10 +58,10 @@ Influencer.prototype.draw = function (canvas, color, dt) {
                           0.9,
                           0.0);
     if (this.showInfluenceRing) {
-        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, [255, 255, 255], 0.9);
-        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color, 1);
+        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, [255, 255, 255], 0.5);
+        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color, 0.75);
     }
-    if (this.force > 0 ) {
+    if (this.force > 0) {
         radius = this.pulsedt / this.pulselength * this.radius * this.sizeFactor;
     } else {
         radius = (1 - this.pulsedt / this.pulselength) * this.radius * this.sizeFactor;

@@ -341,7 +341,8 @@ EditorUI.prototype = {
     },
 
     save: function () {
-        var json = JSON.stringify(this.waterfall.saveLevel(), undefined, 2);
+        //var json = JSON.stringify(this.waterfall.saveLevel(), undefined, 2);
+        var json = JSON.stringify(this.waterfall.saveLevel());
         $('#json').html('<pre>' + json + '</pre>');
     },
 

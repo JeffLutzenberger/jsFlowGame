@@ -48,19 +48,16 @@ var Waterfall = function (canvas) {
     this.sizeFactor = 1;
     this.currentDrawTime = 0;
     this.lastDrawTime = 0;
-    this.iLevel = 1;
-    //smoke image
-    this.smokeImage = new Image();
-    this.smokeImage.src = 'smoke.png';
-    //this.traileffect = new TrailEffect(this.canvas);
-    //this.nebula = new NebulaGenerator(this.canvas);
-    //this.backgroundeffect = new BackgroundEffect(this.w * 0.5, this.h * 0.5, 5, [0, 0, 0]); 
-    this.starfield = new StarField(this.w * 0.5, this.h * 0.5); 
-    this.starfield.init();
 };
 
 Waterfall.prototype = {
-    
+   
+    setHandlers: function () {
+        $(document).bind('levelup', $.proxy(function (e) {
+            this.levelUp();
+        }, this));
+    },
+
     clear: function () {
         this.stars.length = 0;
         this.sources.length = 0;
@@ -228,26 +225,35 @@ Waterfall.prototype = {
     },
 
     levelUp: function () {
-        var x, y;
-        switch (this.iLevel) {
-        case 1:
-            x = -768 * 1.5;
-            y = -1024 * 1.5;
-            break;
-        case 2:
-            x = -768 * 0.5;
-            y = -1024 * 1.5;
-            break;
-        case 3:
-            x = 768 * 0.5;
-            y = -1024 * 1.5;
-            break;
+        //add a sink and a few influencers
+        //influencers should be clustered near our sinks
+        //
+        var locs = [[-768 * 1.5, -1024 * 1.5],
+                    [-768 * 0.5, -1024 * 1.5],
+                    [768 * 0.5, -1024 * 1.5],
+                    [768 * 0.5, -1024 * 0.5],
+                    [768 * 0.5, 1024 * 0.5]],
+            x,
+            y,
+            obj;
+
+        if (this.level > locs.length) {
+            return;
         }
-        console.log(this.iLevel);
-        this.addLevel(levels[this.iLevel += 1], x, y);
         
-        /*console.log("leveling up...");
-        //console.log(this);
+        x = locs[this.level][0];
+        y = locs[this.level][1];
+
+        this.addLevel(levels[this.level], x, y);
+
+        this.level += 1;
+
+        //obj = new Sink(x + 768 * 0.5, y + 1024 * 0.5, 15, 100, 1);
+        //obj.showInfluenceRing = true;
+        //this.sinks.push(obj);
+       
+        /*
+        console.log("leveling up...");
         var i = Math.floor((Math.random() * 3)) * 768 - 768,
             j = Math.floor((Math.random() * 3)) * 1024 - 1024,
             x,
@@ -439,6 +445,7 @@ Waterfall.prototype = {
                     p.y = s.y + Math.sin(s.theta) * s.radius * s.sizeFactor * 10;
                     p.vel.x = Math.cos(s.theta) * 10;
                     p.vel.y = Math.sin(s.theta) * 10;
+                    p.age = 0;
                     return false;
                 } else {
                     this.score += 1;
@@ -471,7 +478,6 @@ Waterfall.prototype = {
             if (this.sinks[i].leveledUp && this.sinks[i].hitGrabber(p)) {
                 this.interactable = this.sinks[i];
                 this.interactable.selected = true;
-                console.log("hit grabber");
                 return true;
             }
         }
@@ -602,13 +608,17 @@ Waterfall.prototype = {
     },
 
     saveLevel: function () {
-        var level = {};
+        var i, level = {};
         level.nParticles = this.nParticles;
         level.buckets = this.buckets;
         level.influencers = this.influencers;
         level.obstacles = this.obstacles;
         level.portals = this.portals;
-        level.sinks = this.sinks;
+        level.sinks = [];
+        for (i = 0; i < this.sinks.length; i += 1) {
+            console.log(this.sinks[i]);
+            level.sinks.push(this.sinks[i].serialize());
+        }
         level.sources = this.sources;
         level.stars = this.stars;
         return level;

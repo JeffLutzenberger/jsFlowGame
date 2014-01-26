@@ -24,7 +24,6 @@ var GameboardPage = function (canvas) {
     this.zoomTransition = false;
     this.loadLevels();
     this.camera.setExtents(768, 1024);
-    //this.camera.setCenter(768 * 3 * 0.5, 1024 * 3 * 0.5);
     this.camera.setCenter(0, 0);
     this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
@@ -54,7 +53,6 @@ GameboardPage.prototype = {
 
         $(document).bind('keypress', $.proxy(function (e) {
             var obj, obj2;
-            //console.log(e.keyCode);
             switch (e.keyCode) {
             case 45: //minus
                 this.home();
@@ -63,6 +61,12 @@ GameboardPage.prototype = {
                 break;
             }
         }, this));
+
+        $(document).bind('levelup', $.proxy(function (e) {
+            this.home();
+        }, this));
+
+        this.waterfall.setHandlers();
          
     },
 
@@ -103,7 +107,6 @@ GameboardPage.prototype = {
 
         $(document).bind('keypress', $.proxy(function (e) {
             var obj, obj2;
-            //console.log(e.keyCode);
             switch (e.keyCode) {
             case 45: //minus
                 this.home();
@@ -111,7 +114,14 @@ GameboardPage.prototype = {
             default:
                 break;
             }
-        }, this)); 
+        }, this));
+
+        $(document).bind('levelup', $.proxy(function (e) {
+            this.home();
+        }, this));
+        
+        this.waterfall.setHandlers();
+
     },
 
     update: function (dt) {
