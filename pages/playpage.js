@@ -34,7 +34,11 @@ PlayPage.prototype = {
             }
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top));
-            if (this.waterfall.interactable) {
+            console.log(this.waterfall.interactable.gameObjectType());
+            if (this.waterfall.interactable.gameObjectType() === "Sink") {
+                //move the sinks grabber...
+               console.log("move grabber"); 
+            } else if (this.waterfall.interactable) {
                 this.waterfall.interactable.x = x / this.canvas.m;
                 this.waterfall.interactable.y = y / this.canvas.m;
             }

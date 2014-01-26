@@ -161,6 +161,7 @@ var PassiveParticle = function (x, y, r, numTracers) {
     this.y = y;
     this.prevx = x;
     this.prevy = y;
+    this.particlelength = 0;//50;
     this.age = 0;
     this.dir = new Vector(1, 0);
     this.vel = new Vector(1, 0);
@@ -168,7 +169,7 @@ var PassiveParticle = function (x, y, r, numTracers) {
     this.radius = r || 4;
     this.trail = [];
     this.numTracers = numTracers || 0;
-    this.traceWidth = 1;
+    this.traceWidth = 2;
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y);
@@ -222,13 +223,31 @@ PassiveParticle.prototype = {
         var i = 0, t1, t2, c = color;
         alpha = alpha || 1.0;
         this.trace();
-        canvas.circle(this.x, this.y, this.radius * 2, c, 0.25 * alpha);
-        canvas.circle(this.x, this.y, this.radius, c, alpha);
+        if (this.particlelength > 0) {
+            canvas.linexy(this.x,
+                          this.y,
+                          this.x - this.vel.x * this.particlelength,
+                          this.y - this.vel.y * this.particlelength,
+                          10,
+                          c,
+                          alpha * 0.25);
+            canvas.linexy(this.x,
+                          this.y,
+                          this.x - this.vel.x * this.particlelength,
+                          this.y - this.vel.y * this.particlelength,
+                          5,
+                          c,
+                          alpha);
+        } else {
+            canvas.circle(this.x, this.y, this.radius * 2, c, 0.25 * alpha);
+            canvas.circle(this.x, this.y, this.radius, c, alpha);
+        }
         for (i = 1; i < this.numTracers; i += 1) {
             t1 = this.trail[i - 1];
             t2 = this.trail[i];
             alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
             canvas.line(t1, t2, this.traceWidth, c, alpha);
+            //canvas.line(t1, t2, this.traceWidth * 5, c, alpha * 0.25);
         }
     }
  

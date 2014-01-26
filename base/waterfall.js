@@ -48,6 +48,7 @@ var Waterfall = function (canvas) {
     this.sizeFactor = 1;
     this.currentDrawTime = 0;
     this.lastDrawTime = 0;
+    this.iLevel = 1;
     //smoke image
     this.smokeImage = new Image();
     this.smokeImage.src = 'smoke.png';
@@ -182,6 +183,7 @@ Waterfall.prototype = {
             o.x += x;
             o.y += y;
             o.updatePoints();
+            o.levelUpCallback = $.proxy(this.levelUp, this);
             this.sinks.push(o);
         }
 
@@ -226,7 +228,25 @@ Waterfall.prototype = {
     },
 
     levelUp: function () {
-        console.log("leveling up...");
+        var x, y;
+        switch (this.iLevel) {
+        case 1:
+            x = -768 * 1.5;
+            y = -1024 * 1.5;
+            break;
+        case 2:
+            x = -768 * 0.5;
+            y = -1024 * 1.5;
+            break;
+        case 3:
+            x = 768 * 0.5;
+            y = -1024 * 1.5;
+            break;
+        }
+        console.log(this.iLevel);
+        this.addLevel(levels[this.iLevel += 1], x, y);
+        
+        /*console.log("leveling up...");
         //console.log(this);
         var i = Math.floor((Math.random() * 3)) * 768 - 768,
             j = Math.floor((Math.random() * 3)) * 1024 - 1024,
@@ -263,7 +283,7 @@ Waterfall.prototype = {
         //obj.showInfluenceRing = this.showInfluenceRing;
         //this.waterfall.influencers.push(obj);
         //this.waterfall.interactableObjects.push(obj);
-        //this.selectObject(obj);
+        //this.selectObject(obj);*/
     },
 
     update: function (dt) {
@@ -276,7 +296,11 @@ Waterfall.prototype = {
         for (i = 0; i < this.sinks.length; i += 1) {
             this.sinks[i].update(dt);
         }
- 
+        
+        for (i = 0; i < this.influencers.length; i += 1) {
+            this.influencers[i].update(dt);
+        }
+
         if (this.sources.length > 0) {
             if (this.particles.length < this.nParticles) {
                 this.addParticle();
@@ -410,28 +434,19 @@ Waterfall.prototype = {
         for (i = 0; i < this.sinks.length; i += 1) {
             s = this.sinks[i];
             if (s.hit(p)) {
-                //s.update(this.dt, true);
-                //s.hitsThisFrame += 1;
-                this.score += 1;
-                this.sumFlux += 1;
-                this.recycleParticle(p);
-                s.addEnergy();
-                //this.curTrap = Math.max(this.maxTrap, this.curTrap + 1);
-                //s.nebula.createNebula(this.dt, 150, 150);
-                /*
-                $.extend(this.nebula.options, this.nebula.presets.x);
-                this.nebula.options.red = 1.0;
-                this.nebula.options.green =  0.3;
-                this.nebula.options.blue = 0.3;
-                this.nebula.createNebula(this.dt, 768 * 0.25, 1025 * 0.25);
-
-                $.extend(this.nebula.options, this.nebula.defaultOptions);
-                this.nebula.options.red = 0.3;
-                this.nebula.options.green =  0.3;
-                this.nebula.options.blue = 1.0;
-                this.nebula.createNebula(this.dt, 768 * 0.25, 1025 * 0.25);
-                */
-                return true;
+                if (s.leveledUp) {
+                    p.x = s.x + Math.cos(s.theta) * s.radius * s.sizeFactor * 10;
+                    p.y = s.y + Math.sin(s.theta) * s.radius * s.sizeFactor * 10;
+                    p.vel.x = Math.cos(s.theta) * 10;
+                    p.vel.y = Math.sin(s.theta) * 10;
+                    return false;
+                } else {
+                    this.score += 1;
+                    this.sumFlux += 1;
+                    this.recycleParticle(p);
+                    s.addEnergy();
+                    return true;
+                }
             }
             //s.update(this.dt, false);
             v2 = new Vector(s.x - p.x, s.y - p.y);
@@ -451,6 +466,14 @@ Waterfall.prototype = {
         if (this.interactable) {
             this.interactable.selected = false;
             this.interactable = undefined;
+        }
+        for (i = 0; i < this.sinks.length; i += 1) {
+            if (this.sinks[i].leveledUp && this.sinks[i].hitGrabber(p)) {
+                this.interactable = this.sinks[i];
+                this.interactable.selected = true;
+                console.log("hit grabber");
+                return true;
+            }
         }
         for (i = 0; i < this.interactableObjects.length; i += 1) {
             if (this.interactableObjects[i].bbHit(p)) {

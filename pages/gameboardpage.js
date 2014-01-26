@@ -36,6 +36,7 @@ GameboardPage.prototype = {
 
     setLevelSelectHandlers: function () {
         $('canvas').unbind();
+        $(document).unbind();
         
         $('canvas').bind('mousemove', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
@@ -67,6 +68,7 @@ GameboardPage.prototype = {
 
     setPlayHandlers: function () {
         $('canvas').unbind();
+        $(document).unbind();
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
@@ -88,13 +90,28 @@ GameboardPage.prototype = {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top)),
                 p = this.camera.screenToWorld(x, y);
-            if (this.waterfall.interactable) {
+            
+            if (this.waterfall.interactable.gameObjectType() === "Sink") {
+                //move the sinks grabber...
+                this.waterfall.interactable.moveGrabber(p);
+            } else if (this.waterfall.interactable) {
                 this.waterfall.interactable.x = p.x;
                 this.waterfall.interactable.y = p.y;
             }
 
         }, this));
 
+        $(document).bind('keypress', $.proxy(function (e) {
+            var obj, obj2;
+            //console.log(e.keyCode);
+            switch (e.keyCode) {
+            case 45: //minus
+                this.home();
+                break;
+            default:
+                break;
+            }
+        }, this)); 
     },
 
     update: function (dt) {
@@ -209,14 +226,8 @@ GameboardPage.prototype = {
 
             this.camera.reset(this.waterfall.bgColor);
 
-            //this.camera.push();
-            //this.waterfall.backgroundeffect.draw(this.canvas);
-            //this.waterfall.starfield.draw(this.canvas);
-            //this.camera.pop();
-
             this.camera.show();
            
-            //this.canvas.ctx.putImageData(this.waterfall.traileffect.buffer, 0, 0);
             /*if (!this.playMode) {
                 this.canvas.grid(this.gridDx,
                              this.gridDy,
