@@ -19,27 +19,22 @@ var Sink = function (x, y, r, influenceRadius, force) {
     this.orbitals = [];
     this.energy = 0;
     this.maxEnergy = 100;
-    this.levelUpEnergyFactor = 0.25;
+    this.lockedInEnergyFactor = 0.25;
     this.energyPerOrbital = 10;
-    this.energyMovingAverage = 0;
-    this.sampleRate = 1; //every second
-    this.sampleTotalTime = 0;
     this.flash = false;
     this.flashdt = 1e6;
     this.flashlength = 500;
     this.burstSize = 30;
-    this.levelUpCallback = undefined;
     this.leveledUp = false;
     this.grabber = new Rectangle(x + Math.cos(this.theta) * this.r,
                                  y + Math.sin(this.theta) * this.r,
                                  20, 20, 0);
     this.grabberFadeLength = 1000;
     this.grabberFadeDt = 0;
-    this.lockeSizeFactor = 0;
+    //this.lockSizeFactor = 0;
     this.pulsar = new ParticleSystem(this.x, this.y);
     this.pulsar.init(this.x, this.y, 200, 10);
     this.continuousPulse = false; //when we hit 90% of max
-    this.pulseRate = 1; //seconds
     this.pulseRates = [5000, 4000, 3000, 2000, 1000, 500, 250, 100]; //milliseconds
     this.ringpulsedt = 0;
     this.ringpulselength = 2000;
@@ -119,11 +114,11 @@ Sink.prototype.contain = function (p) {
 Sink.prototype.update = function (dt, hit) {
     var i;
     this.energy = Math.max(0, this.energy - this.energy * 0.0001 * dt);
-    if (this.energy / this.maxEnergy >= this.levelUpEnergyFactor && this.leveledUp === false && this.levelUpCallback) {
+    this.brightness = Math.min(this.brightness, 1.0);
+    if (this.energy / this.maxEnergy >= this.lockedInEnergyFactor && this.leveledUp === false) {
         //level up: create some new random objects
         this.leveledUp = true;
         $(document).trigger('levelup');
-        //this.levelUpCallback();
     }
     if (this.leveledUp) {
         //start grabber fade
@@ -132,7 +127,7 @@ Sink.prototype.update = function (dt, hit) {
         } else {
             this.grabberFadeDt = this.grabberFadeLength;
         }
-        this.energy = this.levelUpEnergyFactor * this.maxEnergy;
+        this.energy = this.lockedInEnergyFactor * this.maxEnergy;
     }
        
     this.continuousPulse = true;

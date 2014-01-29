@@ -37,6 +37,13 @@ Canvas.prototype = {
         return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
     },
 
+    brighten: function (color, n) {
+        var r = color[0] + Math.round(n * 255),
+            g = color[1] + Math.round(n * 255),
+            b = color[2] + Math.round(n * 255);
+        return [Math.min(r, 255), Math.min(g, 255), Math.min(b, 255)];
+    },
+
     circle: function (x, y, r, color, alpha) {
         this.ctx.fillStyle = this.rgba(color, alpha);
         this.ctx.beginPath();

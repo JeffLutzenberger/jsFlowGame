@@ -14,6 +14,7 @@ var Particle = function (x, y, r) {
     this.trail = [];
     this.numTracers = 30;
     this.traceWidth = 1;
+    this.brightness = 0;
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y);
@@ -30,6 +31,7 @@ Particle.prototype = {
         this.prevx = x;
         this.prevy = y;
         this.age = 0;
+        this.brightness = 0;
         this.vel.x = vx;
         this.vel.y = vy;
         for (i = 0; i < this.numTracers; i += 1) {
@@ -71,16 +73,17 @@ Particle.prototype = {
     
     draw: function (canvas, color) {
         var i = 0, alpha = 1.0, t1, t2,
-            c = color;
+            c = canvas.brighten(color, this.brightness);
         canvas.circle(this.x, this.y, this.radius * 2, c, 0.25);
-        canvas.circle(this.x, this.y, this.radius, c, 1);
+        canvas.circle(this.x, this.y, this.radius, color, 1);
         canvas.circle(this.x, this.y, this.radius * 0.5, [255, 255, 255], 1);
         for (i = 1; i < this.numTracers; i += 1) {
             t1 = this.trail[i - 1];
             t2 = this.trail[i];
             alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
             //color = 'rgba(0,153,255,' + alpha + ')';
-            canvas.line(t1, t2, this.traceWidth, c, alpha);
+            canvas.line(t1, t2, this.traceWidth * 2, c, 0.25);
+            canvas.line(t1, t2, this.traceWidth, color, alpha);
         }
     },
 

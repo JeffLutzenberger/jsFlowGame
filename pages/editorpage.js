@@ -40,6 +40,7 @@ EditorPage.prototype = {
 
     setHandlers: function () {
         $('canvas').unbind();
+        $(document).unbind();
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
@@ -73,10 +74,20 @@ EditorPage.prototype = {
             x = this.waterfall.snapx(p.x);
             y = this.waterfall.snapy(p.y);
 
-            if (this.waterfall.interactable) {
+            /*if (this.waterfall.interactable) {
+                this.waterfall.interactable.setxy(x, y);
+                this.editorui.gameObjectForm.updateLocation();
+            }*/
+
+            if (this.waterfall.interactable.gameObjectType() === "Sink" && 
+                this.waterfall.interactable.grabberSelected) {
+                //move the sinks grabber...
+                this.waterfall.interactable.moveGrabber(p);
+            } else if (this.waterfall.interactable) {
                 this.waterfall.interactable.setxy(x, y);
                 this.editorui.gameObjectForm.updateLocation();
             }
+
         }, this));
 
         $(document).bind('keypress', $.proxy(function (e) {
@@ -131,6 +142,9 @@ EditorPage.prototype = {
                 break;
             }
         }, this));
+
+        this.waterfall.setHandlers();
+
     },
 
     update: function (dt) {
@@ -302,7 +316,7 @@ EditorUI.prototype = {
     },
 
     addSource: function () {
-        var obj = new Source(200, 100, 100, 25, 0, 5);
+        var obj = new Source(200, 100, 25, 25, 0, 5);
         this.waterfall.sources.push(obj);
         this.waterfall.interactableObjects.push(obj);
         this.selectObject(obj);

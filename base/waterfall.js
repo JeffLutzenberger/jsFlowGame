@@ -1,6 +1,7 @@
 'use strict';
 
 var Waterfall = function (canvas) {
+    this.canvas = canvas;
     this.stars = [];
     this.sources = [];
     this.sinks = [];
@@ -10,7 +11,6 @@ var Waterfall = function (canvas) {
     this.obstacles = [];
     this.particles = [];
     this.nParticles = 0;
-    this.canvas = canvas;
     this.score = 0;
     this.flux = 0;
     this.sumFlux = 0;
@@ -159,14 +159,6 @@ Waterfall.prototype = {
         x = x || 0;
         y = y || 0;
 
-        //this.clear();
-            
-        //this.nParticles += level.nParticles;
-
-        //for (i = 0; i < starList.length; i += 1) {
-        //    this.stars.push(starList[i]);
-        //}
-
         for (i = 0; i < sourceList.length; i += 1) {
             o = sourceFromJson(sourceList[i]);
             o.x += x;
@@ -248,48 +240,6 @@ Waterfall.prototype = {
 
         this.level += 1;
 
-        //obj = new Sink(x + 768 * 0.5, y + 1024 * 0.5, 15, 100, 1);
-        //obj.showInfluenceRing = true;
-        //this.sinks.push(obj);
-       
-        /*
-        console.log("leveling up...");
-        var i = Math.floor((Math.random() * 3)) * 768 - 768,
-            j = Math.floor((Math.random() * 3)) * 1024 - 1024,
-            x,
-            y,
-            obj,
-            v,
-            theta;
-        
-        x = 768 * Math.random() + i;
-        y = 1024 * Math.random() + j;
-        console.log(x + " " + y);
-        obj = new Sink(x, y, 15, 100, 1),
-        obj.showInfluenceRing = true;
-        this.sinks.push(obj);
-
-        x = 768 * Math.random() + i;
-        y = 1024 * Math.random() + j;
-        obj = new Influencer(x, y, 15, 100, -0.5);
-        obj.showInfluenceRing = true;
-        this.interactableObjects.push(obj);
-        this.influencers.push(obj);
-
-        //add source pointing at center-ish...
-        x = 768 * Math.random() + i;
-        y = 1024 * Math.random() + j;
-        v = new Vector(x, y).normalize();
-        theta = Math.sin(-v.y) * 180 / Math.PI;
-        
-        obj = new Source(x, y, 50, 50, theta, 5);
-        this.sources.push(obj);
-
-        //var obj = new Influencer(400, 100, 15, 100, -0.5);
-        //obj.showInfluenceRing = this.showInfluenceRing;
-        //this.waterfall.influencers.push(obj);
-        //this.waterfall.interactableObjects.push(obj);
-        //this.selectObject(obj);*/
     },
 
     update: function (dt) {
@@ -445,6 +395,7 @@ Waterfall.prototype = {
                     p.y = s.y + Math.sin(s.theta) * s.radius * s.sizeFactor * 10;
                     p.vel.x = Math.cos(s.theta) * 10;
                     p.vel.y = Math.sin(s.theta) * 10;
+                    p.brightness += 0.1;
                     p.age = 0;
                     return false;
                 } else {
@@ -472,11 +423,13 @@ Waterfall.prototype = {
         var i, p = new Particle(x, y);
         if (this.interactable) {
             this.interactable.selected = false;
+            this.interactable.grabberSelected = false;
             this.interactable = undefined;
         }
         for (i = 0; i < this.sinks.length; i += 1) {
             if (this.sinks[i].leveledUp && this.sinks[i].hitGrabber(p)) {
                 this.interactable = this.sinks[i];
+                this.interactable.grabberSelected = true;
                 this.interactable.selected = true;
                 return true;
             }

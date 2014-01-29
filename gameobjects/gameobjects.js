@@ -7,6 +7,7 @@ var Rectangle = function (x, y, w, h, theta) {
     this.h = h || 100;
     this.theta = theta || 0;
     this.selected = false;
+    this.grabberSelected = false;
     this.interactable = false;
     this.updatePoints();
 };
