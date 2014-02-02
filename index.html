@@ -25,11 +25,15 @@
 
     <script type="text/javascript" charset="utf-8" src="base/vector.js"></script>
     <script type="text/javascript" charset="utf-8" src="base/particle.js"></script>
+    <script type="text/javascript" charset="utf-8" src="base/grid.js"></script>
     <script type="text/javascript" charset="utf-8" src="gameobjects/gameobjects.js"></script>
     <script type="text/javascript" charset="utf-8" src="gameobjects/influencer.js"></script>
     <script type="text/javascript" charset="utf-8" src="gameobjects/sink.js"></script>
     <script type="text/javascript" charset="utf-8" src="gameobjects/source.js"></script>
+    <script type="text/javascript" charset="utf-8" src="gameobjects/star.js"></script>
     <script type="text/javascript" charset="utf-8" src="levels.js"></script>
+    <script type="text/javascript" charset="utf-8" src="levels/level3.js"></script>
+    <script type="text/javascript" charset="utf-8" src="base/levelloader.js"></script>
     <script type="text/javascript" charset="utf-8" src="base/canvas.js"></script>
     <script type="text/javascript" charset="utf-8" src="effects/blur.js"></script>
     <script type="text/javascript" charset="utf-8" src="effects/traileffect.js"></script>
@@ -74,12 +78,19 @@
                 </div>
                 <div class="col-md-5">
                     <div class="row">
+                        <span id="grid-size"></span>
+                    </div>
+                    <div class="row">
+                        <span id="editor-toggle"></span>
+                    </div>
+                    <div class="row">
                         <span id="bucket-button"></span>
                         <span id="influencer-button"></span>
                         <span id="obstacle-button"></span>
                         <span id="portal-button"></span>
                         <span id="source-button"></span>
                         <span id="sink-button"></span>
+                        <span id="star-button"></span>
                     </div>
                     <div class="row">
                         <span id="play-button"></span>

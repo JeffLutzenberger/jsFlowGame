@@ -1,11 +1,11 @@
 'use strict';
 
-var Influencer = function (x, y, r, influenceRadius, force) {
+var Influencer = function (x, y, r, force) {
     this.base = Rectangle;
     this.radius = r || 15;
     this.base(x, y, 2 * this.radius, 2 * this.radius, 0);
     this.force = force || 1;
-    this.influenceRadius = influenceRadius || 100;
+    this.influenceRadius = this.radius * 5;
     this.sizeFactor = 1;
     this.maxSizeFactor = 3;
     this.showInfluenceRing = true;
@@ -25,12 +25,48 @@ Influencer.prototype.gameObjectType = function () {
     return "Influencer";
 };
 
+Influencer.prototype.setRadius = function (val) {
+    this.radius = val;
+    this.influenceRadius = val * 5;
+    this.w = val;
+    this.h = val;
+};
+
 Influencer.prototype.update = function (dt, hit) {
     this.pulsedt += dt;
     if (this.pulsedt > this.pulselength) {
         this.pulsedt = 0;
     }
 };
+
+Influencer.prototype.drawGrabber = function (canvas, color, alpha) {
+    var size = 20,
+        dt1 = 0.3,
+        theta = this.force < 0 ? Math.PI : 0,
+        l = new Vector(this.x + this.radius * this.sizeFactor * 2, this.y),
+        r = new Vector(this.x - this.radius * this.sizeFactor * 2, this.y),
+        t = new Vector(this.x, this.y - this.radius * this.sizeFactor * 2),
+        b = new Vector(this.x, this.y + this.radius * this.sizeFactor * 2);
+
+    //right arrow
+    canvas.arrowHead(l, 50, Math.PI * 0.5 + theta, color, alpha * 0.25);
+    canvas.arrowHead(l, 30, Math.PI * 0.5 + theta, color, alpha * 0.5);
+    canvas.arrowHead(l, 20, Math.PI * 0.5 + theta, [255, 255, 255], alpha * 0.5);
+    //left arrow
+    canvas.arrowHead(r, 50, 1.5 * Math.PI + theta, color, alpha * 0.25);
+    canvas.arrowHead(r, 30, 1.5 * Math.PI + theta, color, alpha * 0.5);
+    canvas.arrowHead(r, 20, 1.5 * Math.PI + theta, [255, 255, 255], alpha * 0.5);
+    //top arrow
+    canvas.arrowHead(t, 50, Math.PI + theta, color, alpha * 0.25);
+    canvas.arrowHead(t, 30, Math.PI + theta, color, alpha * 0.5);
+    canvas.arrowHead(t, 20, Math.PI + theta, [255, 255, 255], alpha * 0.5);
+    //bottom arrow
+    canvas.arrowHead(b, 50, theta, color, alpha * 0.25);
+    canvas.arrowHead(b, 30, theta, color, alpha * 0.5);
+    canvas.arrowHead(b, 20, theta, [255, 255, 255], alpha * 0.5);
+
+};
+
 
 Influencer.prototype.draw = function (canvas, color, dt) {
     var decayFactor = 0.001,
@@ -39,6 +75,8 @@ Influencer.prototype.draw = function (canvas, color, dt) {
         radius = this.radius,
         alpha;
 
+    this.drawGrabber(canvas, color, 1.0);
+    
     canvas.radialGradient(this.x,
                           this.y,
                           this.radius,
@@ -81,14 +119,13 @@ Influencer.prototype.draw = function (canvas, color, dt) {
     canvas.circleOutline(this.x, this.y, radius * 7, 10, [255, 255, 255], 0.5 * alpha);
     canvas.circleOutline(this.x, this.y, radius * 7, 3, color, 0.7 * alpha);
  
-
     if (this.selected) {
         canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, [0, 100, 255], 0.25);
     }
 };
 
 var influencerFromJson = function (j) {
-    return new Influencer(j.x, j.y, j.radius, j.influenceRadius, j.force);
+    return new Influencer(j.x, j.y, j.radius, j.force);
 };
 
 

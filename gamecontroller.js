@@ -11,14 +11,14 @@ var GameController = function (canvas) {
     this.currentTime = 0;
     this.lastTime = 0;
     this.gameState = 'start';
-    this.gameboardPage = new GameboardPage(this.canvas);
-    this.editorPage = new EditorPage(this.canvas, this.waterfall);
+    this.gameboard = new Gameboard(this.canvas, 3, 3);
+    this.editorPage = new EditorPage(this.canvas, 3, 3);
     this.interval = setInterval(this.update.bind(this), this.clockrate);
-    this.gameboardPage.setLevelSelectHandlers();
+    this.gameboard.setPlayHandlers();
 
     $("#main-menu-button").click($.proxy(function () {
         this.gameState = 'start';
-        this.gameboardPage.setLevelSelectHandlers();
+        this.gameboard.setLevelSelectHandlers();
         this.editorPage.hideUI();
         $("#level-editor-button").toggleClass("active");
         $("#main-menu-button").toggleClass("active");
@@ -42,7 +42,7 @@ GameController.prototype = {
         this.dt = this.currentTime - this.lastTime;
         this.lastTime = this.currentTime;
         if (this.gameState === 'start') {
-            this.gameboardPage.update(this.dt);
+            this.gameboard.update(this.dt);
         } else if (this.gameState === 'editor') {
             this.editorPage.update(this.dt);
         }

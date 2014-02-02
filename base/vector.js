@@ -39,7 +39,7 @@ Vector.prototype = {
 
 var VectorMath = {
     squaredLength: function (v) {
-        return v.x * v.x + v.y *v.y;
+        return v.x * v.x + v.y * v.y;
     },
 
     length: function (v) {
@@ -47,7 +47,7 @@ var VectorMath = {
     },
     
     normalize: function (v) {
-        var l = 1/this.length();
+        var l = 1 / this.length();
         v.x *= l;
         v.y *= l;
         return new Vector(v.x, v.y);
@@ -55,5 +55,11 @@ var VectorMath = {
 
     dot: function (v1, v2) {
         return v1.x * v2.x + v1.y * v2.y;
+    },
+
+    rotatePoint : function (v, theta) {
+        var x1 = Math.cos(theta) * v.x + Math.sin(theta) * v.y,
+            y1 = -Math.sin(theta) * v.x + Math.cos(theta) * v.y;
+        return new Vector(x1, y1);
     }
 };

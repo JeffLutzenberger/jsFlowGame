@@ -1,13 +1,16 @@
 'use strict';
-
-var GameboardPage = function (canvas) {
+/**
+ * The gameboard controller is responsible for setting up a level and managing gameplay for
+ * a level
+ * */
+var Gameboard = function (canvas, hdim, vdim) {
     this.canvas = canvas;
     this.camera = new Camera(canvas);
-    this.waterfall = new Waterfall(canvas);
-    this.gridDx = 768;
-    this.gridDy = 1024;
-    this.gridWidth = 768 * 3;
-    this.gridHeight = 1024 * 3;
+    this.grid = new Grid(768 * hdim, 1024 * vdim, 768, 1024);
+    this.waterfall = new ParticleWorld(canvas, this.grid);
+    this.editorui = new EditorUI(this.waterfall);
+    this.hdim = hdim || 3;
+    this.vdim = vdim || 3;
     this.drawDt = 0;
     this.framerate = 30;
     this.currentDrawTime = 0;
@@ -16,7 +19,6 @@ var GameboardPage = function (canvas) {
     this.hoverLevel = -1;
     this.clickLevel = -1;
     this.levelButtons = [];
-    this.zoomFactor = 0.333;
     this.playMode = false;
     this.zoomTime = 0;
     this.startZoomFactor = 1;
@@ -24,51 +26,31 @@ var GameboardPage = function (canvas) {
     this.zoomTransition = false;
     this.loadLevels();
     this.camera.setExtents(768, 1024);
-    this.camera.setCenter(0, 0);
+    this.camera.setCenter(768 * 1.5, 1025 * 1.5);
     this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
     this.finalZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
+    this.playMode = true;
+    this.editmode = false;
+
+    //setup ui...
+    //$("#object-form").html('');
+    //$("#object-form").off();
+
+
+    $("#editor-toggle").append('<pre>Edit Mode: <input id="edit-mode-input" type="checkbox" value="' + this.editmode + '"></span><br></pre>');
+    $("#edit-mode-input").change($.proxy(function () {
+        this.editmode = $("#edit-mode-input").prop('checked');
+        if (this.editmode) {
+            this.editorui.show();
+        } else {
+            this.editorui.hide();
+        }
+    }, this));
 };
 
-GameboardPage.prototype = {
-
-    setLevelSelectHandlers: function () {
-        $('canvas').unbind();
-        $(document).unbind();
-        
-        $('canvas').bind('mousemove', $.proxy(function (e) {
-            var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-                y = Math.floor((e.pageY - $("#canvas").offset().top)),
-                p = this.camera.screenToWorld(x, y);
-            this.hoverLevel = this.levelButtonHit(p.x, p.y);
-        }, this));
-
-        $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
-            var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-                y = Math.floor((e.pageY - $("#canvas").offset().top)),
-                p = this.camera.screenToWorld(x, y);
-            this.selectLevel(this.levelButtonHit(p.x, p.y));
-        }, this));
-
-        $(document).bind('keypress', $.proxy(function (e) {
-            var obj, obj2;
-            switch (e.keyCode) {
-            case 45: //minus
-                this.home();
-                break;
-            default:
-                break;
-            }
-        }, this));
-
-        $(document).bind('levelup', $.proxy(function (e) {
-            this.home();
-        }, this));
-
-        this.waterfall.setHandlers();
-         
-    },
+Gameboard.prototype = {
 
     setPlayHandlers: function () {
         $('canvas').unbind();
@@ -79,7 +61,14 @@ GameboardPage.prototype = {
                 y = Math.floor((e.pageY - $("#canvas").offset().top)),
                 p = this.camera.screenToWorld(x, y);
             this.waterfall.mouseDown = true;
-            this.waterfall.hitInteractable(p.x, p.y);
+            this.waterfall.hitInteractable(p.x, p.y, this.editmode);
+            this.editorui.gameObjectForm.gameObject = this.waterfall.interactable;
+            this.editorui.gameObjectForm.hide();
+            if (this.waterfall.interactable) {
+                this.editorui.gameObjectForm.show();
+            } else {
+                this.selectLevel(this.levelButtonHit(p.x, p.y));
+            }
         }, this));
 
         $(document).bind('mouseup touchend', $.proxy(function (e) {
@@ -95,18 +84,43 @@ GameboardPage.prototype = {
                 y = Math.floor((e.pageY - $("#canvas").offset().top)),
                 p = this.camera.screenToWorld(x, y);
             
-            if (this.waterfall.interactable.gameObjectType() === "Sink") {
+            if (this.waterfall.interactable && this.waterfall.interactable.grabberSelected) {
                 //move the sinks grabber...
                 this.waterfall.interactable.moveGrabber(p);
             } else if (this.waterfall.interactable) {
-                this.waterfall.interactable.x = p.x;
-                this.waterfall.interactable.y = p.y;
+                //this.waterfall.interactable.x = p.x;
+                //this.waterfall.interactable.y = p.y;
+                this.waterfall.interactable.setxy(p.x, p.y);
+                this.editorui.gameObjectForm.updateLocation();
             }
-
+            this.hoverLevel = this.levelButtonHit(p.x, p.y);
         }, this));
+
+        $(document).bind('keydown', $.proxy(function (e) {
+            var obj, obj2;
+            console.log(e.keyCode);
+            switch (e.keyCode) {
+            case 39: //right arrow
+                this.moveRight();
+                break;
+            case 37:
+                this.moveLeft();
+                break;
+            case 38:
+                this.moveUp();
+                break;
+            case 40:
+                this.moveDown();
+                break;
+            default:
+                break;
+            }
+        }, this));
+
 
         $(document).bind('keypress', $.proxy(function (e) {
             var obj, obj2;
+            console.log(e.keyCode);
             switch (e.keyCode) {
             case 45: //minus
                 this.home();
@@ -134,39 +148,17 @@ GameboardPage.prototype = {
 
     loadLevels: function () {
         var w = 768, h = 1024, r, x, y, i, j;
-        for (i = 0; i < 3; i += 1) {
-            for (j = 0; j < 3; j += 1) {
-                x = -w + w * i;
-                y = -h + h * j;
-                r = new Rectangle(x, y, w, h, 0);
+        for (j = 0; j < this.vdim; j += 1) {
+            for (i = 0; i < this.hdim; i += 1) {
+                x = w * i;
+                y = h * j;
+                r = new Rectangle(x + w * 0.5, y + h * 0.5, w, h, 0);
                 this.levelButtons.push(r);
             }
         }
         //level0
-        this.waterfall.loadLevel(levels[0], -w * 0.5, -h * 0.5);
-        /*x = 0;
-        y = 0;
-        r = new Rectangle(x, y, 768, 1024, 0);
-        this.levelButtons.push(r);
-        //level1
-        //this.waterfall.addLevel(levels[1], 0, 1024);
-        x = -768;
-        y = -1024;
-        r = new Rectangle(x, y, 768, 1024, 0);
-        this.levelButtons.push(r);
-        //level2
-        //this.waterfall.addLevel(levels[2], 768 * 2, 1024);
-        x = 768 * 2 + w * 0.5;
-        y = 1024 + h * 0.5;
-        r = new Rectangle(x, y, 768, 1024, 0);
-        this.levelButtons.push(r);
-        //level3
-        //this.waterfall.addLevel(levels[3], 0, 0);
-        x = w * 0.5;
-        y = h * 0.5;
-        r = new Rectangle(x, y, 768, 1024, 0);
-        this.levelButtons.push(r);
-        */
+        LevelLoader.load(this.waterfall, levels[0], 768, 1024);
+        LevelLoader.addLevel(this.waterfall, level3, 768 * 2, 1024);
     },
      
     levelButtonHit: function (x, y) {
@@ -183,6 +175,7 @@ GameboardPage.prototype = {
     selectLevel: function (i) {
         //zoom to level and enable interactabble object handlers
         var r = this.levelButtons[i];
+        this.selectedLevel = i;
         this.playMode = true;
         this.zoomTransition = true;
         this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
@@ -218,12 +211,34 @@ GameboardPage.prototype = {
     home: function () {
         this.playMode = false;
         this.zoomTransition = true;
+        this.selectedLevel = 4;
         this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
-        this.finalZoomCenter = new Vector(0, 0);
+        this.finalZoomCenter = new Vector(768 * 1.5, 1024 * 1.5);
         this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
         this.finalZoomExtents = new Vector(768 * 3, 1024 * 3);
         this.zoomTime = 0;
-        this.setLevelSelectHandlers();
+        //this.setLevelSelectHandlers();
+        this.setPlayHandlers();
+    },
+
+    moveRight: function () {
+        var i = Math.min(this.selectedLevel + 1, this.hdim * this.vdim);
+        this.selectLevel(i);
+    },
+
+    moveLeft: function () {
+        var i = Math.max(this.selectedLevel - 1, 0);
+        this.selectLevel(i);
+    },
+
+    moveUp: function () {
+        var i = Math.max(this.selectedLevel - this.vdim, 0);
+        this.selectLevel(i);
+    },
+
+    moveDown: function () {
+        var i = Math.min(this.selectedLevel + this.vdim, this.hdim * this.vdim);
+        this.selectLevel(i);
     },
 
     draw: function (dt) {
@@ -232,26 +247,17 @@ GameboardPage.prototype = {
             
             this.currentDrawTime = new Date().getTime();
             
-            this.lastDrawTime = this.currentDrawTime; 
+            this.lastDrawTime = this.currentDrawTime;
 
             this.camera.reset(this.waterfall.bgColor);
 
             this.camera.show();
            
-            /*if (!this.playMode) {
-                this.canvas.grid(this.gridDx,
-                             this.gridDy,
-                             this.gridWidth,
-                             this.gridHeight,
-                             1,
-                             'rgba(125,125,125,1)');
-            }*/
-
-            if (this.hoverLevel > -1) {
+            /*if (this.hoverLevel > -1) {
                 var color = 'rgba(100,100,255,1)',
                     b = this.levelButtons[this.hoverLevel];
                 this.canvas.rectangleOutline(b.p1, b.p2, b.p3, b.p4, 4, color);
-            }
+            }*/
             
             this.waterfall.draw(this.drawDt);
             

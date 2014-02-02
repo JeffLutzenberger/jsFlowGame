@@ -46,7 +46,7 @@ MenuPage.prototype = {
             level = "";
 
         for (i = 0; i < levels.length; i += 1) {
-            this.levels[i] = new Waterfall(this.canvas);
+            this.levels[i] = new ParticleWorld(this.canvas);
             this.levels[i].loadLevel(levels[i]);
         }
         for (i = 0; i < levels.length; i += 1) {

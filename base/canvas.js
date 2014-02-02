@@ -44,6 +44,12 @@ Canvas.prototype = {
         return [Math.min(r, 255), Math.min(g, 255), Math.min(b, 255)];
     },
 
+    rotatePoint : function (x, y, theta) {
+        var x1 = Math.cos(theta) * x + Math.sin(theta) * y,
+            y1 = -Math.sin(theta) * x + Math.cos(theta) * y;
+        return new Vector(x1, y1);
+    },
+
     circle: function (x, y, r, color, alpha) {
         this.ctx.fillStyle = this.rgba(color, alpha);
         this.ctx.beginPath();
@@ -111,15 +117,50 @@ Canvas.prototype = {
         this.ctx.stroke();
     },
 
+    triangle: function (p1, p2, p3, color, alpha) {
+        this.ctx.fillStyle = this.rgba(color, alpha);
+        this.ctx.beginPath();
+        this.ctx.moveTo(p1.x * this.m, p1.y * this.m);
+        this.ctx.lineTo(p2.x * this.m, p2.y * this.m);
+        this.ctx.lineTo(p3.x * this.m, p3.y * this.m);
+        this.ctx.lineTo(p1.x * this.m, p1.y * this.m);
+        this.ctx.fill();
+    },
+
+    triangleOutline: function (p1, p2, p3, lineWidth, color, alpha) {
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(p1.x * this.m, p1.y * this.m);
+        this.ctx.lineTo(p2.x * this.m, p2.y * this.m);
+        this.ctx.lineTo(p3.x * this.m, p3.y * this.m);
+        this.ctx.lineTo(p1.x * this.m, p1.y * this.m);
+        this.ctx.fill();
+    },
+
+    arrowHead: function (center, size, theta, color, alpha) {
+        var p1 = this.rotatePoint(0, size * 0.5, theta),
+            p2 = this.rotatePoint(-size * 0.4, -size * 0.5, theta),
+            p3 = this.rotatePoint(size * 0.4, -size * 0.5, theta);
+        p1.x += center.x;
+        p1.y += center.y;
+        p2.x += center.x;
+        p2.y += center.y;
+        p3.x += center.x;
+        p3.y += center.y;
+        this.triangle(p1, p2, p3, color, alpha);
+    },
+
     text: function (x, y, color, fontFamily, fontSize, str) {
         this.ctx.fillStyle = color;
         this.ctx.font = fontSize + "px " + fontFamily;
         this.ctx.fillText(str, x * this.m, y * this.m);
     },
 
-    grid: function (dx, dy, w, h, lineWeight, color) {
+    grid: function (dx, dy, w, h, lineWeight, color, alpha) {
         var i, nx = w / dx, ny = h / dy;
-        this.ctx.strokeStyle = color;
+        alpha = alpha || 1;
+        this.ctx.strokeStyle = this.rgba(color, alpha);
         this.ctx.lineWidth = lineWeight;
         for (i = 0; i < nx; i += 1) {
             this.ctx.beginPath();

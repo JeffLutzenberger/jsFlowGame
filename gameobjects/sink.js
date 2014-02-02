@@ -1,17 +1,18 @@
 'use strict';
 /* global Rectangle, Vector, Particle */
 
-var Sink = function (x, y, r, influenceRadius, force) {
+var Sink = function (x, y, r, force) {
     var i, degtorad = Math.PI / 180;
     this.base = Rectangle;
     this.radius = r || 15;
     this.base(x, y, 2 * this.radius, 2 * this.radius, 0);
     this.force = force || 1;
-    this.influenceRadius = influenceRadius || 100;
+    this.influenceRadius = 5 * this.radius;
     this.sizeFactor = 1;
     this.targetSizeFactor = 3;
     this.maxSizeFactor = 4;
     this.showInfluenceRing = true;
+    this.influenceBound = false;
     this.hitsThisFrame = 0;
     this.growthFactor = 0.15;
     this.decayFactor = 0.05;
@@ -25,15 +26,12 @@ var Sink = function (x, y, r, influenceRadius, force) {
     this.flashdt = 1e6;
     this.flashlength = 500;
     this.burstSize = 30;
-    this.leveledUp = false;
+    this.lockedIn = false;
     this.grabber = new Rectangle(x + Math.cos(this.theta) * this.r,
                                  y + Math.sin(this.theta) * this.r,
                                  20, 20, 0);
     this.grabberFadeLength = 1000;
     this.grabberFadeDt = 0;
-    //this.lockSizeFactor = 0;
-    this.pulsar = new ParticleSystem(this.x, this.y);
-    this.pulsar.init(this.x, this.y, 200, 10);
     this.continuousPulse = false; //when we hit 90% of max
     this.pulseRates = [5000, 4000, 3000, 2000, 1000, 500, 250, 100]; //milliseconds
     this.ringpulsedt = 0;
@@ -66,6 +64,13 @@ Sink.prototype.gameObjectType = function () {
     return "Sink";
 };
 
+Sink.prototype.setRadius = function (val) {
+    this.radius = val;
+    this.influenceRadius = val * 5;
+    this.w = val;
+    this.h = val;
+};
+
 Sink.prototype.hit = function (p) {
     var v2 = new Vector(this.x - p.x, this.y - p.y),
         d2 = v2.squaredLength();
@@ -82,7 +87,6 @@ Sink.prototype.hitGrabber = function (p) {
 Sink.prototype.moveGrabber = function (p) {
     var v = new Vector(p.x - this.x, p.y - this.y),
         d = v.length();
-    //this.theta = Math.asin(v.y / d);
     this.theta = Math.atan(v.y / v.x);
     if (v.x < 0) {
         this.theta -= Math.PI;
@@ -115,12 +119,12 @@ Sink.prototype.update = function (dt, hit) {
     var i;
     this.energy = Math.max(0, this.energy - this.energy * 0.0001 * dt);
     this.brightness = Math.min(this.brightness, 1.0);
-    if (this.energy / this.maxEnergy >= this.lockedInEnergyFactor && this.leveledUp === false) {
+    if (this.energy / this.maxEnergy >= this.lockedInEnergyFactor && this.lockedIn === false) {
         //level up: create some new random objects
-        this.leveledUp = true;
+        this.lockedIn = true;
         $(document).trigger('levelup');
     }
-    if (this.leveledUp) {
+    if (this.lockedIn) {
         //start grabber fade
         if (this.grabberFadeDt < this.grabberFadeLength) {
             this.grabberFadeDt += dt;
@@ -135,7 +139,6 @@ Sink.prototype.update = function (dt, hit) {
     
     if (this.pulsedt >= this.pulseRates[this.getOrbitalShell()]) {
         this.pulsedt = 0;
-        //this.pulsar.burst(this.x, this.y, 0.5, this.burstSize);
         this.flashdt = 0;
     }
     
@@ -146,11 +149,9 @@ Sink.prototype.update = function (dt, hit) {
     this.ringpulsedt += dt;
     if (this.ringpulsedt > this.ringpulselength) {
         this.ringpulsedt = 0;
-        this.pulsar.burst(this.x, this.y, 0.5, this.burstSize);
     }
 
     this.updateOrbitals(dt);
-    //this.pulsar.update(dt);
 };
 
 Sink.prototype.getOrbitalShell = function () {
@@ -177,7 +178,6 @@ Sink.prototype.addOrbital = function () {
     p.a = 2;//Math.random() * 2 + 1;
     p.b = 1;//Math.random() * 2 + 1;
     this.orbitals.push(p);
-    //this.pulsar.burst(this.x, this.y, 0.5, this.burstSize);
 };
 
 Sink.prototype.updateOrbitals = function (dt) {
@@ -203,6 +203,13 @@ Sink.prototype.updateOrbitals = function (dt) {
     }
 };
 
+Sink.prototype.recycleParticle = function (p) {
+    var dt = Math.random() * 0.1 - 0.05;
+    p.x = this.x + Math.cos(this.theta + dt) * this.influenceRadius * this.sizeFactor;
+    p.y = this.y + Math.sin(this.theta + dt) * this.influenceRadius * this.sizeFactor;
+    p.vel.x = Math.cos(this.theta) * 15;
+    p.vel.y = Math.sin(this.theta) * 15;
+};
 
 Sink.prototype.drawOrbitals = function (canvas, color) {
     var i;
@@ -247,6 +254,41 @@ function brighten(color, factor) {
     return c;
 }
 
+Sink.prototype.drawGrabber = function (canvas, color, alpha) {
+    var size = 20,
+        dt1 = 0.3,
+        p1 = new Vector(this.x + Math.cos(this.theta + dt1) * this.influenceRadius * this.sizeFactor,
+                        this.y + Math.sin(this.theta + dt1) * this.influenceRadius * this.sizeFactor),
+        p2 = new Vector(this.x + Math.cos(this.theta - dt1) * this.influenceRadius * this.sizeFactor,
+                        this.y + Math.sin(this.theta - dt1) * this.influenceRadius * this.sizeFactor);
+
+    canvas.radialGradient(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
+                          this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
+                          10,
+                          40,
+                          color,
+                          color,
+                          0.5 * alpha,
+                          0);
+    canvas.circle(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
+                  this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
+                  20, color, alpha);
+    canvas.radialGradient(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
+                          this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
+                          5,
+                          50,
+                          [255, 255, 255],
+                          color,
+                          alpha,
+                          0.0);
+    canvas.arrowHead(p1, 50, -this.theta - dt1, color, alpha * 0.25);
+    canvas.arrowHead(p1, 30, -this.theta - dt1, color, alpha * 0.5);
+    canvas.arrowHead(p1, 20, -this.theta - dt1, [255, 255, 255], alpha * 0.5);
+    canvas.arrowHead(p2, 50, -this.theta + dt1 + Math.PI, color, alpha * 0.25);
+    canvas.arrowHead(p2, 30, -this.theta + dt1 + Math.PI, color, alpha * 0.5);
+    canvas.arrowHead(p2, 20, -this.theta + dt1 + Math.PI, [255, 255, 255], alpha * 0.5);
+};
+
 Sink.prototype.draw = function (canvas, color) {
     var maxHitAlpha = 0.15,
         hitFactor = 0.005,
@@ -284,53 +326,34 @@ Sink.prototype.draw = function (canvas, color) {
         canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, c, 1);
     }
 
-    if (this.leveledUp) {
-        //draw the a pulsing outer ring to indicate this sink has been locked in
+    if (this.lockedIn) {
+        //draw a pulsing outer ring to indicate this sink has been locked in
         radius = this.radius * this.sizeFactor;
-        //alpha = 1;//Math.sin(this.ringpulsedt / this.ringpulselength * Math.PI) + 0.2;
         alpha = this.grabberFadeDt / this.grabberFadeLength;
         canvas.radialGradient(this.x,
                               this.y,
-                              radius,
-                              radius * 10,
+                              this.radius * this.sizeFactor,
+                              this.influenceRadius * this.sizeFactor * 1.5,
                               [255, 255, 255],
                               color,
                               0.5 * alpha,
                               0.0);
         
-        canvas.circleOutline(this.x, this.y, radius * 7, 20, [255, 255, 255], 0.3 * alpha);
-        canvas.circleOutline(this.x, this.y, radius * 7, 5, color, 0.5 * alpha);
-        //draw the grabber
-        canvas.radialGradient(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
-                              this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
-                              10,
-                              40,
-                              color,
-                              color,
-                              0.5 * alpha,
-                              0);
-        canvas.circle(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
-                      this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
-                      20, color, alpha);
-        canvas.radialGradient(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
-                              this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
-                              5,
-                              50,
-                              [255, 255, 255],
-                              color,
-                              alpha,
-                              0.0);
+        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 20, [255, 255, 255], 0.3 * alpha);
+        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 5, color, 0.5 * alpha);
+        
+        this.drawGrabber(canvas, color, alpha);
+    
     } else {
-        //this.pulsar.draw(canvas, color);
         //draw pulse ring...
-        this.drawPulseRing(canvas, color);
+        //this.drawPulseRing(canvas, color);
         if (this.flashdt >= 0 && this.flashdt < this.flashlength) {
             alpha = this.getOrbitalShell() / this.maxOrbitals * 0.75;
             alpha *= Math.sin(this.flashdt / this.flashlength * Math.PI) * 0.5;
             canvas.radialGradient(this.x,
                                   this.y,
-                                  this.radius * this.sizeFactor * 1.5,
-                                  this.radius * 10 * this.sizeFactor,
+                                  this.radius * this.sizeFactor * 1.25,
+                                  this.influenceRadius * this.sizeFactor * 1.25,
                                   [255, 255, 255],
                                   color,
                                   alpha,
@@ -371,7 +394,7 @@ Sink.prototype.serialize = function () {
 };
 
 var sinkFromJson = function (j) {
-    return new Sink(j.x, j.y, j.radius, j.influenceRadius, j.force);
+    return new Sink(j.x, j.y, j.radius, j.force);
 };
 
 

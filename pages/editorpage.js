@@ -1,10 +1,13 @@
 'use strict';
 
-var EditorPage = function (canvas) {
+var EditorPage = function (canvas, hdim, vdim) {
     this.canvas = canvas;
     this.camera = new Camera(canvas);
-    this.waterfall = new Waterfall(canvas);
+    this.grid = new Grid(768 * hdim, 1024 * vdim, 768, 1024);
+    this.waterfall = new ParticleWorld(canvas, this.grid);
+    this.grid = new Grid(768, 1024, 768 / 32, 1024 / 32);
     this.editorui = new EditorUI(this.waterfall);
+    this.showGrid = false;
     this.drawDt = 0;
     this.framerate = 30;
     this.currentDrawTime = 0;
@@ -71,16 +74,10 @@ EditorPage.prototype = {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top)),
                 p = this.camera.screenToWorld(x, y);
-            x = this.waterfall.snapx(p.x);
-            y = this.waterfall.snapy(p.y);
+            x = this.grid.snapx(p.x);
+            y = this.grid.snapy(p.y);
 
-            /*if (this.waterfall.interactable) {
-                this.waterfall.interactable.setxy(x, y);
-                this.editorui.gameObjectForm.updateLocation();
-            }*/
-
-            if (this.waterfall.interactable.gameObjectType() === "Sink" && 
-                this.waterfall.interactable.grabberSelected) {
+            if (this.waterfall.interactable.gameObjectType() === "Sink" && this.waterfall.interactable.grabberSelected) {
                 //move the sinks grabber...
                 this.waterfall.interactable.moveGrabber(p);
             } else if (this.waterfall.interactable) {
@@ -165,9 +162,10 @@ EditorPage.prototype = {
             this.camera.reset();
 
             this.camera.show();
-            //this.camera.zoom(1);
 
-            //this.camera.move(0, 0);
+            if (this.editorui.showGrid) {
+                this.grid.draw(this.canvas, [50, 50, 50]);
+            }
 
             this.waterfall.draw();
         }
@@ -177,6 +175,7 @@ EditorPage.prototype = {
 var EditorUI = function (waterfall) {
     this.waterfall = waterfall;
     this.gameObjectForm = new GameObjectEditForm(waterfall);
+    this.showGrid = false;
     this.showInfluenceRing = true;
 };
 
@@ -213,6 +212,12 @@ EditorUI.prototype = {
             .button()
             .click($.proxy(function () {
                 this.addSink();
+            }, this));
+
+        $("#star-button").append('<input type="button" value="Star">')
+            .button()
+            .click($.proxy(function () {
+                this.addStar();
             }, this));
 
         $("#play-button").append('<input type="button" value="Play">')
@@ -260,6 +265,8 @@ EditorUI.prototype = {
         $("#source-button").off('click');
         $("#sink-button").html('');
         $("#sink-button").off('click');
+        $("#star-button").html('');
+        $("#star-button").off('click');
         $("#play-button").html('');
         $("#play-button").off('click');
         $("#grid-button").html('');
@@ -283,7 +290,7 @@ EditorUI.prototype = {
     },
 
     addInfluencer: function () {
-        var obj = new Influencer(400, 100, 15, 100, -0.5);
+        var obj = new Influencer(400, 100, 15, 0.5);
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.influencers.push(obj);
         this.waterfall.interactableObjects.push(obj);
@@ -291,9 +298,18 @@ EditorUI.prototype = {
     },
 
     addSink: function () {
-        var obj = new Sink(400, 200, 15, 100, 1);
+        var obj = new Sink(400, 200, 15, 1);
+        obj.lockedIn = true;
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.sinks.push(obj);
+        this.waterfall.interactableObjects.push(obj);
+        this.selectObject(obj);
+    },
+
+    addStar: function () {
+        var obj = new Star(400, 200, 15, 1);
+        obj.showInfluenceRing = this.showInfluenceRing;
+        this.waterfall.stars.push(obj);
         this.waterfall.interactableObjects.push(obj);
         this.selectObject(obj);
     },
@@ -324,7 +340,7 @@ EditorUI.prototype = {
 
     togglePlay: function () {
         //toggle particles
-        if (this.waterfall.nParticles <= 0 && this.waterfall.sources.length > 0) {
+        if (this.waterfall.nParticles <= 0) {
             this.waterfall.nParticles = 50;
         } else {
             this.waterfall.nParticles = 0;
@@ -333,8 +349,7 @@ EditorUI.prototype = {
     },
 
     toggleGrid: function () {
-        //show the grid...
-        this.waterfall.showGrid = !this.waterfall.showGrid;
+        this.showGrid = !this.showGrid;
     },
 
     toggleInfluenceRings: function () {
@@ -356,7 +371,8 @@ EditorUI.prototype = {
 
     save: function () {
         //var json = JSON.stringify(this.waterfall.saveLevel(), undefined, 2);
-        var json = JSON.stringify(this.waterfall.saveLevel());
+        //var json = JSON.stringify(this.waterfall.saveLevel());
+        var json = JSON.stringify(LevelLoader.saveLevel(this.waterfall));
         $('#json').html('<pre>' + json + '</pre>');
     },
 
@@ -391,17 +407,21 @@ GameObjectEditForm.prototype = {
 
     show: function () {
         var val, goType = this.gameObject.gameObjectType();
+        $("#object-form").html('');
+        $("#object-form").off();
+ 
         $("#object-form").append('<span id="object-type">' + goType + '</span><br>');
         $("#object-form").append('<span id="location-display">x: ' + this.gameObject.x + ' y: ' + this.gameObject.y + '</span><br>');
 
-        if (goType === "Influencer" || goType === "Sink") {
+        if (goType === "Influencer" || goType === "Sink" || goType === "Star") {
             $("#object-form").append('radius: <input id="radius-input" type="text" value="' + this.gameObject.radius + '"></span><br>');
             $("#radius-input").change($.proxy(function () {
                 val = $("#radius-input").val();
                 if (isPositiveNumber(val)) {
-                    this.gameObject.radius = val;
-                    this.gameObject.w = val;
-                    this.gameObject.h = val;
+                    this.gameObject.setRadius(val);
+                    //this.gameObject.radius = val;
+                    //this.gameObject.w = val;
+                    //this.gameObject.h = val;
                     this.gameObject.updatePoints();
                 }
             }, this));
@@ -477,8 +497,23 @@ GameObjectEditForm.prototype = {
     },
 
     hide: function () {
+        var val;
         $("#object-form").html('');
         $("#object-form").off();
+        //edit our grid
+        $("#object-form").append('<span id="object-type">Gameboard Grid</span><br>');
+        $("#object-form").append('Number of Grid Columns: <input id="grid-cols-input" type="text" value="' + this.waterfall.grid.nCols() + '"></span><br>');
+        $("#grid-cols-input").change($.proxy(function () {
+            val = $("#grid-cols-input").val();
+            if (isPositiveNumber(val)) {
+                //this.gameObject.setRadius(val);
+                //this.gameObject.radius = val;
+                //this.gameObject.w = val;
+                //this.gameObject.h = val;
+                //this.gameObject.updatePoints();
+                console.log("update n grid cols");
+            }
+        }, this));
     },
 
     updateLocation: function () {
@@ -514,6 +549,10 @@ GameObjectEditForm.prototype = {
         if (goType === "Sink") {
             index = this.waterfall.sinks.indexOf(o);
             this.waterfall.sinks.splice(index, 1);
+        }
+        if (goType === "Star") {
+            index = this.waterfall.stars.indexOf(o);
+            this.waterfall.stars.splice(index, 1);
         }
     }
 };
