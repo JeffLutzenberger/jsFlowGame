@@ -307,7 +307,7 @@ EditorUI.prototype = {
     },
 
     addStar: function () {
-        var obj = new Star(400, 200, 15, 1);
+        var obj = new Star(400, 200, 50, 1);
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.stars.push(obj);
         this.waterfall.interactableObjects.push(obj);

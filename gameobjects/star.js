@@ -13,7 +13,7 @@ Wormhole.prototype = new Rectangle();
 
 var Star = function (x, y, r, force) {
     this.base = Rectangle;
-    this.radius = r || 15;
+    this.radius = r || 50;
     this.base(x, y, 2 * this.radius, 2 * this.radius, 0);
     this.force = force || 1;
     this.influenceRadius = this.radius * 5;
@@ -119,9 +119,9 @@ Star.prototype.drawStar = function (canvas, color, alpha) {
         b = new Vector(0, this.radius * this.sizeFactor * 2),
         l2, r2, t2, b2;
 
-    if (!this.inactive) {
-        theta2 += this.animationTheta;
-    }
+    //if (!this.inactive) {
+    //    theta2 += this.animationTheta;
+    //}
     l2 = VectorMath.rotatePoint(l, theta2);
     r2 = VectorMath.rotatePoint(r, theta2);
     t2 = VectorMath.rotatePoint(t, theta2);
@@ -167,6 +167,32 @@ Star.prototype.draw = function (canvas, color, dt) {
         maxHitAlpha = 0.15,
         hitFactor = 0.005,
         radius = this.radius,
+        alpha = 1.0,
+        w = this.radius,
+        h = this.radius * 1.2;
+
+    this.sizeFactor = 1 + this.energy / this.maxEnergy * this.maxSizeFactor;
+   
+    if (this.inactive) {
+        //alpha = 0.70;
+        this.sizeFactor = 1 + this.maxSizeFactor;
+    } else {
+        alpha = 0.75;
+    }
+
+    if (this.explode === true) {
+        this.explosion.draw(canvas, color);
+    }
+    
+    canvas.diamond(this.x, this.y, w, h, 0, 10, color, 0.5);
+    canvas.diamond(this.x, this.y, w, h, 0, 5, color, 1.0);
+    canvas.diamond(this.x, this.y, w, h, 0, 2, [255, 255, 255], 0.9);
+}
+/*Star.prototype.draw = function (canvas, color, dt) {
+    var decayFactor = 0.001,
+        maxHitAlpha = 0.15,
+        hitFactor = 0.005,
+        radius = this.radius,
         alpha = 1.0;
 
     this.sizeFactor = 1 + this.energy / this.maxEnergy * this.maxSizeFactor;
@@ -206,31 +232,11 @@ Star.prototype.draw = function (canvas, color, dt) {
     //    canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, [255, 255, 255], 0.5);
     //    canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color, 0.75);
     //}
-    /*if (this.force > 0) {
-        radius = this.pulsedt / this.pulselength * this.radius * this.sizeFactor;
-    } else {
-        radius = (1 - this.pulsedt / this.pulselength) * this.radius * this.sizeFactor;
-    }
-    alpha = Math.sin(this.pulsedt / this.pulselength * Math.PI);
-    alpha = Math.max(0, alpha);
-    alpha = Math.min(1, alpha);
-    canvas.radialGradient(this.x,
-                          this.y,
-                          radius,
-                          radius * 10,
-                          [255, 255, 255],
-                          color,
-                          0.5 * alpha,
-                          0.0);
-    
-    canvas.circleOutline(this.x, this.y, radius * 7, 10, [255, 255, 255], 0.5 * alpha);
-    canvas.circleOutline(this.x, this.y, radius * 7, 3, color, 0.7 * alpha);
-    */
     if (this.selected) {
         canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, [0, 100, 255], 0.25);
     }
 };
-
+*/
 Star.prototype.serialize = function () {
     var obj = {};
     obj.x = this.x;

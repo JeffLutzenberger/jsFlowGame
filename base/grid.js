@@ -36,12 +36,12 @@ var Grid = function (w, h, gridx, gridy) {
     //console.log(this.h);
     //console.log(this.gridx);
     //console.log(this.gridy);
-    for (i = 0; i < Math.round(this.h / this.gridy); i += 1) {
+    for (i = 0; i < Math.round(this.h / this.gridy) + 1; i += 1) {
         p1 = new Vector(0, this.gridy * i);
         p2 = new Vector(this.w, this.gridy * i);
         this.lines.push([p1, p2]);
     }
-    for (i = 0; i < Math.round(this.w / this.gridx); i += 1) {
+    for (i = 0; i < Math.round(this.w / this.gridx) + 1; i += 1) {
         p1 = new Vector(this.gridx * i, 0);
         p2 = new Vector(this.gridx * i, this.h);
         this.lines.push([p1, p2]);

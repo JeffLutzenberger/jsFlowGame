@@ -151,6 +151,30 @@ Canvas.prototype = {
         this.triangle(p1, p2, p3, color, alpha);
     },
 
+    diamond: function (x, y, w, h, theta, lineWidth, color, alpha) {
+        var p1 = this.rotatePoint(w * 0.5, 0, theta),
+            p2 = this.rotatePoint(0, h * 0.5, theta),
+            p3 = this.rotatePoint(-w * 0.5, 0, theta),
+            p4 = this.rotatePoint(0, -h * 0.5, theta);
+        p1.x += x;
+        p1.y += y;
+        p2.x += x;
+        p2.y += y;
+        p3.x += x;
+        p3.y += y;
+        p4.x += x;
+        p4.y += y;
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(p1.x, p1.y);
+        this.ctx.lineTo(p2.x, p2.y);
+        this.ctx.lineTo(p3.x, p3.y);
+        this.ctx.lineTo(p4.x, p4.y);
+        this.ctx.lineTo(p1.x, p1.y);
+        this.ctx.stroke();
+    },
+
     text: function (x, y, color, fontFamily, fontSize, str) {
         this.ctx.fillStyle = color;
         this.ctx.font = fontSize + "px " + fontFamily;
@@ -162,13 +186,13 @@ Canvas.prototype = {
         alpha = alpha || 1;
         this.ctx.strokeStyle = this.rgba(color, alpha);
         this.ctx.lineWidth = lineWeight;
-        for (i = 0; i < nx; i += 1) {
+        for (i = 0; i < nx + 1; i += 1) {
             this.ctx.beginPath();
             this.ctx.moveTo(dx * i * this.m, 0);
             this.ctx.lineTo(dx * i * this.m, h * this.m);
             this.ctx.stroke();
         }
-        for (i = 0; i < ny; i += 1) {
+        for (i = 0; i < ny + 1; i += 1) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, dy * i * this.m);
             this.ctx.lineTo(w * this.m, dy * i * this.m);
