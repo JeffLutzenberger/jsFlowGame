@@ -6,7 +6,7 @@
 var Gameboard = function (canvas, hdim, vdim) {
     this.canvas = canvas;
     this.camera = new Camera(canvas);
-    this.grid = new Grid(768 * hdim, 1024 * vdim, 768, 1024);
+    this.grid = new GameGrid(768 * hdim, 1024 * vdim, 768, 1024);
     this.waterfall = new ParticleWorld(canvas, this.grid);
     this.editorui = new EditorUI(this.waterfall);
     this.hdim = hdim || 3;
@@ -39,22 +39,24 @@ var Gameboard = function (canvas, hdim, vdim) {
     //$("#object-form").off();
 
 
-    $("#editor-toggle").append('<pre>Edit Mode: <input id="edit-mode-input" type="checkbox" value="' + this.editmode + '"></span><br></pre>');
-    $("#edit-mode-input").change($.proxy(function () {
-        this.editmode = $("#edit-mode-input").prop('checked');
-        if (this.editmode) {
-            this.editorui.show();
-        } else {
-            this.editorui.hide();
-        }
-    }, this));
 };
 
 Gameboard.prototype = {
 
-    setPlayHandlers: function () {
+    setHandlers: function () {
         $('canvas').unbind();
         $(document).unbind();
+        this.hide();
+
+        $("#editor-toggle").append('<pre>Edit Mode: <input id="edit-mode-input" type="checkbox" value="' + this.editmode + '"></span><br></pre>');
+        $("#edit-mode-input").change($.proxy(function () {
+            this.editmode = $("#edit-mode-input").prop('checked');
+            if (this.editmode) {
+                this.editorui.show();
+            } else {
+                this.editorui.hide();
+            }
+        }, this));
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
@@ -88,8 +90,6 @@ Gameboard.prototype = {
                 //move the sinks grabber...
                 this.waterfall.interactable.moveGrabber(p);
             } else if (this.waterfall.interactable) {
-                //this.waterfall.interactable.x = p.x;
-                //this.waterfall.interactable.y = p.y;
                 this.waterfall.interactable.setxy(p.x, p.y);
                 this.editorui.gameObjectForm.updateLocation();
             }
@@ -138,6 +138,13 @@ Gameboard.prototype = {
 
     },
 
+    hide: function () {
+        $("#editor-toggle").html('');
+        $("#editor-toggle").off();
+        this.editorui.hide();
+    },
+
+
     update: function (dt) {
         if (this.zoomTransition) {
             this.onZoomTransition(dt);
@@ -157,8 +164,9 @@ Gameboard.prototype = {
             }
         }
         //level0
+        //LevelLoader.load(this.waterfall, level4, 768, 1024);
         LevelLoader.load(this.waterfall, levels[0], 768, 1024);
-        LevelLoader.addLevel(this.waterfall, level3, 768 * 2, 1024);
+        //LevelLoader.addLevel(this.waterfall, level3, 768 * 2, 1024);
     },
      
     levelButtonHit: function (x, y) {
@@ -171,6 +179,7 @@ Gameboard.prototype = {
         }
         return -1;
     },
+
     
     selectLevel: function (i) {
         //zoom to level and enable interactabble object handlers
@@ -183,7 +192,7 @@ Gameboard.prototype = {
         this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
         this.finalZoomExtents = new Vector(r.w, r.h);
         this.zoomTime = 0;
-        this.setPlayHandlers();
+        this.setHandlers();
     },
 
     onZoomTransition: function (dt) {
@@ -218,7 +227,7 @@ Gameboard.prototype = {
         this.finalZoomExtents = new Vector(768 * 3, 1024 * 3);
         this.zoomTime = 0;
         //this.setLevelSelectHandlers();
-        this.setPlayHandlers();
+        this.setHandlers();
     },
 
     moveRight: function () {

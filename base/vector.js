@@ -47,7 +47,7 @@ var VectorMath = {
     },
     
     normalize: function (v) {
-        var l = 1 / this.length();
+        var l = 1 / VectorMath.length(v);
         v.x *= l;
         v.y *= l;
         return new Vector(v.x, v.y);

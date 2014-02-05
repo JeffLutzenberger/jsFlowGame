@@ -6,6 +6,7 @@ var Rectangle = function (x, y, w, h, theta) {
     this.w = w || 100;
     this.h = h || 100;
     this.theta = theta || 0;
+    this.level = 1;
     this.selected = false;
     this.grabberSelected = false;
     this.interactable = false;

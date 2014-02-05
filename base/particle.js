@@ -159,15 +159,16 @@ var Tracer = function (x, y) {
 };
 
 
-var PassiveParticle = function (x, y, r, numTracers) {
+var PassiveParticle = function (x, y, r, numTracers, particlelength) {
     this.x = x;
     this.y = y;
     this.prevx = x;
     this.prevy = y;
-    this.particlelength = 0;//50;
+    this.particlelength = Math.random() * 0.1 + particlelength * 0.9;
     this.age = 0;
     this.dir = new Vector(1, 0);
     this.vel = new Vector(1, 0);
+    this.accel = -0.0003;
     this.mass = this.inv_mass = 1;
     this.radius = r || 4;
     this.trail = [];
@@ -185,9 +186,10 @@ PassiveParticle.prototype = {
     move : function (dt) {
         this.prevx = this.x;
         this.prevy = this.y;
+        this.vel.x += this.dir.x * this.accel * dt;
+        this.vel.y += this.dir.y * this.accel * dt;
         this.x += this.vel.x * dt;
         this.y += this.vel.y * dt;
-        this.age += dt;
     },
 
     recycle : function (x, y, vx, vy) {
@@ -199,6 +201,8 @@ PassiveParticle.prototype = {
         this.age = 0;
         this.vel.x = vx;
         this.vel.y = vy;
+        this.dir = VectorMath.normalize(new Vector(this.vel.x, this.vel.y));
+
         for (i = 0; i < this.numTracers; i += 1) {
             this.trail[i].x = x;
             this.trail[i].y = y;
@@ -220,24 +224,26 @@ PassiveParticle.prototype = {
  
     update: function (dt) {
         this.move(dt);
+        this.age += dt;
     },
 
     draw: function (canvas, color, alpha) {
-        var i = 0, t1, t2, c = color;
+        var i = 0, t1, t2, c = color, l;
         alpha = alpha || 1.0;
         this.trace();
         if (this.particlelength > 0) {
+            l = this.particlelength * alpha;
             canvas.linexy(this.x,
                           this.y,
-                          this.x - this.vel.x * this.particlelength,
-                          this.y - this.vel.y * this.particlelength,
+                          this.x - this.dir.x * l,
+                          this.y - this.dir.y * l,
                           10,
                           c,
                           alpha * 0.25);
             canvas.linexy(this.x,
                           this.y,
-                          this.x - this.vel.x * this.particlelength,
-                          this.y - this.vel.y * this.particlelength,
+                          this.x - this.dir.x * l,
+                          this.y - this.dir.y * l,
                           5,
                           c,
                           alpha);
@@ -248,12 +254,11 @@ PassiveParticle.prototype = {
         for (i = 1; i < this.numTracers; i += 1) {
             t1 = this.trail[i - 1];
             t2 = this.trail[i];
-            alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
+            alpha *= (this.numTracers - this.trail[i].age) / this.numTracers;
             canvas.line(t1, t2, this.traceWidth, c, alpha);
             //canvas.line(t1, t2, this.traceWidth * 5, c, alpha * 0.25);
         }
     }
- 
 };
 
 var ParticleSystem = function (x, y, image) {
@@ -271,20 +276,22 @@ var ParticleSystem = function (x, y, image) {
 
 ParticleSystem.prototype = {
 
-    init: function (x, y, nParticles, nTracers, image) {
+    init: function (x, y, nParticles, nTracers, particleLength, image) {
         var i = 0;
         this.x = x;
         this.y = y;
         this.image = image;
         this.dieRate = 0.95;
         this.maxAge = 5000;
+        particleLength = particleLength || 0;
         for (i = 0; i < nParticles; i += 1) {
-            this.pool.push(new PassiveParticle(x, y, 5, nTracers));
+            this.pool.push(new PassiveParticle(x, y, 5, nTracers, particleLength));
         }
     },
     
-    burst: function (x, y, speed, nParticles) {
-        var i = 0, theta, p;
+    burst: function (x, y, r, speed, nParticles, age) {
+        var i = 0, theta, p, s;
+        this.maxAge = age || this.maxAge;
         this.speed = speed;
         for (i = 0; i < nParticles; i += 1) {
             if (this.pool.length <= 0) {
@@ -292,10 +299,11 @@ ParticleSystem.prototype = {
             }
             theta = Math.random() * Math.PI * 2;
             p = this.pool.pop();
-            p.recycle(x,
-                      y,
-                      Math.sin(theta) * speed,
-                      Math.cos(theta) * speed);
+            s = speed + Math.random() * speed * 0.1;
+            p.recycle(x + Math.sin(theta) * 1.5 * r * Math.random(),
+                      y + Math.cos(theta) * 1.5 * r * Math.random(),
+                      Math.sin(theta) * s,
+                      Math.cos(theta) * s);
             this.active.push(p);
         }
     },

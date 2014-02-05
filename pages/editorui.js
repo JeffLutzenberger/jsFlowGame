@@ -181,52 +181,60 @@ var EditorUI = function (waterfall) {
 
 EditorUI.prototype = {
     show: function () {
-        $("#bucket-button").append('<input type="button" value="Bucket">')
-            .button()
-            .click($.proxy(function () {
-                this.addBucket();
-            }, this));
-        $("#influencer-button").append('<input type="button" value="Influencer">')
-            .button()
-            .click($.proxy(function () {
-                this.addInfluencer();
-            }, this));
-        $("#obstacle-button").append('<input type="button" value="Obstacle">')
-            .button()
-            .click($.proxy(function () {
-                this.addObstacle();
-            }, this));
-        $("#portal-button").append('<input type="button" value="Portal">')
-            .button()
-            .click($.proxy(function () {
-                this.addPortal();
-            }, this));
+        $("#editor-form").html('');
+        $("#editor-form").off();
 
-        $("#source-button").append('<input type="button" value="Source">')
-            .button()
-            .click($.proxy(function () {
-                this.addSource();
-            }, this));
+        $("#editor-form").append('<input id="bucket-button" type="button" value="Bucket">').button();
+        $("#bucket-button").click($.proxy(function () {
+            this.addBucket();
+        }, this));
 
-        $("#sink-button").append('<input type="button" value="Sink">')
-            .button()
-            .click($.proxy(function () {
-                this.addSink();
-            }, this));
+        $("#editor-form").append('&nbsp;<input id="influencer-button" type="button" value="Influencer">').button();
+        $("#influencer-button").click($.proxy(function () {
+            this.addInfluencer();
+        }, this));
 
-        $("#star-button").append('<input type="button" value="Star">')
-            .button()
-            .click($.proxy(function () {
-                this.addStar();
-            }, this));
+        $("#editor-form").append('&nbsp;<input id="obstacle-button" type="button" value="Obstacle">').button();
+        $("#obstacle-button").click($.proxy(function () {
+            this.addObstacle();
+        }, this));
 
-        $("#play-button").append('<input type="button" value="Play">')
-            .button()
-            .click($.proxy(function () {
-                this.togglePlay();
-            }, this));
+        $("#editor-form").append('&nbsp;<input id="portal-button" type="button" value="Portal">').button();
+        $("#portal-button").click($.proxy(function () {
+            this.addPortal();
+        }, this));
 
-        $("#grid-button").append('<input type="button" value="Grid">')
+        $("#editor-form").append('&nbsp;<input id="source-button" type="button" value="Source"><br><br>').button();
+        $("#source-button").click($.proxy(function () {
+            this.addSource();
+        }, this));
+
+        $("#editor-form").append('&nbsp;<input id="sink-button" type="button" value="Sink">').button();
+        $("#sink-button").click($.proxy(function () {
+            this.addSink();
+        }, this));
+
+        $("#editor-form").append('&nbsp;<input id="star-button" type="button" value="Star">').button();
+        $("#star-button").click($.proxy(function () {
+            this.addStar();
+        }, this));
+
+        $("#editor-form").append('&nbsp;<input id="play-button" type="button" value="Play">').button();
+        $("#play-button").click($.proxy(function () {
+            this.togglePlay();
+        }, this));
+        
+        $("#editor-form").append('&nbsp;<input id="save-button" type="button" value="Save">').button();
+        $("#save-button").click($.proxy(function () {
+            this.save();
+        }, this));
+
+        $("#editor-form").append('&nbsp;<input id="reset-button" type="button" value="Reset">').button();
+        $("#reset-button").click($.proxy(function () {
+            this.reset();
+        }, this));
+   
+        /*$("#grid-button").append('<input type="button" value="Grid">')
             .button()
             .click($.proxy(function () {
                 this.toggleGrid();
@@ -237,53 +245,19 @@ EditorUI.prototype = {
             .click($.proxy(function () {
                 this.toggleInfluenceRings();
             }, this));
-
-        $("#save-button").append('<input type="button" value="Save">')
-            .button()
-            .click($.proxy(function () {
-                this.save();
-            }, this));
-
-        $("#button-row-2").append('<input id="reset-button" type="button" value="Reset">');
-        $("#reset-button")
-            .button()
-            .click($.proxy(function () {
-                this.reset();
-            }, this));
+        */
     },
 
     hide: function () {
-        $("#bucket-button").html('');
-        $("#bucket-button").off('click');
-        $("#influencer-button").html('');
-        $("#influencer-button").off('click');
-        $("#obstacle-button").html('');
-        $("#obstacle-button").off('click');
-        $("#portal-button").html('');
-        $("#portal-button").off('click');
-        $("#source-button").html('');
-        $("#source-button").off('click');
-        $("#sink-button").html('');
-        $("#sink-button").off('click');
-        $("#star-button").html('');
-        $("#star-button").off('click');
-        $("#play-button").html('');
-        $("#play-button").off('click');
-        $("#grid-button").html('');
-        $("#grid-button").off('click');
-        $("#influence-ring-button").html('');
-        $("#influence-ring-button").off('click');
-        $("#save-button").html('');
-        $("#save-button").off('click');
-        $("#delete-button").html('');
-        $("#delete-button").off('click');
-        $("#button-row-2").html('');
-        $("#button-row-2").off();
+        $("#editor-form").html('');
+        $("#editor-form").off();
+        $("#object-form").html('');
+        $("#object-form").off();
         $("#json").html('');
     },
 
     addBucket: function () {
-        var obj = new Bucket(100, 400, 100, 50, 0);
+        var obj = new Bucket(300, 500, 100, 50, 0);
         this.waterfall.buckets.push(obj);
         this.waterfall.interactableObjects.push(obj);
         this.selectObject(obj);
@@ -307,7 +281,7 @@ EditorUI.prototype = {
     },
 
     addStar: function () {
-        var obj = new Star(400, 200, 50, 1);
+        var obj = new Star(400, 200, 15, 1);
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.stars.push(obj);
         this.waterfall.interactableObjects.push(obj);
@@ -323,7 +297,7 @@ EditorUI.prototype = {
 
     addPortal: function () {
         var obj = new Portal(300, 400, 100, 25, 0),
-            obj2 = new Portal(200, 300, 100, 25, 0, obj);
+            obj2 = new Portal(200, 300, 50, 25, 0, obj);
         this.waterfall.portals.push(obj);
         this.waterfall.portals.push(obj2);
         this.waterfall.interactableObjects.push(obj);

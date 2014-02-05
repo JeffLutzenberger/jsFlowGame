@@ -319,6 +319,15 @@ ParticleWorld.prototype = {
                     return true;
                 }
             }
+            
+            for (i = 0; i < this.obstacles.length; i += 1) {
+                if (this.obstacles[i].bbHit(p)) {
+                    this.interactable = this.obstacles[i];
+                    this.interactable.selected = true;
+                    return true;
+                }
+            }
+
             for (i = 0; i < this.stars.length; i += 1) {
                 if (this.stars[i].bbHit(p)) {
                     this.interactable = this.stars[i];
@@ -342,10 +351,29 @@ ParticleWorld.prototype = {
                 }
             }
 
+            for (i = 0; i < this.buckets.length; i += 1) {
+                if (this.buckets[i].bbHit(p)) {
+                    this.interactable = this.buckets[i];
+                    this.interactable.selected = true;
+                    return true;
+                }
+            }
+
             for (i = 0; i < this.portals.length; i += 1) {
                 if (this.portals[i].bbHit(p)) {
                     this.interactable = this.portals[i];
                     this.interactable.selected = true;
+                    return true;
+                }
+            }
+
+            for (i = 0; i < this.grid.lines.length; i += 1) {
+                //console.log(this.grid.lines[i]);
+                //console.log(p);
+                if (this.grid.lines[i].hit(p)) {
+                    this.interactable = this.grid.lines[i];
+                    this.interactable.selected = true;
+                    console.log(this.interactable);
                     return true;
                 }
             }

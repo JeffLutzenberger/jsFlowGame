@@ -12,26 +12,19 @@ var GameController = function (canvas) {
     this.lastTime = 0;
     this.gameState = 'start';
     this.gameboard = new Gameboard(this.canvas, 3, 3);
-    this.editorPage = new EditorPage(this.canvas, 3, 3);
+    this.particlesim = new ParticleSimPage(this.canvas, 0, 0);
     this.interval = setInterval(this.update.bind(this), this.clockrate);
-    this.gameboard.setPlayHandlers();
+    this.gameboard.setHandlers();
 
     $("#main-menu-button").click($.proxy(function () {
         this.gameState = 'start';
-        this.gameboard.setLevelSelectHandlers();
-        this.editorPage.hideUI();
-        $("#level-editor-button").toggleClass("active");
-        $("#main-menu-button").toggleClass("active");
-
+        this.gameboard.setHandlers();
     }, this));
 
-    $("#level-editor-button").click($.proxy(function () {
-        this.gameState = 'editor';
-        this.editorPage.hideUI();
-        this.editorPage.showUI();
-        this.editorPage.setHandlers();
-        $("#level-editor-button").toggleClass("active");
-        $("#main-menu-button").toggleClass("active");
+    $("#particle-sim-button").click($.proxy(function () {
+        this.gameState = 'particlesim';
+        this.gameboard.hide();
+        this.particlesim.setHandlers();
     }, this));
 };
 
@@ -45,6 +38,8 @@ GameController.prototype = {
             this.gameboard.update(this.dt);
         } else if (this.gameState === 'editor') {
             this.editorPage.update(this.dt);
+        } else if (this.gameState === 'particlesim') {
+            this.particlesim.update(this.dt);
         }
     }
 };
