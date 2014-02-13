@@ -121,6 +121,14 @@ Obstacle.prototype.gameObjectType = function () {
     return "Obstacle";
 };
 
+Obstacle.prototype.draw = function (canvas, color) {
+    var alpha = 1.0;
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 20, color, 0.25);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 10, color, 0.5);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 5, [255, 255, 255], 0.9);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 30, color, 0.15);
+};
+
 var obstacleFromJson = function (j) {
     return new Obstacle(j.x, j.y, j.w, j.h, j.theta, j.reaction);
 };
@@ -145,12 +153,15 @@ var portalFromJson = function (j) {
 };
 
 Portal.prototype.hit = function (p) {
-    var i = 0, r = 10;
+    var i = 0, r = 10, s;
     if (this.outlet) {
         if (p.lineCollision(this.p1, this.p2, r)) {
             //move the particle to the channel outlet
             p.x = this.outlet.x - this.outlet.w * 0.5 + Math.random() * this.outlet.w;
             p.y = this.outlet.y + this.outlet.h * 0.5;
+            s = VectorMath.length(p.vel);
+            p.vel.x = s * this.outlet.n3.x;
+            p.vel.y = s * this.outlet.n3.y;
             for (i = 0; i < p.numTracers; i += 1) {
                 p.trail[i].x = p.x;
                 p.trail[i].y = p.y;
@@ -160,4 +171,13 @@ Portal.prototype.hit = function (p) {
     }
     return false;
 };
+
+Portal.prototype.draw = function (canvas, color) {
+    var alpha = 1.0;
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 20, color, 0.25);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 10, color, 0.5);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 5, [255, 255, 255], 0.9);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 30, color, 0.15);
+};
+
 

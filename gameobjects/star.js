@@ -1,16 +1,5 @@
 'use strict';
 
-/* a wormhole is just a hole in a grid wall...
- * it allows particles to flow through it
- *
- * */
-var Wormhole = function (x, y, size, oneway) {
-    this.base = Rectangle;
-    base(x, y, l, 10, 0);
-};
-
-Wormhole.prototype = new Rectangle();
-
 var StarLine = function (x, y, l) {
     this.x = x;
     this.y = y;
@@ -40,27 +29,37 @@ StarLine.prototype = {
     }
 };
 
-var Star = function (x, y, r, force) {
+var StarTypes = ["diamond",
+                 "double diamond",
+                 "astrix",
+                 "windmill",
+                 "gear",
+                 "jellyfish"];
+
+var Star = function (x, y, r, force, starType) {
     this.base = Rectangle;
     this.radius = r || 15;
     this.base(x, y, 2 * this.radius, 2 * this.radius, 0);
     this.force = force || 1;
+    this.starType = starType || StarTypes[0];
     this.influenceRadius = this.radius * 4;
     this.sizeFactor = 1;
-    this.maxSizeFactor = 1.25;
+    this.maxSizeFactor = 1.10;
     this.showInfluenceRing = true;
     this.hitsThisFrame = 0;
     this.hitsToDecay = 0;
     this.hitAlpha = 0;
     this.maxHitAlpha = 0.15;
     this.growthFactor = 0.005;
-    this.decayFactor = 0.0001;
+    this.decayFactor = 0.001;
     this.pulsedt = 0;
     this.pulselength = 2000;
     this.energy = 0;
-    this.maxEnergy = 50;
+    this.maxEnergy = 50.0;
+    this.doorEnergy = 0;
+    this.doorOpen = false;
     this.explode = false;
-    this.inactive = false;
+    this.exploded = false;
     this.explodedt = 0;
     this.growthFactor = 0.15;
     this.explosion = new ParticleSystem(x, y);
@@ -68,7 +67,19 @@ var Star = function (x, y, r, force) {
     this.animationTheta = 0;
     this.lines = [];
     //allow some stars to put down a doorway between grid walls...
-    this.wormhole = undefined;//new Wormhole(x, y, size);
+    this.particleconfigs = {
+        x : 768 * 0.5,
+        y : 1024 * 0.5,
+        particleradius : 5,
+        particlelength : 50,
+        nparticles : 300,
+        nburstparticles: 50,
+        burstradius : 50,
+        speed : 0.6,
+        accel : -0.0005,
+        ntracers : 10,
+        lifetime : 1000
+    };
 };
 
 Star.prototype = new Rectangle();
@@ -139,6 +150,13 @@ Star.prototype.hit = function (p) {
     return (d2 <=  this.radius * this.radius * this.sizeFactor * this.sizeFactor);
 };
 
+Star.prototype.insideInfluenceRing = function (p) {
+    var v2 = new Vector(this.x - p.x, this.y - p.y),
+        d2 = v2.squaredLength(),
+        r = this.influenceRadius *this.sizeFactor;
+    return (d2 <=  r * r);
+};
+
 Star.prototype.startExplosion = function () {
     var i, n, l, d = new Diamond(this.x,
                                  this.y,
@@ -156,7 +174,21 @@ Star.prototype.updateExplosion = function (dt) {
 };
 
 Star.prototype.update = function (dt, hit) {
-    //this.energy = Math.max(0, this.energy - this.energy * 0.0001 * dt);
+    //this.doorEnergy = Math.max(0, this.doorEnergy - this.doorEnergy * this.decayFactor * dt);
+    //console.log(this.doorEnergy);
+    if (this.exploded && this.doorEnergy > this.maxEnergy * 0.8 && this.doorOpen === false) {
+        console.log("open door");
+        this.doorOpen = true;
+        //send open door message
+        $(document).trigger('opendoor');
+    }
+    //} else if (this.exploded && this.doorEnergy < this.maxEnergy * 0.5 && this.doorOpen === true) {
+    //    console.log("close door");
+    //    this.doorOpen = false;
+    //    //send close door message
+    //    $(document).trigger('closedoor');
+    //}
+
     this.brightness = Math.min(this.brightness, 1.0);
     this.animationTheta += 0.001 * dt;
 
@@ -167,13 +199,27 @@ Star.prototype.update = function (dt, hit) {
     if (this.energy >= this.maxEnergy * 0.9 && this.explode === false) {
         console.log("explode");
         this.explode = true;
-        this.inactive = true;
-        this.startExplosion();
-        this.explosion.burst(this.x, this.y, 0.1, 100, 50);
+        this.exploded = true;
+        //this.startExplosion();
+        this.explosion.init(this.x,
+                            this.y,
+                            this.particleconfigs.particleradius,
+                            this.particleconfigs.particlelength,
+                            this.particleconfigs.ntracers,
+                            this.particleconfigs.nparticles);
+
+        this.explosion.burst(this.x,
+                             this.y,
+                             this.particleconfigs.burstradius,
+                             this.particleconfigs.speed,
+                             this.particleconfigs.accel,
+                             this.particleconfigs.nburstparticles,
+                             this.particleconfigs.lifetime);
+
     }
 
     if (this.explode === true) {
-        this.updateExplosion(dt);
+        //this.updateExplosion(dt);
         this.explodedt += dt;
         this.explosion.update(dt);
     }
@@ -196,6 +242,13 @@ Star.prototype.addEnergy = function () {
 
 };
 
+Star.prototype.addDoorEnergy = function () {
+    this.doorEnergy += this.growthFactor;
+    if (this.doorEnergy > this.maxEnergy) {
+        this.doorEnergy = this.maxEnergy;
+    }
+};
+
 Star.prototype.drawExplosion = function (canvas, color) {
     //send lines outward and give them some rotation
     var i, l;
@@ -211,17 +264,11 @@ Star.prototype.draw = function (canvas, color, dt) {
         radius = this.radius,
         alpha = 1.0,
         w = this.radius,
-        h = this.radius * 1.5;
+        h = this.radius;
 
     this.sizeFactor = 1 + this.energy / this.maxEnergy * this.maxSizeFactor;
-    
-    w *= 2 * this.sizeFactor;
-    h *= 2 * this.sizeFactor;
-    
-    w += Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * w * 0.25;
-    h -= Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * h * 0.25;
-
-    if (this.inactive) {
+       
+    if (this.exploded) {
         //alpha = 0.70;
         this.sizeFactor = 1 + this.maxSizeFactor;
     } else {
@@ -229,7 +276,7 @@ Star.prototype.draw = function (canvas, color, dt) {
     }
 
     if (this.explode === true) {
-        this.drawExplosion(canvas, color)
+        //this.drawExplosion(canvas, color)
         this.explosion.draw(canvas, color);
     }
 
@@ -251,19 +298,70 @@ Star.prototype.draw = function (canvas, color, dt) {
                           color,
                           alpha,
                           0.0);
-    if (this.explode) {
-        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, [255, 255, 255], 0.5);
-        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color, 0.75);
+    canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, [255, 255, 255], 0.5);
+    canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, color, 0.75);
 
+    w *= 3 * this.sizeFactor;
+    h *= 3 * this.sizeFactor;
+ 
+    if (this.starType === StarTypes[0]) {
+        w += Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * w * 0.25;
+        h -= Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * h * 0.25;
+        this.drawDiamond(w, h, canvas, color);
+    } else if (this.starType === StarTypes[1]) {
+        w += Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * w * 0.25;
+        h -= Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * h * 0.25;
+        this.drawDoubleDiamond(w, h, canvas, color);
+    } else if (this.starType === StarTypes[2]) {
+        w += Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * w * 0.25;
+        h -= Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * h * 0.25;
+        this.drawAstrix(w, h, this.animationTheta, canvas, color);
+    } else if (this.starType === StarTypes[3]) {
+        this.drawWindmill(w, h, this.animationTheta, canvas, color);
+    } else if (this.starType === StarTypes[4]) {
+        this.drawGear(w * 0.65, w * 0.8, this.animationTheta, canvas, color);
+    } else if (this.starType === StarTypes[5]) {
+        this.drawJellyfish(w, w * 0.8, this.animationTheta, canvas, color);
     }
+};
+
+Star.prototype.drawDiamond = function (w, h, canvas, color) {
     canvas.diamond(this.x, this.y, w, h, 0, 10, color, 0.5);
     canvas.diamond(this.x, this.y, w, h, 0, 5, color, 1.0);
     canvas.diamond(this.x, this.y, w, h, 0, 2, [255, 255, 255], 0.9);
-    if (this.level > 0) {
-        canvas.diamond(this.x, this.y, h, w, 0, 10, color, 0.5);
-        canvas.diamond(this.x, this.y, h, w, 0, 5, color, 1.0);
-        canvas.diamond(this.x, this.y, h, w, 0, 2, [255, 255, 255], 0.9);
-    }
+};
+
+Star.prototype.drawDoubleDiamond = function (w, h, canvas, color) {
+    canvas.diamond(this.x, this.y, w, h, 0, 10, color, 0.5);
+    canvas.diamond(this.x, this.y, w, h, 0, 5, color, 1.0);
+    canvas.diamond(this.x, this.y, w, h, 0, 2, [255, 255, 255], 0.9);
+    canvas.diamond(this.x, this.y, h, w, 0, 10, color, 0.5);
+    canvas.diamond(this.x, this.y, h, w, 0, 5, color, 1.0);
+    canvas.diamond(this.x, this.y, h, w, 0, 2, [255, 255, 255], 0.9);
+};
+
+Star.prototype.drawAstrix = function (w, h, theta, canvas, color) {
+    canvas.astrix(this.x, this.y, w, h, theta, 10, color, 0.5);
+    canvas.astrix(this.x, this.y, w, h, theta, 5, color, 1.0);
+    canvas.astrix(this.x, this.y, w, h, theta, 2, [255, 255, 255], 0.9);
+};
+
+Star.prototype.drawWindmill = function (w, h, theta, canvas, color) {
+    canvas.windmill(this.x, this.y, w, h, theta, 10, color, 0.5);
+    canvas.windmill(this.x, this.y, w, h, theta, 5, color, 1.0);
+    canvas.windmill(this.x, this.y, w, h, theta, 2, [255, 255, 255], 0.9);
+};
+
+Star.prototype.drawGear = function (rin, rout, theta, canvas, color) {
+    canvas.gear(this.x, this.y, rin, rout, theta, 8, color, 0.5);
+    canvas.gear(this.x, this.y, rin, rout, theta, 5, color, 1.0);
+    canvas.gear(this.x, this.y, rin, rout, theta, 2, [255, 255, 255], 0.9);
+};
+
+Star.prototype.drawJellyfish = function (w, h, theta, canvas, color) {
+    canvas.jellyfish(this.x, this.y, w, theta, 8, color, 0.5);
+    canvas.jellyfish(this.x, this.y, w, theta, 4, color, 1.0);
+    canvas.jellyfish(this.x, this.y, w, theta, 2, [255, 255, 255], 0.9);
 };
 
 Star.prototype.serialize = function () {
@@ -273,11 +371,12 @@ Star.prototype.serialize = function () {
     obj.radius = this.radius;
     obj.influenceRadius = this.influenceRadius;
     obj.force = this.force;
+    obj.starType = this.starType;
     return obj;
 };
 
 var starFromJson = function (j) {
-    return new Star(j.x, j.y, j.radius, j.force);
+    return new Star(j.x, j.y, j.radius, j.force, j.starType);
 };
 
 

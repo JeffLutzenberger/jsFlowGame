@@ -87,6 +87,7 @@ Influencer.prototype.draw = function (canvas, color, dt) {
                           0);
     canvas.circle(this.x, this.y, this.radius * 2 * this.sizeFactor, color, 0.25);
     canvas.circle(this.x, this.y, this.radius * this.sizeFactor, color, 0.25);
+    color[0];
     canvas.radialGradient(this.x,
                           this.y,
                           this.radius * this.sizeFactor * 0.25,
@@ -104,18 +105,24 @@ Influencer.prototype.draw = function (canvas, color, dt) {
     } else {
         radius = (1 - this.pulsedt / this.pulselength) * this.radius * this.sizeFactor;
     }
-    alpha = Math.sin(this.pulsedt / this.pulselength * Math.PI);
-    alpha = Math.max(0, alpha);
-    alpha = Math.min(1, alpha);
-    canvas.radialGradient(this.x,
-                          this.y,
-                          radius,
-                          radius * 10,
-                          [255, 255, 255],
-                          color,
-                          0.5 * alpha,
-                          0.0);
-    
+    alpha = this.pulsedt / this.pulselength;
+    alpha = Math.sin(alpha * Math.PI);
+    if (alpha < 0.001) {
+        alpha = 0.001;
+    }
+    //radius = Math.min(0.01, radius);
+    try {
+        canvas.radialGradient(this.x,
+                              this.y,
+                              radius,
+                              radius * 10,
+                              [255, 255, 255],
+                              color,
+                              0.5 * alpha,
+                              0.0);
+    } catch (err) {
+        console.log("alpha " + alpha);
+    }
     canvas.circleOutline(this.x, this.y, radius * 7, 10, [255, 255, 255], 0.5 * alpha);
     canvas.circleOutline(this.x, this.y, radius * 7, 3, color, 0.7 * alpha);
  

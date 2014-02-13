@@ -1,7 +1,7 @@
 'use strict';
 /* global Rectangle, Vector, Particle */
 
-var Sink = function (x, y, r, force) {
+var Sink = function (x, y, r, force, isSource) {
     var i, degtorad = Math.PI / 180;
     this.base = Rectangle;
     this.radius = r || 15;
@@ -13,7 +13,7 @@ var Sink = function (x, y, r, force) {
     this.maxSizeFactor = 4;
     this.showInfluenceRing = true;
     this.influenceBound = false;
-    this.hitsThisFrame = 0;
+    //this.hitsThisFrame = 0;
     this.growthFactor = 0.15;
     this.decayFactor = 0.05;
     this.maxOrbitals = 4;
@@ -27,6 +27,7 @@ var Sink = function (x, y, r, force) {
     this.flashlength = 500;
     this.burstSize = 30;
     this.lockedIn = false;
+    this.isSource = isSource || false;
     this.grabber = new Rectangle(x + Math.cos(this.theta) * this.r,
                                  y + Math.sin(this.theta) * this.r,
                                  20, 20, 0);
@@ -93,7 +94,7 @@ Sink.prototype.moveGrabber = function (p) {
     }
 };
 
-Sink.prototype.contain = function (p) {
+Sink.prototype.trap = function (p) {
     var v = new Vector(p.vel.x, p.vel.y),
         c1 = new Particle(p.x, p.y, p.radius),
         p1 = new Vector(p.prevx, p.prevy),
@@ -122,7 +123,7 @@ Sink.prototype.update = function (dt, hit) {
     if (this.energy / this.maxEnergy >= this.lockedInEnergyFactor && this.lockedIn === false) {
         //level up: create some new random objects
         this.lockedIn = true;
-        $(document).trigger('levelup');
+        //$(document).trigger('levelup');
     }
     if (this.lockedIn) {
         //start grabber fade
@@ -255,7 +256,7 @@ function brighten(color, factor) {
 }
 
 Sink.prototype.drawGrabber = function (canvas, color, alpha) {
-    var size = 20,
+    var size = this.radius,
         dt1 = 0.3,
         p1 = new Vector(this.x + Math.cos(this.theta + dt1) * this.influenceRadius * this.sizeFactor,
                         this.y + Math.sin(this.theta + dt1) * this.influenceRadius * this.sizeFactor),
@@ -264,19 +265,19 @@ Sink.prototype.drawGrabber = function (canvas, color, alpha) {
 
     canvas.radialGradient(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
                           this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
-                          10,
-                          40,
+                          this.radius * 0.5,
+                          this.radius * 2,
                           color,
                           color,
                           0.5 * alpha,
                           0);
     canvas.circle(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
                   this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
-                  20, color, alpha);
+                  this.radius, color, alpha);
     canvas.radialGradient(this.x + Math.cos(this.theta) * this.influenceRadius * this.sizeFactor,
                           this.y + Math.sin(this.theta) * this.influenceRadius * this.sizeFactor,
-                          5,
-                          50,
+                          this.radius * 0.25,
+                          this.radius * 2.25,
                           [255, 255, 255],
                           color,
                           alpha,
@@ -326,7 +327,7 @@ Sink.prototype.draw = function (canvas, color) {
         canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, c, 1);
     }
 
-    if (this.lockedIn) {
+    if (this.lockedIn && this.isSource) {
         //draw a pulsing outer ring to indicate this sink has been locked in
         radius = this.radius * this.sizeFactor;
         alpha = this.grabberFadeDt / this.grabberFadeLength;
@@ -361,7 +362,11 @@ Sink.prototype.draw = function (canvas, color) {
         }
 
         radius = (1 - this.ringpulsedt / this.ringpulselength) * this.radius * this.sizeFactor;
-        alpha = Math.sin(this.ringpulsedt / this.ringpulselength * Math.PI);
+        alpha = this.ringpulsedt / this.ringpulselength;
+        alpha = Math.sin(alpha * Math.PI);
+        if (alpha < 0.001) {
+            alpha = 0.001;
+        }
         canvas.radialGradient(this.x,
                               this.y,
                               radius,
@@ -390,11 +395,12 @@ Sink.prototype.serialize = function () {
     obj.radius = this.radius;
     obj.influenceRadius = this.influenceRadius;
     obj.force = this.force;
+    obj.isSource = this.isSource;
     return obj;
 };
 
 var sinkFromJson = function (j) {
-    return new Sink(j.x, j.y, j.radius, j.force);
+    return new Sink(j.x, j.y, j.radius, j.force, j.isSource);
 };
 
 

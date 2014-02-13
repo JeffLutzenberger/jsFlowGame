@@ -159,13 +159,14 @@ var Tracer = function (x, y) {
 };
 
 
-var PassiveParticle = function (x, y, r, numTracers, particlelength) {
+var PassiveParticle = function (x, y, r, particlelength, numTracers, lifetime) {
     this.x = x;
     this.y = y;
     this.prevx = x;
     this.prevy = y;
     this.particlelength = Math.random() * 0.1 + particlelength * 0.9;
     this.age = 0;
+    this.lifetime = lifetime || 3000;
     this.dir = new Vector(1, 0);
     this.vel = new Vector(1, 0);
     this.accel = -0.0003;
@@ -173,7 +174,9 @@ var PassiveParticle = function (x, y, r, numTracers, particlelength) {
     this.radius = r || 4;
     this.trail = [];
     this.numTracers = numTracers || 0;
-    this.traceWidth = 2;
+    this.traceWidth = 5;
+    this.color = [0, 0, 255];
+    this.fadeColorIn = true;
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y);
@@ -202,7 +205,7 @@ PassiveParticle.prototype = {
         this.vel.x = vx;
         this.vel.y = vy;
         this.dir = VectorMath.normalize(new Vector(this.vel.x, this.vel.y));
-
+        
         for (i = 0; i < this.numTracers; i += 1) {
             this.trail[i].x = x;
             this.trail[i].y = y;
@@ -245,7 +248,7 @@ PassiveParticle.prototype = {
                           this.x - this.dir.x * l,
                           this.y - this.dir.y * l,
                           5,
-                          c,
+                          [255, 255, 255],
                           alpha);
         } else {
             canvas.circle(this.x, this.y, this.radius * 2, c, 0.25 * alpha);
@@ -264,11 +267,11 @@ PassiveParticle.prototype = {
 var ParticleSystem = function (x, y, image) {
     this.x = x;
     this.y = y;
-    this.dieRate = 10;
     this.image = image;
-    this.speed = 0.02;
+    this.startSpeed = 0.02;
+    this.startAccel = 0.0003;
     this.alpha = 1.0;
-    this.maxAge = 5000;
+    this.lifetime = 5000;
     this.particles = [];
     this.pool = [];
     this.active = [];
@@ -276,32 +279,33 @@ var ParticleSystem = function (x, y, image) {
 
 ParticleSystem.prototype = {
 
-    init: function (x, y, nParticles, nTracers, particleLength, image) {
+    init: function (x, y, particleradius, particlelength, ntracers, nparticles, image) {
         var i = 0;
         this.x = x;
         this.y = y;
         this.image = image;
-        this.dieRate = 0.95;
-        this.maxAge = 5000;
-        particleLength = particleLength || 0;
-        for (i = 0; i < nParticles; i += 1) {
-            this.pool.push(new PassiveParticle(x, y, 5, nTracers, particleLength));
+        particlelength = particlelength || 0;
+        for (i = 0; i < nparticles; i += 1) {
+            this.pool.push(new PassiveParticle(x, y, particleradius, particlelength, ntracers));
         }
     },
     
-    burst: function (x, y, r, speed, nParticles, age) {
+    burst: function (x, y, burstradius, speed, accel, nparticles, lifetime) {
         var i = 0, theta, p, s;
-        this.maxAge = age || this.maxAge;
+        this.lifetime = lifetime || this.lifetime;
         this.speed = speed;
-        for (i = 0; i < nParticles; i += 1) {
+        for (i = 0; i < nparticles; i += 1) {
             if (this.pool.length <= 0) {
                 break;
             }
             theta = Math.random() * Math.PI * 2;
             p = this.pool.pop();
+            p.speed = speed;
+            p.accel = accel;
+            p.lifetime = lifetime;
             s = speed + Math.random() * speed * 0.1;
-            p.recycle(x + Math.sin(theta) * 1.5 * r * Math.random(),
-                      y + Math.cos(theta) * 1.5 * r * Math.random(),
+            p.recycle(x + Math.sin(theta) * 1.5 * burstradius * Math.random(),
+                      y + Math.cos(theta) * 1.5 * burstradius * Math.random(),
                       Math.sin(theta) * s,
                       Math.cos(theta) * s);
             this.active.push(p);
@@ -313,7 +317,7 @@ ParticleSystem.prototype = {
         for (i = this.active.length - 1; i >= 0; i -= 1) {
             this.active[i].update(dt);
             //console.log(this.active[i].age);
-            if (this.active[i].age > this.maxAge) {
+            if (this.active[i].age > this.lifetime) {
                 p = this.active.splice(i, 1)[0];
                 p.recycle(this.x, this.y, 0, 0);
                 this.pool.push(p);
@@ -324,7 +328,7 @@ ParticleSystem.prototype = {
     draw: function (canvas, color) {
         var i = 0, alpha;
         for (i = 0; i < this.active.length; i += 1) {
-            alpha = 1 - this.active[i].age / this.maxAge;
+            alpha = 1 - this.active[i].age / this.lifetime;
             this.active[i].draw(canvas, color, alpha);
             //this.active[i].trace();
         }

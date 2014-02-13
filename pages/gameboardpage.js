@@ -19,7 +19,6 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.hoverLevel = -1;
     this.clickLevel = -1;
     this.levelButtons = [];
-    this.playMode = false;
     this.zoomTime = 0;
     this.startZoomFactor = 1;
     this.finalZoomFactor = 1;
@@ -31,8 +30,7 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
     this.finalZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
-    this.playMode = true;
-    this.editmode = false;
+    this.editmode = true;
 
     //setup ui...
     //$("#object-form").html('');
@@ -44,9 +42,16 @@ var Gameboard = function (canvas, hdim, vdim) {
 Gameboard.prototype = {
 
     setHandlers: function () {
-        $('canvas').unbind();
-        $(document).unbind();
+        //$('canvas').unbind();
+        //$(document).unbind();
         this.hide();
+        this.editorui.show();
+
+        //$(document).bind('opendoor', $.proxy(function (e) {
+        //    console.log("open door message");
+        //    //this.doorIsOpen = true;
+        //}, this));
+
 
         $("#editor-toggle").append('<pre>Edit Mode: <input id="edit-mode-input" type="checkbox" value="' + this.editmode + '"></span><br></pre>');
         $("#edit-mode-input").change($.proxy(function () {
@@ -57,6 +62,8 @@ Gameboard.prototype = {
                 this.editorui.hide();
             }
         }, this));
+
+        $("#edit-mode-input").prop('checked', true);
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
@@ -98,7 +105,7 @@ Gameboard.prototype = {
 
         $(document).bind('keydown', $.proxy(function (e) {
             var obj, obj2;
-            console.log(e.keyCode);
+            //console.log(e.keyCode);
             switch (e.keyCode) {
             case 39: //right arrow
                 this.moveRight();
@@ -165,7 +172,8 @@ Gameboard.prototype = {
         }
         //level0
         //LevelLoader.load(this.waterfall, level4, 768, 1024);
-        LevelLoader.load(this.waterfall, levels[0], 768, 1024);
+        //LevelLoader.load(this.waterfall, levels[0], 768, 1024);
+        LevelLoader.load(this.waterfall, awesomelevel, 0, 0);
         //LevelLoader.addLevel(this.waterfall, level3, 768 * 2, 1024);
     },
      
@@ -185,14 +193,12 @@ Gameboard.prototype = {
         //zoom to level and enable interactabble object handlers
         var r = this.levelButtons[i];
         this.selectedLevel = i;
-        this.playMode = true;
         this.zoomTransition = true;
         this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
         this.finalZoomCenter = new Vector(r.x, r.y);
         this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
         this.finalZoomExtents = new Vector(r.w, r.h);
         this.zoomTime = 0;
-        this.setHandlers();
     },
 
     onZoomTransition: function (dt) {
@@ -218,7 +224,6 @@ Gameboard.prototype = {
     },
 
     home: function () {
-        this.playMode = false;
         this.zoomTransition = true;
         this.selectedLevel = 4;
         this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
@@ -226,8 +231,6 @@ Gameboard.prototype = {
         this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
         this.finalZoomExtents = new Vector(768 * 3, 1024 * 3);
         this.zoomTime = 0;
-        //this.setLevelSelectHandlers();
-        this.setHandlers();
     },
 
     moveRight: function () {

@@ -76,6 +76,29 @@ Canvas.prototype = {
         this.ctx.fill();
     },
 
+    ellipse: function (xc, yc, w, h, lineWidth, color, alpha) {
+        var kappa = 0.5522848,
+            x = xc - 0.5 * w,
+            y = yc - 0.5 * h,
+            ox = (w / 2) * kappa, // control point offset horizontal
+            oy = (h / 2) * kappa, // control point offset vertical
+            xe = x + w,           // x-end
+            ye = y + h,           // y-end
+            xm = x + w / 2,       // x-middle
+            ym = y + h / 2;       // y-middle
+
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.beginPath();
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.moveTo(x, ym);
+        this.ctx.bezierCurveTo(x, ym - oy, xm - ox, y, xm, y);
+        this.ctx.bezierCurveTo(xm + ox, y, xe, ym - oy, xe, ym);
+        this.ctx.bezierCurveTo(xe, ym + oy, xm + ox, ye, xm, ye);
+        this.ctx.bezierCurveTo(xm - ox, ye, x, ym + oy, x, ym);
+        //this.ctx.closePath();
+        this.ctx.stroke();
+    },
+
     line: function (p1, p2, w, color, alpha) {
         this.ctx.strokeStyle = this.rgba(color, alpha);
         this.ctx.beginPath();
@@ -114,6 +137,7 @@ Canvas.prototype = {
         this.ctx.lineTo(p3.x * this.m, p3.y * this.m);
         this.ctx.lineTo(p4.x * this.m, p4.y * this.m);
         this.ctx.lineTo(p1.x * this.m, p1.y * this.m);
+        this.ctx.lineCap = 'round';
         this.ctx.stroke();
     },
 
@@ -173,6 +197,138 @@ Canvas.prototype = {
         this.ctx.lineTo(p4.x, p4.y);
         this.ctx.lineTo(p1.x, p1.y);
         this.ctx.stroke();
+    },
+
+    astrix: function (x, y, w, h, theta, lineWidth, color, alpha) {
+        var p1 = new Vector(-w * 0.5, 0),
+            p2 = new Vector(w * 0.5, 0),
+            p3 = new Vector(p1.x + x, p1.y + y),
+            p4 = new Vector(p2.x + x, p2.y + y);
+        this.line(p3, p4, lineWidth, color, alpha);
+        p1 = this.rotatePoint(p1.x, p1.y, 22.5);
+        p2 = this.rotatePoint(p2.x, p2.y, 22.5);
+        p3 = new Vector(p1.x + x, p1.y + y),
+        p4 = new Vector(p2.x + x, p2.y + y);
+        this.line(p3, p4, lineWidth, color, alpha);
+        p1 = this.rotatePoint(p1.x, p1.y, 22.5);
+        p2 = this.rotatePoint(p2.x, p2.y, 22.5);
+        p3 = new Vector(p1.x + x, p1.y + y),
+        p4 = new Vector(p2.x + x, p2.y + y);
+        this.line(p3, p4, lineWidth, color, alpha);
+        p1 = this.rotatePoint(p1.x, p1.y, 22.5);
+        p2 = this.rotatePoint(p2.x, p2.y, 22.5);
+        p3 = new Vector(p1.x + x, p1.y + y),
+        p4 = new Vector(p2.x + x, p2.y + y);
+        this.line(p3, p4, lineWidth, color, alpha);
+        p1 = this.rotatePoint(p1.x, p1.y, 22.5);
+        p2 = this.rotatePoint(p2.x, p2.y, 22.5);
+        p3 = new Vector(p1.x + x, p1.y + y),
+        p4 = new Vector(p2.x + x, p2.y + y);
+        this.line(p3, p4, lineWidth, color, alpha);
+        p1 = this.rotatePoint(p1.x, p1.y, 22.5);
+        p2 = this.rotatePoint(p2.x, p2.y, 22.5);
+        p3 = new Vector(p1.x + x, p1.y + y),
+        p4 = new Vector(p2.x + x, p2.y + y);
+        this.line(p3, p4, lineWidth, color, alpha);
+
+    },
+
+    windmill: function (x, y, w, h, theta, lineWidth, color, alpha) {
+        var p1 = this.rotatePoint(w * 0.5, h * 0.5, theta),
+            p2 = this.rotatePoint(0, h * 0.5, theta),
+            p3 = this.rotatePoint(0, -h * 0.5, theta),
+            p4 = this.rotatePoint(-w * 0.5, -h * 0.5, theta);
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.beginPath();
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.moveTo(p1.x + x, p1.y + y);
+        this.ctx.lineTo(p2.x + x, p2.y + y);
+        this.ctx.lineTo(p3.x + x, p3.y + y);
+        this.ctx.lineTo(p4.x + x, p4.y + y);
+        this.ctx.lineTo(p1.x + x, p1.y + y);
+        this.ctx.stroke();
+        p1 = this.rotatePoint(w * 0.5, 0, theta);
+        p2 = this.rotatePoint(w * 0.5, -h * 0.5, theta);
+        p3 = this.rotatePoint(-w * 0.5, h * 0.5, theta);
+        p4 = this.rotatePoint(-w * 0.5, -h * 0, theta);
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.beginPath();
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.moveTo(p1.x + x, p1.y + y);
+        this.ctx.lineTo(p2.x + x, p2.y + y);
+        this.ctx.lineTo(p3.x + x, p3.y + y);
+        this.ctx.lineTo(p4.x + x, p4.y + y);
+        this.ctx.lineTo(p1.x + x, p1.y + y);
+        this.ctx.stroke();
+    },
+
+    gear: function (x, y, rin, rout, theta, lineWidth, color, alpha) {
+        var i, x1, y1, thetaGear = theta, ngears = 10,
+            dtheta = Math.PI * 2 / ngears, 
+            outerPoints = [],
+            innerPoints = [];
+        for (i = 0; i < ngears; i += 1) {
+            x1 = rin * Math.cos(thetaGear);
+            y1 = rin * Math.sin(thetaGear);
+            innerPoints[i] = new Vector(x1, y1);
+            x1 = rout * Math.cos(thetaGear);
+            y1 = rout * Math.sin(thetaGear);
+            outerPoints[i] = new Vector(x1, y1);
+            thetaGear += dtheta;
+        }
+        
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        thetaGear = theta;
+        for (i = 0; i < innerPoints.length; i += 1) {
+            if (i % 2) {
+                this.ctx.moveTo(x + innerPoints[i].x, y + innerPoints[i].y);
+                this.ctx.arc(x, y, rin, thetaGear, thetaGear + dtheta, false);
+                this.ctx.moveTo(x + innerPoints[i].x, y + innerPoints[i].y);
+                this.ctx.lineTo(x + outerPoints[i].x, y + outerPoints[i].y);
+            }
+            else {
+                this.ctx.moveTo(x + outerPoints[i].x, y + outerPoints[i].y);
+                this.ctx.arc(x, y, rout, thetaGear, thetaGear + dtheta, false);
+                this.ctx.moveTo(x + outerPoints[i].x, y + outerPoints[i].y);
+                this.ctx.lineTo(x + innerPoints[i].x, y + innerPoints[i].y);
+            }
+            thetaGear += dtheta;
+        }
+        this.ctx.moveTo(x + rin * 0.6, y);
+        this.ctx.arc(x, y, rin * 0.6, 0, Math.PI * 2, false);
+        this.ctx.stroke();
+    },
+
+    jellyfish: function (x, y, r, theta, lineWidth, color, alpha) {
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, r, Math.PI, 0, false);
+        this.ctx.stroke();
+        this.circleOutline(x, y - r * 0.25, r * 0.1, lineWidth, color, alpha);
+        this.ellipse(x, y, r * 2, r * 0.75, lineWidth, color, alpha);
+    },
+
+
+    electricityLine: function (p1, p2, lineWidth, shockiness, color, alpha) {
+        var i, npoints = shockiness * 3, points = [], v = new Vector(p2.x - p1.x, p2.y - p1.y),
+            n = VectorMath.normalize(new Vector(-v.y, v.x)), l = VectorMath.length(v), dl;
+        //console.log("l  = " + l);
+        points[0] = [p1.x, p1.y];
+        points[npoints - 1] = [p2.x, p2.y];
+        for (i = 1; i < npoints - 1; i += 1) {
+            //console.log(p1.x + i / npoints * v.x);
+            //console.log(p1.y + i / npoints * v.y);
+            points[i] = [p1.x + i / npoints * v.x, p1.y + i / npoints * v.y];
+            dl = Math.random() * shockiness;
+            points[i][0] += n.x * dl;
+            points[i][1] += n.y * dl;
+            //console.log(points[i]);
+            this.linexy(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1], lineWidth, color, alpha);
+        }
+        this.linexy(points[npoints - 2][0], points[npoints - 2][1], points[npoints - 1][0], points[npoints - 1][1], lineWidth, color, alpha);
     },
 
     text: function (x, y, color, fontFamily, fontSize, str) {

@@ -35,14 +35,11 @@ Source.prototype.update = function (dt) {
 };
 
 Source.prototype.draw = function (canvas, color) {
-    var alpha = Math.sin(this.pulsedt / this.pulselength * Math.PI);
-    canvas.rectangle(this.p1, this.p2, this.p3, this.p4, color, 1.0);
-    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 1, color, 1.0);
-    if (this.selected) {
-        canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 2, color, 1.0);
-    }
-
-    //rectangle(this.p1, this.p2, this.p3, this.p4, [255, 255, 255], 1.0);
+    var alpha = 1.0;
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 20, color, 0.25);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 10, color, 0.5);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 5, [255, 255, 255], 0.9);
+    canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 30, color, 0.15);
 };
 
 var sourceFromJson = function (j) {

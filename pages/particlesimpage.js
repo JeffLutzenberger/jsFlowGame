@@ -17,6 +17,19 @@ var ParticleSimPage = function (canvas, hdim, vdim) {
     this.lastDrawTime = 0;
     this.camera.setExtents(768, 1024);
     this.camera.setCenter(768 * 0.5, 1025 * 0.5);
+    this.configs = {
+        x : 768 * 0.5,
+        y : 1024 * 0.5,
+        particleradius : 5,
+        particlelength : 50,
+        nparticles : 300,
+        nburstparticles: 50,
+        burstradius : 50,
+        speed : 0.6,
+        accel : -0.0005,
+        ntracers : 10,
+        lifetime : 1000
+    };
     this.init();
 };
 
@@ -24,8 +37,20 @@ ParticleSimPage.prototype = {
 
     init: function () {
         //create our particle effect and make it explode...
-        this.explosion.init(768 * 0.5, 1024 * 0.5, 300, 10, 50);
-        this.explosion.burst(768 * 0.5, 1024 * 0.5, 25, 0.5, 50, 2000);
+        this.explosion.init(this.configs.x,
+                            this.configs.y,
+                            this.configs.particleradius,
+                            this.configs.particlelength,
+                            this.configs.ntracers,
+                            this.configs.nparticles);
+
+        this.explosion.burst(this.configs.x,
+                             this.configs.y,
+                             this.configs.burstradius,
+                             this.configs.speed,
+                             this.configs.accel,
+                             this.configs.nburstparticles,
+                             this.configs.lifetime);
     },
 
     setHandlers: function () {
@@ -40,7 +65,14 @@ ParticleSimPage.prototype = {
 
         $("#editor-form").append('<input id="particle-burst-button" type="button" value="Burst">').button();
         $("#particle-burst-button").click($.proxy(function () {
-            this.explosion.burst(768 * 0.5, 1024 * 0.5, 25, 0.5, 50, 2000);
+            this.explosion.burst(this.configs.x,
+                             this.configs.y,
+                             this.configs.burstradius,
+                             this.configs.speed,
+                             this.configs.accel,
+                             this.configs.nburstparticles,
+                             this.configs.lifetime);
+
         }, this));
     },
 

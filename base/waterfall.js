@@ -12,7 +12,8 @@ var ParticleWorld = function (canvas, grid) {
     this.buckets = [];
     this.obstacles = [];
     this.particles = [];
-    this.sinkIsSource = true;
+    this.sinkIsSource = false;
+    this.localizeInfluence = true;
     this.nParticles = 0;
     this.score = 0;
     this.flux = 0;
@@ -36,15 +37,17 @@ var ParticleWorld = function (canvas, grid) {
     this.particleColor = [0, 153, 255];
     this.blueColor = [0, 153, 255];
     this.greenColor = [0, 153, 153];
-    this.sourceColor = [0, 255, 153];
+    this.sourceColor = [100, 255, 100];
     this.sinkColor =  [0, 255, 0];
     this.starColor =  [255, 150, 200];
     this.influencerColor = [0, 153, 255];
-    this.obstacleColor = [100, 100, 100];
+    this.obstacleColor = [100, 100, 255];
     this.gridColor = [200, 50, 255];
     this.portalColor = [255, 153, 0];
     this.scoreTextColor = [100, 100, 100];
     this.traileffect = new TrailEffect(canvas);
+
+    canvas.electricityLine(new Vector(100, 100), new Vector(100, 500), 30, 10, [100, 100, 255], 1.0);
 };
 
 ParticleWorld.prototype = {
@@ -159,7 +162,6 @@ ParticleWorld.prototype = {
     },
 
     moveParticle: function (particle) {
-        var i = 0, v2, d2, res, influencer, sink, n, dot;
               
         particle.move();
         
@@ -171,17 +173,13 @@ ParticleWorld.prototype = {
 
         this.hitInfluencers(particle);
  
-        if (this.hitObstacles(particle)) {
-            particle.move();
-        }
-
-        if (this.hitGridWall(particle)) {
-            particle.move();
-        }
+        this.hitObstacles(particle);
 
         this.hitBuckets(particle);
 
         this.hitPortals(particle);
+
+        this.hitGridWall(particle);
 
         if (particle.age > this.maxParticleAge) {
             this.missed += 1;
@@ -200,6 +198,7 @@ ParticleWorld.prototype = {
                 } else {
                     this.recycleParticle(p);
                 }
+                p.move();
                 return true;
             }
         }
@@ -224,6 +223,12 @@ ParticleWorld.prototype = {
         var i, v2, d2, res, influencer;
         for (i = 0; i < this.influencers.length; i += 1) {
             influencer = this.influencers[i];
+            if (this.localizeInfluence) {
+                //check that particle and object are in the same tile piece
+                if (!this.grid.sameTile(influencer, p)) {
+                    continue;
+                }
+            }
             v2 = new Vector(influencer.x - p.x, influencer.y - p.y);
             d2 = v2.squaredLength();
             d2 = Math.max(this.minDSquared, d2);
@@ -241,9 +246,17 @@ ParticleWorld.prototype = {
         var i, s, d2, v2, res, hit = false, dt = Math.random() * 0.4 - 0.2;
         for (i = 0; i < this.sinks.length; i += 1) {
             s = this.sinks[i];
+            if (this.localizeInfluence) {
+                //check that particle and object are in the same tile piece
+                if (!this.grid.sameTile(s, p)) {
+                    continue;
+                }
+            }
+
             if (s.hit(p)) {
-                if (s.lockedIn) {
+                if (s.lockedIn && s.isSource) {
                     s.recycleParticle(p);
+                    //this.recycleParticle(p);
                     p.brightness += 0.1;
                     p.age = 0;
                     return false;
@@ -271,15 +284,26 @@ ParticleWorld.prototype = {
         var i, s, d2, v2, res, hit = false, dt = Math.random() * 0.4 - 0.2;
         for (i = 0; i < this.stars.length; i += 1) {
             s = this.stars[i];
-            if (!s.inactive && s.hit(p)) {
+            if (this.localizeInfluence) {
+                //check that particle and object are in the same tile piece
+                if (!this.grid.sameTile(s, p)) {
+                    continue;
+                }
+            }
+
+            if (!s.exploded && s.hit(p)) {
                 //flash and increment energy
                 s.addEnergy();
                 this.recycleParticle(p);
                 return true;
             }
+            if (s.insideInfluenceRing(p)) {
+                //add door energy
+                s.addDoorEnergy();
+            }
             v2 = new Vector(s.x - p.x, s.y - p.y);
             d2 = v2.squaredLength();
-            res = s.force * this.forceMultiplier * s.sizeFactor / d2;
+            res = s.force * this.forceMultiplier * s.sizeFactor * s.energy / s.maxEnergy / d2;
             res = Math.min(res, this.maxParticleSpeed);
             v2 = v2.normalize();
             v2 = v2.scalarMultiply(-res);
@@ -291,6 +315,7 @@ ParticleWorld.prototype = {
 
     hitInteractable: function (x, y, checkall) {
         var i, p = new Particle(x, y);
+        p.radius = 50;
         if (this.interactable) {
             this.interactable.selected = false;
             this.interactable.grabberSelected = false;
@@ -405,6 +430,7 @@ ParticleWorld.prototype = {
         var h = this.grid.hit(p);
         if (h) {
             p.bounce(h);
+            p.move();
             return true;
         }
         return false;

@@ -89,7 +89,7 @@ EditorPage.prototype = {
 
         $(document).bind('keypress', $.proxy(function (e) {
             var obj, obj2;
-            console.log(e.keyCode);
+            //console.log(e.keyCode);
             switch (e.keyCode) {
             case 32: //space
                 //toggle particles
@@ -181,6 +181,7 @@ var EditorUI = function (waterfall) {
 
 EditorUI.prototype = {
     show: function () {
+        var val;
         $("#editor-form").html('');
         $("#editor-form").off();
 
@@ -233,6 +234,13 @@ EditorUI.prototype = {
         $("#reset-button").click($.proxy(function () {
             this.reset();
         }, this));
+
+        $("#editor-form").append('<br><br>Tile-based Influence: <input id="localize-influence-input" type="checkbox"' + (this.waterfall.localizeInfluence ? "checked" : "") + '></span><br>');
+        $("#localize-influence-input").change($.proxy(function () {
+            val = $("#localize-influence-input").prop('checked');
+            this.waterfall.localizeInfluence = val;
+        }, this));
+
    
         /*$("#grid-button").append('<input type="button" value="Grid">')
             .button()
@@ -281,7 +289,7 @@ EditorUI.prototype = {
     },
 
     addStar: function () {
-        var obj = new Star(400, 200, 15, 1);
+        var obj = new Star(768 + 400, 1024 + 200, 15, 1);
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.stars.push(obj);
         this.waterfall.interactableObjects.push(obj);
@@ -415,6 +423,29 @@ GameObjectEditForm.prototype = {
                     this.gameObject.updatePoints();
                 }
             }, this));
+        } else if (goType === "GridWall") {
+
+            $("#object-form").append('Has Door: <input id="has-door-input" type="checkbox"' + (this.gameObject.hasDoor ? "checked" : "") + '></span><br>');
+            $("#has-door-input").change($.proxy(function () {
+                val = $("#has-door-input").prop('checked');
+                this.gameObject.hasDoor = val;
+            }, this));
+
+            $("#object-form").append('Door s1: <input id="door-s1-input" type="text" value="' + this.gameObject.getS1() + '"></span><br>');
+            $("#door-s1-input").change($.proxy(function () {
+                val = $("#door-s1-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.setS1(val);
+                }
+            }, this));
+
+            $("#object-form").append('Door s2: <input id="door-s2-input" type="text" value="' + this.gameObject.getS2() + '"></span><br>');
+            $("#door-s2-input").change($.proxy(function () {
+                val = $("#door-s2-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.setS2(val);
+                }
+            }, this));
 
         } else {
             $("#object-form").append('w: <input id="w-input" type="text" value="' + this.gameObject.w + '"><br>');
@@ -445,6 +476,15 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
+        if (goType === "Sink") {
+            $("#object-form").append('Is Source: <input id="is-source-input" type="checkbox"' + (this.gameObject.isSource ? "checked" : "") + '></span><br>');
+            $("#is-source-input").change($.proxy(function () {
+                val = $("#is-source-input").prop('checked');
+                this.gameObject.isSource = val;
+                this.gameObject.lockedIn = val;
+            }, this));
+        }
+
         if (goType === "Source") {
             $("#object-form").append('particle speed: <input id="speed-input" type="text" value="' + this.gameObject.v + '"></span><br>');
             $("#speed-input").change($.proxy(function () {
@@ -455,6 +495,20 @@ GameObjectEditForm.prototype = {
                 }
             }, this));
 
+        }
+
+        if (goType === "Star") {
+            $("#object-form").append('Star Type: <select id="star-type-select"></select><br>');
+            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[0] + '</option>');
+            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[1] + '</option>');
+            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[2] + '</option>');
+            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[3] + '</option>');
+            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[4] + '</option>');
+            $("#star-type-select").val(this.gameObject.starType);
+            $("#star-type-select").change($.proxy(function () {
+                val = $("#star-type-select option:selected").text();
+                this.gameObject.starType = val;
+            }, this));
         }
 
         $("#object-form").append('Interactable: <input id="interactable-input" type="checkbox" value="' + this.gameObject.interactable + '"></span><br>');

@@ -2,7 +2,7 @@
 
 var Line = function (p1, p2) {
     var v = new Vector((p2.x + p1.x) * 0.5, (p2.y + p1.y) * 0.5);
-    console.log(v);
+    //console.log(v);
     this.x = v.x;
     this.y = v.y;
     v = new Vector(p2.x - p1.x, p2.y - p1.y);
@@ -73,7 +73,7 @@ Diamond.prototype = {
         this.vertices[1] = this.rotateAndTranslateVertex(this.vertices[1]);
         this.vertices[2] = this.rotateAndTranslateVertex(this.vertices[2]);
         this.vertices[3] = this.rotateAndTranslateVertex(this.vertices[3]);
-        console.log(this.vertices);
+        //console.log(this.vertices);
     },
 
     getLines: function () {
@@ -88,7 +88,7 @@ Diamond.prototype = {
 
     explode: function (speed, rotationSpeed) {
         var v, i, lines = this.getLines();
-        console.log(lines);
+        //console.log(lines);
         for (i = 0; i < lines.length; i += 1) {
             v = new Vector(lines[i].x - this.x, lines[i].y - this.y);
             v = VectorMath.normalize(v);
