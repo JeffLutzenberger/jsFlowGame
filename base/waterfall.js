@@ -94,7 +94,7 @@ ParticleWorld.prototype = {
             if (this.particles.length < this.nParticles) {
                 this.addParticle();
             }
-            this.moveParticles();
+            this.moveParticles(dt);
         }
 
         //for (i = 0; i < this.particles.length; i += 1) {
@@ -154,16 +154,16 @@ ParticleWorld.prototype = {
         }
     },
 
-    moveParticles: function (particle) {
+    moveParticles: function (dt) {
         var i = 0;
         for (i = 0; i < this.particles.length; i += 1) {
-            this.moveParticle(this.particles[i]);
+            this.moveParticle(this.particles[i], dt);
         }
     },
 
-    moveParticle: function (particle) {
-              
-        particle.move();
+    moveParticle: function (particle, dt) {
+             
+        particle.move(dt);
         
         particle.trace();
 
@@ -173,13 +173,13 @@ ParticleWorld.prototype = {
 
         this.hitInfluencers(particle);
  
-        this.hitObstacles(particle);
+        this.hitObstacles(particle, dt);
 
         this.hitBuckets(particle);
 
         this.hitPortals(particle);
 
-        this.hitGridWall(particle);
+        this.hitGridWall(particle, dt);
 
         if (particle.age > this.maxParticleAge) {
             this.missed += 1;
@@ -187,7 +187,7 @@ ParticleWorld.prototype = {
         }
     },
 
-    hitObstacles: function (p) {
+    hitObstacles: function (p, dt) {
         var i, o, h, dot;
         for (i = 0; i < this.obstacles.length; i += 1) {
             o = this.obstacles[i];
@@ -198,7 +198,7 @@ ParticleWorld.prototype = {
                 } else {
                     this.recycleParticle(p);
                 }
-                p.move();
+                p.move(dt);
                 return true;
             }
         }
@@ -246,28 +246,27 @@ ParticleWorld.prototype = {
         var i, s, d2, v2, res, hit = false, dt = Math.random() * 0.4 - 0.2;
         for (i = 0; i < this.sinks.length; i += 1) {
             s = this.sinks[i];
-            if (this.localizeInfluence) {
-                //check that particle and object are in the same tile piece
-                if (!this.grid.sameTile(s, p)) {
+            if (this.localizeInfluence && !this.grid.sameTile(s, p)) {
                     continue;
-                }
+            }
+
+            if (s.influenceBound && !s.insideInfluenceRing(p)) {
+                continue;
             }
 
             if (s.hit(p)) {
                 if (s.lockedIn && s.isSource) {
                     s.recycleParticle(p);
-                    //this.recycleParticle(p);
                     p.brightness += 0.1;
                     p.age = 0;
                     return false;
                 } else {
-                    this.score += 1;
-                    this.sumFlux += 1;
                     this.recycleParticle(p);
                     s.addEnergy();
                     return true;
                 }
             }
+
             v2 = new Vector(s.x - p.x, s.y - p.y);
             d2 = v2.squaredLength();
             res = s.force * this.forceMultiplier * s.sizeFactor / d2;
@@ -395,7 +394,7 @@ ParticleWorld.prototype = {
             for (i = 0; i < this.grid.lines.length; i += 1) {
                 //console.log(this.grid.lines[i]);
                 //console.log(p);
-                if (this.grid.lines[i].hit(p)) {
+                if (this.grid.lines[i].circleHit(p)) {
                     this.interactable = this.grid.lines[i];
                     this.interactable.selected = true;
                     console.log(this.interactable);
@@ -424,13 +423,13 @@ ParticleWorld.prototype = {
         return false;
     },
 
-    hitGridWall: function (p) {
+    hitGridWall: function (p, dt) {
         //where is the particle...
         //i.e. get the grid rect that the particle is in
         var h = this.grid.hit(p);
         if (h) {
             p.bounce(h);
-            p.move();
+            p.move(dt);
             return true;
         }
         return false;

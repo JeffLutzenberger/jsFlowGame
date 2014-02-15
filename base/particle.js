@@ -40,11 +40,12 @@ Particle.prototype = {
         }
     },
  
-    move : function () {
+    move : function (dt) {
         this.prevx = this.x;
         this.prevy = this.y;
-        this.x += this.vel.x;
-        this.y += this.vel.y;
+        //TODO: remove the 0.1x factor and rebalance all influencers and sinks
+        this.x += this.vel.x;// * dt * 0.09;
+        this.y += this.vel.y;// * dt * 0.09;
         this.age += 1;
     },
 

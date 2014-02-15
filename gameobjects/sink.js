@@ -7,13 +7,14 @@ var Sink = function (x, y, r, force, isSource) {
     this.radius = r || 15;
     this.base(x, y, 2 * this.radius, 2 * this.radius, 0);
     this.force = force || 1;
+    this.speed = 10;
+    this.isSource = isSource || true;
     this.influenceRadius = 5 * this.radius;
     this.sizeFactor = 1;
     this.targetSizeFactor = 3;
     this.maxSizeFactor = 4;
     this.showInfluenceRing = true;
-    this.influenceBound = false;
-    //this.hitsThisFrame = 0;
+    this.influenceBound = true;
     this.growthFactor = 0.15;
     this.decayFactor = 0.05;
     this.maxOrbitals = 4;
@@ -27,7 +28,6 @@ var Sink = function (x, y, r, force, isSource) {
     this.flashlength = 500;
     this.burstSize = 30;
     this.lockedIn = false;
-    this.isSource = isSource || false;
     this.grabber = new Rectangle(x + Math.cos(this.theta) * this.r,
                                  y + Math.sin(this.theta) * this.r,
                                  20, 20, 0);
@@ -75,7 +75,13 @@ Sink.prototype.setRadius = function (val) {
 Sink.prototype.hit = function (p) {
     var v2 = new Vector(this.x - p.x, this.y - p.y),
         d2 = v2.squaredLength();
-    return (d2 <= 2 * this.radius * this.radius * this.sizeFactor * this.sizeFactor);
+    return (d2 <= 3 * this.radius * this.radius * this.sizeFactor * this.sizeFactor);
+};
+
+Sink.prototype.insideInfluenceRing = function (p) {
+    var v2 = new Vector(this.x - p.x, this.y - p.y),
+        d2 = v2.squaredLength();
+    return (d2 <= 2 * this.influenceRadius * this.influenceRadius * this.sizeFactor * this.sizeFactor);
 };
 
 Sink.prototype.hitGrabber = function (p) {
@@ -208,8 +214,8 @@ Sink.prototype.recycleParticle = function (p) {
     var dt = Math.random() * 0.1 - 0.05;
     p.x = this.x + Math.cos(this.theta + dt) * this.influenceRadius * this.sizeFactor;
     p.y = this.y + Math.sin(this.theta + dt) * this.influenceRadius * this.sizeFactor;
-    p.vel.x = Math.cos(this.theta) * 15;
-    p.vel.y = Math.sin(this.theta) * 15;
+    p.vel.x = Math.cos(this.theta) * this.speed;
+    p.vel.y = Math.sin(this.theta) * this.speed;
 };
 
 Sink.prototype.drawOrbitals = function (canvas, color) {

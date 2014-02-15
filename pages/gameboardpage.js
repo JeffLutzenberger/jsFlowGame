@@ -25,7 +25,7 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.zoomTransition = false;
     this.loadLevels();
     this.camera.setExtents(768, 1024);
-    this.camera.setCenter(768 * 1.5, 1025 * 1.5);
+    this.camera.setCenter(768 * 0.5, 1025 * 0.5);
     this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
     this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
@@ -173,7 +173,7 @@ Gameboard.prototype = {
         //level0
         //LevelLoader.load(this.waterfall, level4, 768, 1024);
         //LevelLoader.load(this.waterfall, levels[0], 768, 1024);
-        LevelLoader.load(this.waterfall, awesomelevel, 0, 0);
+        //LevelLoader.load(this.waterfall, awesomelevel, 0, 0);
         //LevelLoader.addLevel(this.waterfall, level3, 768 * 2, 1024);
     },
      

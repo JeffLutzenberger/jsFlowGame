@@ -56,7 +56,28 @@ GridWall.prototype = {
     },
 
     hit : function (p) {
-        var n;
+        var n, r = 10;
+        if (this.hasDoor && this.doorIsOpen) {
+            //if (p.circleCollision(this.p1, this.p2)) {
+            if (p.lineCollision(this.p1, this.p2, r)) {
+                n = new Vector(-(this.p2.y - this.p1.y), this.p2.x - this.p1.x).normalize();
+                return n;
+            }
+            if (p.lineCollision(this.p3, this.p4, r)) {
+                n = new Vector(-(this.p4.y - this.p3.y), this.p4.x - this.p3.x).normalize();
+                return n;
+            }
+        } else {
+            if (p.lineCollision(this.p1, this.p4, r)) {
+                n = new Vector(-(this.p4.y - this.p1.y), this.p4.x - this.p1.x).normalize();
+                return n;
+            }
+        }
+        return undefined;
+    },
+
+    circleHit : function (p) {
+        var n, r = 10;
         if (this.hasDoor && this.doorIsOpen) {
             if (p.circleCollision(this.p1, this.p2)) {
                 n = new Vector(-(this.p2.y - this.p1.y), this.p2.x - this.p1.x).normalize();
@@ -272,6 +293,17 @@ GameGrid.prototype = {
             canvas.line(this.lines[i].p1, this.lines[i].p2, 10, color, 1.0);
             canvas.line(this.lines[i].p1, this.lines[i].p2, 5, [255, 255, 255], 0.8);
         }
+    },
+
+    selectionHit : function (p) {
+        var i, n;
+        for (i = 0; i < this.lines.length; i += 1) {
+            n = this.lines[i].circleHit(p);
+            if (n) {
+                return n;
+            }
+        }
+        return undefined;
     },
 
     hit : function (p) {

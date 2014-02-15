@@ -37,6 +37,9 @@ Vector.prototype = {
     }
 };
 
+/**
+ * VectorMath does not mutate vectors
+ * */
 var VectorMath = {
     squaredLength: function (v) {
         return v.x * v.x + v.y * v.y;
@@ -47,10 +50,10 @@ var VectorMath = {
     },
     
     normalize: function (v) {
-        var l = 1 / VectorMath.length(v);
-        v.x *= l;
-        v.y *= l;
-        return new Vector(v.x, v.y);
+        var vector = new Vector(v.x, v.y), l = 1 / VectorMath.length(vector);
+        vector.x *= l;
+        vector.y *= l;
+        return vector;
     },
 
     dot: function (v1, v2) {

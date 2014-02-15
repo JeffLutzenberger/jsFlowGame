@@ -289,7 +289,7 @@ EditorUI.prototype = {
     },
 
     addStar: function () {
-        var obj = new Star(768 + 400, 1024 + 200, 15, 1);
+        var obj = new Star(400, 200, 15, 1);
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.stars.push(obj);
         this.waterfall.interactableObjects.push(obj);
@@ -477,11 +477,24 @@ GameObjectEditForm.prototype = {
         }
 
         if (goType === "Sink") {
+            $("#object-form").append('Nozzle Speed: <input id="nozzle-speed-input" type="text" value="' + this.gameObject.speed + '"></span><br>');
+            $("#nozzle-speed-input").change($.proxy(function () {
+                val = $("#nozzle-speed-input").val();
+                if (isPositiveNumber(val)) {
+                    this.gameObject.speed = val;
+                }
+            }, this));
+
             $("#object-form").append('Is Source: <input id="is-source-input" type="checkbox"' + (this.gameObject.isSource ? "checked" : "") + '></span><br>');
             $("#is-source-input").change($.proxy(function () {
                 val = $("#is-source-input").prop('checked');
                 this.gameObject.isSource = val;
                 this.gameObject.lockedIn = val;
+            }, this));
+            $("#object-form").append('Influence Bound: <input id="influence-bound-input" type="checkbox"' + (this.gameObject.influenceBound ? "checked" : "") + '></span><br>');
+            $("#influence-bound-input").change($.proxy(function () {
+                val = $("#influence-bound-input").prop('checked');
+                this.gameObject.influenceBound = val;
             }, this));
         }
 
@@ -550,8 +563,8 @@ GameObjectEditForm.prototype = {
     },
 
     deleteObject: function () {
-        console.log(this.waterfall.interactable);
-        var o = this.waterfall.interactable,
+        //console.log(this.waterfall.interactable);
+        var o = this.gameObject,
             goType = o.gameObjectType(),
             index;
         if (goType === "Bucket") {
