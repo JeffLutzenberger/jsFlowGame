@@ -301,6 +301,90 @@ Canvas.prototype = {
         this.ctx.stroke();
     },
 
+    saw: function (x, y, rin, rout, theta, lineWidth, color, alpha) {
+        var i, x1, y1, thetaGear = theta, ngears = 8,
+            dtheta = Math.PI * 2 / ngears, 
+            outerPoints = [],
+            innerPoints = [],
+            sawPoints = [];
+        for (i = 0; i < ngears; i += 1) {
+            x1 = rin * Math.cos(thetaGear);
+            y1 = rin * Math.sin(thetaGear);
+            sawPoints.push(new Vector(x1, y1));
+            x1 = rout * Math.cos(thetaGear);
+            y1 = rout * Math.sin(thetaGear);
+            sawPoints.push(new Vector(x1, y1));
+            thetaGear += dtheta;
+        }
+        
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        thetaGear = theta;
+        this.ctx.moveTo(x + sawPoints[0].x, y + sawPoints[0].y); 
+        for (i = 1; i < sawPoints.length; i += 1) {
+            this.ctx.lineTo(x + sawPoints[i].x, y + sawPoints[i].y);
+        }
+        this.ctx.lineTo(x + sawPoints[0].x, y + sawPoints[0].y);
+        this.ctx.moveTo(x + rin * 0.5, y);
+        this.ctx.arc(x, y, rin * 0.5, 0, Math.PI * 2, false);
+        this.ctx.stroke();
+    },
+    
+    fourcircles: function (x, y, r, theta, lineWidth, color, alpha) {
+        //this.ctx.strokeStyle = this.rgba(color, alpha);
+        //this.ctx.lineWidth = lineWidth;
+        this.circleOutline(x - r * 0.35, y, r * 0.25, lineWidth, color, alpha);
+        this.circleOutline(x + r * 0.35, y, r * 0.25, lineWidth, color, alpha);
+        this.circleOutline(x, y - r * 0.35, r * 0.25, lineWidth, color, alpha);
+        this.circleOutline(x, y + r * 0.35, r * 0.25, lineWidth, color, alpha);
+        this.circleOutline(x, y, r * 0.75, lineWidth, color, alpha);
+        //this.ellipse(x, y, r * 2, r * 0.75, lineWidth, color, alpha);
+    },
+ 
+    target: function (x, y, r, theta, lineWidth, color, alpha) {
+        var i, x1, y1, theta1 = Math.PI / 6, theta2 = Math.PI / 3;
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        for (i = 0; i < 4; i += 1) {
+            x1 = x + r * 0.4 * Math.cos(theta);
+            y1 = y + r * 0.4 * Math.sin(theta);
+            this.ctx.moveTo(x1, y1);
+            this.ctx.arc(x, y, r * 0.4, theta, theta + theta2, false);
+            this.ctx.moveTo(x1, y1);
+            x1 = x + r * 0.6 * Math.cos(theta);
+            y1 = y + r * 0.6 * Math.sin(theta);
+            this.ctx.lineTo(x1, y1);
+            x1 = x + r * 0.4 * Math.cos(theta + theta2);
+            y1 = y + r * 0.4 * Math.sin(theta + theta2);
+            this.ctx.moveTo(x1, y1);
+            x1 = x + r * 0.6 * Math.cos(theta + theta2);
+            y1 = y + r * 0.6 * Math.sin(theta + theta2);
+            this.ctx.lineTo(x1, y1);
+            this.ctx.arc(x, y, r * 0.6, theta + theta2, theta, true);
+
+            x1 = x + r * 0.8 * Math.cos(theta);
+            y1 = y + r * 0.8 * Math.sin(theta);
+            this.ctx.moveTo(x1, y1);
+            this.ctx.arc(x, y, r * 0.8, theta, theta + theta2, false);
+            this.ctx.moveTo(x1, y1);
+            x1 = x + r * 1.0 * Math.cos(theta);
+            y1 = y + r * 1.0 * Math.sin(theta);
+            this.ctx.lineTo(x1, y1);
+            x1 = x + r * 0.8 * Math.cos(theta + theta2);
+            y1 = y + r * 0.8 * Math.sin(theta + theta2);
+            this.ctx.moveTo(x1, y1);
+            x1 = x + r * 1.0 * Math.cos(theta + theta2);
+            y1 = y + r * 1.0 * Math.sin(theta + theta2);
+            this.ctx.lineTo(x1, y1);
+            this.ctx.arc(x, y, r * 1.0, theta + theta2, theta, true);
+            theta += theta1 + theta2;
+        }
+        this.ctx.stroke();
+    },
+
+
     jellyfish: function (x, y, r, theta, lineWidth, color, alpha) {
         this.ctx.strokeStyle = this.rgba(color, alpha);
         this.ctx.lineWidth = lineWidth;
