@@ -388,7 +388,7 @@ function isPositiveNumber(n) {
 GameObjectEditForm.prototype = {
 
     show: function () {
-        var val, goType = this.gameObject.gameObjectType();
+        var val, i, goType = this.gameObject.gameObjectType();
         $("#object-form").html('');
         $("#object-form").off();
  
@@ -512,11 +512,9 @@ GameObjectEditForm.prototype = {
 
         if (goType === "Star") {
             $("#object-form").append('Star Type: <select id="star-type-select"></select><br>');
-            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[0] + '</option>');
-            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[1] + '</option>');
-            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[2] + '</option>');
-            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[3] + '</option>');
-            $("#star-type-select").append('<option value=' + StarTypes[0] + '>' + StarTypes[4] + '</option>');
+            for (i = 0; i < StarTypes.length; i += 1) {
+                $("#star-type-select").append('<option value=' + StarTypes[i] + '>' + StarTypes[i] + '</option>');
+            }
             $("#star-type-select").val(this.gameObject.starType);
             $("#star-type-select").change($.proxy(function () {
                 val = $("#star-type-select option:selected").text();

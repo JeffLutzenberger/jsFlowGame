@@ -358,6 +358,25 @@ Star.prototype.drawGear = function (rin, rout, theta, canvas, color) {
     canvas.gear(this.x, this.y, rin, rout, theta, 2, [255, 255, 255], 0.9);
 };
 
+Star.prototype.drawSaw = function (rin, rout, theta, canvas, color) {
+    canvas.saw(this.x, this.y, rin, rout, theta, 8, color, 0.5);
+    canvas.saw(this.x, this.y, rin, rout, theta, 5, color, 1.0);
+    canvas.saw(this.x, this.y, rin, rout, theta, 2, [255, 255, 255], 0.9);
+};
+
+Star.prototype.drawFourCircles = function (rin, rout, theta, canvas, color) {
+    canvas.fourcircles(this.x, this.y, rin, theta, 8, color, 0.5);
+    canvas.fourcircles(this.x, this.y, rin, theta, 5, color, 1.0);
+    canvas.fourcircles(this.x, this.y, rin, theta, 2, [255, 255, 255], 0.9);
+};
+
+Star.prototype.drawTarget = function (r, theta, canvas, color) {
+    canvas.target(this.x, this.y, r, theta, 8, color, 0.5);
+    canvas.target(this.x, this.y, r, theta, 5, color, 1.0);
+    canvas.target(this.x, this.y, r, theta, 2, [255, 255, 255], 0.9);
+};
+
+
 Star.prototype.drawJellyfish = function (w, h, theta, canvas, color) {
     canvas.jellyfish(this.x, this.y, w, theta, 8, color, 0.5);
     canvas.jellyfish(this.x, this.y, w, theta, 4, color, 1.0);
