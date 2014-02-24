@@ -34,6 +34,9 @@ var StarTypes = ["diamond",
                  "astrix",
                  "windmill",
                  "gear",
+                 "saw",
+                 "fourcircles",
+                 "target",
                  "jellyfish"];
 
 var Star = function (x, y, r, force, starType) {
@@ -303,7 +306,7 @@ Star.prototype.draw = function (canvas, color, dt) {
 
     w *= 3 * this.sizeFactor;
     h *= 3 * this.sizeFactor;
- 
+    
     if (this.starType === StarTypes[0]) {
         w += Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * w * 0.25;
         h -= Math.sin(this.pulsedt / this.pulselength * Math.PI * 2) * h * 0.25;
@@ -321,6 +324,12 @@ Star.prototype.draw = function (canvas, color, dt) {
     } else if (this.starType === StarTypes[4]) {
         this.drawGear(w * 0.65, w * 0.8, this.animationTheta, canvas, color);
     } else if (this.starType === StarTypes[5]) {
+        this.drawSaw(w * 0.65, w * 0.8, this.animationTheta, canvas, color);
+    } else if (this.starType === StarTypes[6]) {
+        this.drawFourCircles(w, w * 0.8, this.animationTheta, canvas, color);
+    } else if (this.starType === StarTypes[7]) {
+        this.drawTarget(w, this.animationTheta, canvas, color);
+    } else if (this.starType === StarTypes[8]) {
         this.drawJellyfish(w, w * 0.8, this.animationTheta, canvas, color);
     }
 };
@@ -384,18 +393,17 @@ Star.prototype.drawJellyfish = function (w, h, theta, canvas, color) {
 };
 
 Star.prototype.serialize = function () {
-    var obj = {};
-    obj.x = this.x;
-    obj.y = this.y;
+    var obj = this.base.serialize();
     obj.radius = this.radius;
-    obj.influenceRadius = this.influenceRadius;
     obj.force = this.force;
     obj.starType = this.starType;
+    obj.influenceRadius = this.influenceRadius;
+    obj.maxSizeFactor = this.maxSizeFactor;
     return obj;
 };
 
 var starFromJson = function (j) {
-    return new Star(j.x, j.y, j.radius, j.force, j.starType);
+    var obj = new Star(j.x, j.y, j.radius, j.force, j.starType);
+    $.extend(obj, j);
+    return obj;
 };
-
-

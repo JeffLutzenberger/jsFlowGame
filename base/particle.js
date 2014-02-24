@@ -1,7 +1,7 @@
 'use strict';
 //check here for a pretty good particle / quadtree tutorial
 //http://gamedevelopment.tutsplus.com/tutorials/make-your-game-pop-with-particle-effects-and-quadtrees--gamedev-2138
-var Particle = function (x, y, r) {
+var Particle = function (x, y, r, color) {
     this.x = x;
     this.y = y;
     this.prevx = x;
@@ -15,28 +15,32 @@ var Particle = function (x, y, r) {
     this.numTracers = 30;
     this.traceWidth = 1;
     this.brightness = 0;
+    this.color = color;
+    this.source = undefined;
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
-        t = new Tracer(this.x, this.y);
+        t = new Tracer(this.x, this.y, this.color);
         this.trail.push(t);
     }
 };
 
 Particle.prototype = {
 
-    recycle : function (x, y, vx, vy) {
+    recycle : function (x, y, vx, vy, color) {
         var i = 0;
         this.x = x;
         this.y = y;
         this.prevx = x;
         this.prevy = y;
-        this.age = 0;
+        this.age = Math.random() * 10;
         this.brightness = 0;
         this.vel.x = vx;
         this.vel.y = vy;
+        this.color = color;
         for (i = 0; i < this.numTracers; i += 1) {
             this.trail[i].x = x;
             this.trail[i].y = y;
+            this.trail[i].color = this.color;
         }
     },
  
@@ -44,15 +48,21 @@ Particle.prototype = {
         this.prevx = this.x;
         this.prevy = this.y;
         //TODO: remove the 0.1x factor and rebalance all influencers and sinks
-        this.x += this.vel.x;// * dt * 0.09;
-        this.y += this.vel.y;// * dt * 0.09;
-        this.age += 1;
+        this.x += this.vel.x * dt * 0.08;
+        this.y += this.vel.y * dt * 0.08;
+        this.age += dt * 0.001;
     },
 
     bounce : function (n) {
         var dot = 2 * VectorMath.dot(this.vel, n);
         this.vel.x -= dot * n.x;
         this.vel.y -= dot * n.y;
+    },
+
+    redirect: function (n) {
+        var speed = VectorMath.length(this.vel);
+        this.vel.x = speed * n.x;
+        this.vel.y = speed * n.y;
     },
 
     distanceSquared: function (p) {
@@ -70,20 +80,22 @@ Particle.prototype = {
         this.trail[0].x = this.x;
         this.trail[0].y = this.y;
         this.trail[0].age = 0;
+        this.trail[0].color = this.color;
     },
     
     draw: function (canvas, color) {
-        var i = 0, alpha = 1.0, t1, t2,
-            c = canvas.brighten(color, this.brightness);
-        canvas.circle(this.x, this.y, this.radius * 2, c, 0.25);
+        var i = 0, alpha = 1.0, t1, t2;
+        color = ParticleWorldColors[this.color];
+        canvas.circle(this.x, this.y, this.radius * 2, color, 0.25);
         canvas.circle(this.x, this.y, this.radius, color, 1);
         canvas.circle(this.x, this.y, this.radius * 0.5, [255, 255, 255], 1);
         for (i = 1; i < this.numTracers; i += 1) {
+            color = ParticleWorldColors[this.trail[i].color];
             t1 = this.trail[i - 1];
             t2 = this.trail[i];
             alpha = (this.numTracers - this.trail[i].age) / this.numTracers;
             //color = 'rgba(0,153,255,' + alpha + ')';
-            canvas.line(t1, t2, this.traceWidth * 2, c, 0.25);
+            canvas.line(t1, t2, this.traceWidth * 2, color, 0.25);
             canvas.line(t1, t2, this.traceWidth, color, alpha);
         }
     },
@@ -153,10 +165,11 @@ Particle.prototype = {
     }
 };
 
-var Tracer = function (x, y) {
+var Tracer = function (x, y, color) {
     this.x = x;
     this.y = y;
     this.age = 0;
+    this.color = color;
 };
 
 

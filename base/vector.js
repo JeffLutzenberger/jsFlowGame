@@ -64,5 +64,9 @@ var VectorMath = {
         var x1 = Math.cos(theta) * v.x + Math.sin(theta) * v.y,
             y1 = -Math.sin(theta) * v.x + Math.cos(theta) * v.y;
         return new Vector(x1, y1);
+    },
+
+    scalarMultiply: function (v, num) {
+        return new Vector(v.x * num, v.y * num);
     }
 };

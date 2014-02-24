@@ -97,7 +97,7 @@ Rectangle.prototype = {
                 p.circleCollision(this.p4, this.p1));
     },
 
-    serialize : function () {
+    baseSerialize : function () {
         var obj = {};
         obj.x = this.x;
         obj.y = this.y;
@@ -109,4 +109,3 @@ Rectangle.prototype = {
         return obj;
     }
 };
-

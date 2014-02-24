@@ -1,177 +1,5 @@
 'use strict';
 
-var EditorPage = function (canvas, hdim, vdim) {
-    this.canvas = canvas;
-    this.camera = new Camera(canvas);
-    this.grid = new Grid(768 * hdim, 1024 * vdim, 768, 1024);
-    this.waterfall = new ParticleWorld(canvas, this.grid);
-    this.grid = new Grid(768, 1024, 768 / 32, 1024 / 32);
-    this.editorui = new EditorUI(this.waterfall);
-    this.showGrid = false;
-    this.drawDt = 0;
-    this.framerate = 30;
-    this.currentDrawTime = 0;
-    this.lastDrawTime = 0;
-    this.camera.setExtents(768, 1024);
-    this.camera.setCenter(768 * 0.5, 1024 * 0.5);
-};
-
-
-EditorPage.prototype = {
-
-    init: function () {
-        var obj;
-        this.waterfall.clear();
-        obj = new Source(400, 50, 50, 25, 0, 5);
-        this.waterfall.sources.push(obj);
-        this.waterfall.interactableObjects.push(obj);
-        obj = new Bucket(300, 600, 100, 50, 0);
-        this.waterfall.buckets.push(obj);
-        this.waterfall.interactableObjects.push(obj);
-        obj = new Obstacle(300, 300, 100, 25, 45, 1);
-        this.waterfall.obstacles.push(obj);
-        this.waterfall.interactableObjects.push(obj);
-    },
-
-    hideUI: function () {
-        this.editorui.hide();
-    },
-
-    showUI: function () {
-        this.editorui.show();
-    },
-
-    setHandlers: function () {
-        $('canvas').unbind();
-        $(document).unbind();
-
-        $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
-            var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-                y = Math.floor((e.pageY - $("#canvas").offset().top)),
-                p = this.camera.screenToWorld(x, y);
-            this.waterfall.mouseDown = true;
-            this.waterfall.hitInteractable(p.x, p.y);
-            this.editorui.gameObjectForm.gameObject = this.waterfall.interactable;
-            this.editorui.gameObjectForm.hide();
-            if (this.waterfall.interactable) {
-                console.log(this.waterfall.interactable);
-                this.editorui.gameObjectForm.show();
-            }
-        }, this));
-
-        $(document).bind('mouseup touchend', $.proxy(function (e) {
-            this.waterfall.mouseDown = false;
-            if (this.waterfall.hitObject) {
-                this.waterfall.hitObject.selected = false;
-            }
-            this.waterfall.hitObject = null;
-        }, this));
-
-        $('canvas').bind('mousemove touchmove', $.proxy(function (e) {
-            if (this.waterfall.mouseDown === false) {
-                return;
-            }
-            var x = Math.floor((e.pageX - $("#canvas").offset().left)),
-                y = Math.floor((e.pageY - $("#canvas").offset().top)),
-                p = this.camera.screenToWorld(x, y);
-            x = this.grid.snapx(p.x);
-            y = this.grid.snapy(p.y);
-
-            if (this.waterfall.interactable.gameObjectType() === "Sink" && this.waterfall.interactable.grabberSelected) {
-                //move the sinks grabber...
-                this.waterfall.interactable.moveGrabber(p);
-            } else if (this.waterfall.interactable) {
-                this.waterfall.interactable.setxy(x, y);
-                this.editorui.gameObjectForm.updateLocation();
-            }
-
-        }, this));
-
-        $(document).bind('keypress', $.proxy(function (e) {
-            var obj, obj2;
-            //console.log(e.keyCode);
-            switch (e.keyCode) {
-            case 32: //space
-                //toggle particles
-                if (this.waterfall.nParticles <= 0 && this.waterfall.sources.length > 0) {
-                    this.waterfall.nParticles = 50;
-                } else {
-                    this.waterfall.nParticles = 0;
-                    this.waterfall.particles.length = 0;
-                }
-                break;
-            case 98: //b
-                obj = new Bucket(100, 400, 100, 50, 0);
-                this.waterfall.buckets.push(obj);
-                this.waterfall.interactableObjects.push(obj);
-                this.editorui.selectObject(obj);
-                break;
-            case 105: //i
-                obj = new Influencer(400, 100);
-                this.waterfall.influencers.push(obj);
-                this.waterfall.interactableObjects.push(obj);
-                this.editorui.selectObject(obj);
-                break;
-            case 111: //o
-                //add an obstacle
-                obj = new Obstacle(100, 100, 100, 25, 0, 1);
-                this.waterfall.obstacles.push(obj);
-                this.waterfall.interactableObjects.push(obj);
-                this.editorui.selectObject(obj);
-                break;
-            case 112: //p
-                //add an obstacle
-                obj = new Portal(300, 400, 100, 25, 0);
-                obj2 = new Portal(200, 300, 100, 25, 0, obj);
-                this.waterfall.portals.push(obj);
-                this.waterfall.portals.push(obj2);
-                this.waterfall.interactableObjects.push(obj);
-                this.waterfall.interactableObjects.push(obj2);
-                this.editorui.selectObject(obj);
-                break;
-            case 115: //s
-                obj = new Source(200, 100, 100, 25, 0, 0, 0.5);
-                this.waterfall.sources.push(obj);
-                this.waterfall.interactableObjects.push(obj);
-                this.editorui.selectObject(obj);
-                break;
-            default:
-                break;
-            }
-        }, this));
-
-        this.waterfall.setHandlers();
-
-    },
-
-    update: function (dt) {
-        this.waterfall.update(dt);
-        this.draw(dt);
-    },
-
-    draw: function (dt) {
-        this.drawDt += dt;
-        if (this.drawDt > this.framerate) {
-
-            this.currentDrawTime = new Date().getTime();
-
-            this.lastDrawTime = this.currentDrawTime;
-
-            this.drawDt = 0;
-
-            this.camera.reset();
-
-            this.camera.show();
-
-            if (this.editorui.showGrid) {
-                this.grid.draw(this.canvas, [50, 50, 50]);
-            }
-
-            this.waterfall.draw();
-        }
-    }
-};
-
 var EditorUI = function (waterfall) {
     this.waterfall = waterfall;
     this.gameObjectForm = new GameObjectEditForm(waterfall);
@@ -233,6 +61,7 @@ EditorUI.prototype = {
         $("#editor-form").append('&nbsp;<input id="reset-button" type="button" value="Reset">').button();
         $("#reset-button").click($.proxy(function () {
             this.reset();
+            this.waterfall.backgroundGrid.applyExplosiveForce(5, new Vector(768 * 0.5, 1025 * 0.5), 512);
         }, this));
 
         $("#editor-form").append('<br><br>Tile-based Influence: <input id="localize-influence-input" type="checkbox"' + (this.waterfall.localizeInfluence ? "checked" : "") + '></span><br>');
@@ -272,7 +101,7 @@ EditorUI.prototype = {
     },
 
     addInfluencer: function () {
-        var obj = new Influencer(400, 100, 15, 0.5);
+        var obj = new Influencer(400, 100, 15, 5);
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.influencers.push(obj);
         this.waterfall.interactableObjects.push(obj);
@@ -280,8 +109,8 @@ EditorUI.prototype = {
     },
 
     addSink: function () {
-        var obj = new Sink(400, 200, 15, 1);
-        obj.lockedIn = true;
+        var obj = new Sink(400, 200, 15, 5);
+        //obj.lockedIn = true;
         obj.showInfluenceRing = this.showInfluenceRing;
         this.waterfall.sinks.push(obj);
         this.waterfall.interactableObjects.push(obj);
@@ -314,7 +143,7 @@ EditorUI.prototype = {
     },
 
     addSource: function () {
-        var obj = new Source(200, 100, 25, 25, 0, 5);
+        var obj = new Source(200, 100, 25, 25, 0, 2);
         this.waterfall.sources.push(obj);
         this.waterfall.interactableObjects.push(obj);
         this.selectObject(obj);
@@ -322,11 +151,15 @@ EditorUI.prototype = {
 
     togglePlay: function () {
         //toggle particles
-        if (this.waterfall.nParticles <= 0) {
-            this.waterfall.nParticles = 50;
-        } else {
-            this.waterfall.nParticles = 0;
-            this.waterfall.particles.length = 0;
+        var i = 0;
+        for (i = 0; i < this.waterfall.sources.length; i += 1) {
+            if (this.waterfall.sources[i].particles.length <= 0) {
+                this.waterfall.sources[i].nparticles = 50;
+                this.waterfall.sources[i].addParticles();
+            } else {
+                this.waterfall.sources[i].nparticles = 0;
+                this.waterfall.sources[i].particles.length = 0;
+            }
         }
     },
 
@@ -452,7 +285,7 @@ GameObjectEditForm.prototype = {
             $("#w-input").change($.proxy(function (e) {
                 val = $("#w-input").val();
                 if (isPositiveNumber(val)) {
-                    this.gameObject.w = val;
+                    this.gameObject.w = parseFloat(val);
                     this.gameObject.updatePoints();
                 }
             }, this));
@@ -461,7 +294,7 @@ GameObjectEditForm.prototype = {
             $("#h-input").change($.proxy(function () {
                 val = $("#h-input").val();
                 if (isPositiveNumber(val)) {
-                    this.gameObject.h = val;
+                    this.gameObject.h = parseFloat(val);
                     this.gameObject.updatePoints();
                 }
             }, this));
@@ -473,6 +306,14 @@ GameObjectEditForm.prototype = {
                     this.gameObject.theta = val;
                     this.gameObject.updatePoints();
                 }
+            }, this));
+        }
+
+        if (goType === "Bucket") {
+            $("#object-form").append('Has Bottom: <input id="has-bottom-input" type="checkbox"' + (this.gameObject.hasBottom ? "checked" : "") + '></span><br>');
+            $("#has-bottom-input").change($.proxy(function () {
+                val = $("#has-bottom-input").prop('checked');
+                this.gameObject.hasBottom = val;
             }, this));
         }
 
@@ -499,11 +340,11 @@ GameObjectEditForm.prototype = {
         }
 
         if (goType === "Source") {
-            $("#object-form").append('particle speed: <input id="speed-input" type="text" value="' + this.gameObject.v + '"></span><br>');
+            $("#object-form").append('particle speed: <input id="speed-input" type="text" value="' + this.gameObject.speed + '"></span><br>');
             $("#speed-input").change($.proxy(function () {
                 val = $("#speed-input").val();
                 if (isNumber(val)) {
-                    this.gameObject.v = parseFloat(val);
+                    this.gameObject.speed = parseFloat(val);
                     this.gameObject.updatePoints();
                 }
             }, this));
@@ -519,6 +360,48 @@ GameObjectEditForm.prototype = {
             $("#star-type-select").change($.proxy(function () {
                 val = $("#star-type-select option:selected").text();
                 this.gameObject.starType = val;
+            }, this));
+        }
+
+        if (goType === "Source" || goType === "Sink" || goType === "Star" || goType === "GridWall") {
+            $("#object-form").append('Color: <select id="color-select"></select><br>');
+            for (i in ParticleWorldColors) {
+                $("#color-select").append('<option value=' + i + '>' + i + '</option>');
+            }
+            if (goType === "GridWall") {
+                $("#color-select").val(this.gameObject.doorColor);
+                $("#color-select").change($.proxy(function () {
+                    val = $("#color-select option:selected").text();
+                    this.gameObject.doorColor = val;
+                }, this));
+            } else {
+                $("#color-select").val(this.gameObject.color);
+                $("#color-select").change($.proxy(function () {
+                    val = $("#color-select option:selected").text();
+                    this.gameObject.color = val;
+                }, this));
+            }
+        }
+
+        if (goType === "Bucket") {
+            $("#object-form").append('In Color: <select id="in-color-select"></select><br>');
+            for (i in ParticleWorldColors) {
+                $("#in-color-select").append('<option value=' + i + '>' + i + '</option>');
+            }
+            $("#in-color-select").val(this.gameObject.inColor);
+            $("#in-color-select").change($.proxy(function () {
+                val = $("#in-color-select option:selected").text();
+                this.gameObject.inColor = val;
+            }, this));
+            
+            $("#object-form").append('Out Color: <select id="out-color-select"></select><br>');
+            for (i in ParticleWorldColors) {
+                $("#out-color-select").append('<option value=' + i + '>' + i + '</option>');
+            }
+            $("#out-color-select").val(this.gameObject.outColor);
+            $("#out-color-select").change($.proxy(function () {
+                val = $("#out-color-select option:selected").text();
+                this.gameObject.outColor = val;
             }, this));
         }
 

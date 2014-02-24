@@ -7,14 +7,16 @@ var Sink = function (x, y, r, force, isSource) {
     this.radius = r || 15;
     this.base(x, y, 2 * this.radius, 2 * this.radius, 0);
     this.force = force || 1;
-    this.speed = 10;
-    this.isSource = isSource || true;
-    this.influenceRadius = 5 * this.radius;
+    this.influenceRadius = this.radius * 5;
+    this.speed = 5;
+    this.color = 'green';
+    this.isSource = isSource || false;
+    this.influenceType = 0;
     this.sizeFactor = 1;
     this.targetSizeFactor = 3;
     this.maxSizeFactor = 4;
     this.showInfluenceRing = true;
-    this.influenceBound = true;
+    this.influenceBound = false;
     this.growthFactor = 0.15;
     this.decayFactor = 0.05;
     this.maxOrbitals = 4;
@@ -72,10 +74,37 @@ Sink.prototype.setRadius = function (val) {
     this.h = val;
 };
 
+Sink.prototype.influence = function (p, dt, maxSpeed) {
+    var v2 = new Vector(this.x - p.x, this.y - p.y),
+        r2 = Math.max(v2.squaredLength(), this.radius * this.radius),
+        res;
+    if (this.influenceType === 0) {
+        // 1/r^2 
+        res = this.force * 100 / r2;
+    } else if (this.influenceType === 1) {
+        // 1/r smooths out influence
+        res = this.force / Math.sqrt(r2);
+    } else if (this.influenceType === 2) {
+        res = maxSpeed - Math.sqrt(r2) * maxSpeed / 1000;
+        res = Math.max(0, res);
+    } else if (this.influenceType === 3) {
+        if (r2 < this.influenceRadius * this.influenceRadius) {
+            res = maxSpeed;
+        }
+    }
+    res *= dt * 0.08;
+    //res = Math.min(res, maxSpeed);
+    v2 = VectorMath.normalize(v2);
+    v2.x *= res;
+    v2.y *= res;
+    p.vel.x += v2.x;
+    p.vel.y += v2.y;
+};
+
 Sink.prototype.hit = function (p) {
     var v2 = new Vector(this.x - p.x, this.y - p.y),
         d2 = v2.squaredLength();
-    return (d2 <= 3 * this.radius * this.radius * this.sizeFactor * this.sizeFactor);
+    return (d2 <= 2 * this.radius * this.radius * this.sizeFactor * this.sizeFactor);
 };
 
 Sink.prototype.insideInfluenceRing = function (p) {
@@ -105,7 +134,7 @@ Sink.prototype.trap = function (p) {
         c1 = new Particle(p.x, p.y, p.radius),
         p1 = new Vector(p.prevx, p.prevy),
         p2 = new Vector(p.x, p.y),
-        d1 = new Vector(p1.x - this.x, p2.y - this.y).length(),
+        d1 = new Vector(p1.x - this.x, p1.y - this.y).length(),
         d2 = new Vector(p2.x - this.x, p2.y - this.y).length(),
         hitPoint;
     if (d1 < d2) {
@@ -121,6 +150,22 @@ Sink.prototype.trap = function (p) {
         }
     }
 };
+
+Sink.prototype.bounce = function (p) {
+    var d1 = new Vector(p.x - this.x, p.y - this.y).length(),
+        r1 = this.influenceRadius * this.sizeFactor + 10,
+        r2 = r1 + 10,
+        n;
+    if (d1 < r1) {
+        //get the normal vector at this point
+        n = new Vector(p.x - this.x, p.y - this.y);
+        n = VectorMath.normalize(n);
+        p.x = this.x + r2 * n.x;
+        p.y = this.y + r2 * n.y;
+        return n;
+    }
+};
+
 
 Sink.prototype.update = function (dt, hit) {
     var i;
@@ -308,6 +353,7 @@ Sink.prototype.draw = function (canvas, color) {
         radius,
         alpha,
         grabberAlpha;
+    color = ParticleWorldColors[this.color];
     this.sizeFactor = 1 + this.radius * this.energy / 1000;
 
     canvas.radialGradient(this.x,
@@ -318,7 +364,7 @@ Sink.prototype.draw = function (canvas, color) {
                           color,
                           0.5,
                           0);
-    canvas.circle(this.x, this.y, this.radius * 2 * this.sizeFactor, c, 0.25);
+    canvas.circle(this.x, this.y, this.radius * 2 * this.sizeFactor, color, 0.25);
     canvas.radialGradient(this.x,
                           this.y,
                           this.radius * this.sizeFactor * 0.5,
@@ -330,7 +376,7 @@ Sink.prototype.draw = function (canvas, color) {
 
     if (this.showInfluenceRing) {
         canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 1, [255, 255, 255], 1);
-        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, c, 1);
+        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 3, color, 1);
     }
 
     if (this.lockedIn && this.isSource) {
@@ -351,7 +397,7 @@ Sink.prototype.draw = function (canvas, color) {
         
         this.drawGrabber(canvas, color, alpha);
     
-    } else {
+    }/* else {
         //draw pulse ring...
         //this.drawPulseRing(canvas, color);
         if (this.flashdt >= 0 && this.flashdt < this.flashlength) {
@@ -388,25 +434,27 @@ Sink.prototype.draw = function (canvas, color) {
 
     if (this.selected) {
         canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, [0, 100, 255], 0.25);
-    }
+    }*/
 
-    this.drawOrbitals(canvas, c);
+    //this.drawOrbitals(canvas, c);
 };
 
-
 Sink.prototype.serialize = function () {
-    var obj = {};
-    obj.x = this.x;
-    obj.y = this.y;
+    var obj = this.base.serialize();
     obj.radius = this.radius;
-    obj.influenceRadius = this.influenceRadius;
     obj.force = this.force;
     obj.isSource = this.isSource;
+    obj.influenceRadius = this.influenceRadius;
+    obj.influenceType = this.influenceType;
+    obj.maxSizeFactor = this.maxSizeFactor;
+    obj.targetSizeFactor = this.targetSizeFactor;
+    obj.influenceBound = this.influenceBound;
+    obj.showInfluenceRing = this.showInfluenceRing;
     return obj;
 };
 
 var sinkFromJson = function (j) {
-    return new Sink(j.x, j.y, j.radius, j.force, j.isSource);
+    var obj = new Sink(j.x, j.y, j.radius, j.force, j.isSource);
+    $.extend(obj, j);
+    return obj;
 };
-
-

@@ -384,6 +384,77 @@ Canvas.prototype = {
         this.ctx.stroke();
     },
 
+    bucket: function (x, y, w, h, theta, lineWidth, color, alpha) {
+        var x1 = -w * 0.5, y1 = -h * 0.5,
+            //x2 = 0, y2 = -h * 0.3,
+            //x3 = 0, y2 = -h * 0.3,
+            x2 = -w * 0.4, y2 = -h * 0.3,
+            x3 =  w * 0.4, y3 = -h * 0.3,
+            x4 =  w * 0.5, y4 = -h * 0.5,
+            x5 =  w * 0.5, y5 = h * 0.5,
+            x6 = -w * 0.5, y6 = h * 0.5;
+        this.push();
+        this.ctx.translate(x, y);
+        this.ctx.rotate(-theta)
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x2, y2);
+        this.ctx.lineTo(x3, y3);
+        this.ctx.lineTo(x4, y4);
+        this.ctx.lineTo(x5, y5);
+        this.ctx.lineTo(x6, y6);
+        this.ctx.moveTo(x2, y2);
+        this.ctx.lineTo(x1, y1);
+        this.ctx.lineTo(x6, y6);
+        this.ctx.lineCap = 'square';
+        this.ctx.stroke();
+        this.pop();
+
+    },
+
+    funnel: function (x, y, w, h, theta, lineWidth, inColor, outColor, alpha) {
+        var x1 = -w * 0.5, y1 = -h * 0.5,
+            x2 = 0, y2 = -h * 0.3,
+            x3 = 0, y3 = -h * 0.3,
+            //x2 = -w * 0.4, y2 = -h * 0.3,
+            //x3 =  w * 0.4, y3 = -h * 0.3,
+            x4 =  w * 0.5, y4 = -h * 0.5,
+            x5 =  w * 0.5, y5 = -h * 0.2,
+            x6 = -w * 0.5, y6 = -h * 0.2;
+        this.push();
+        this.ctx.translate(x, y);
+        this.ctx.rotate(-theta)
+        this.ctx.strokeStyle = this.rgba(inColor, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x2, y2);
+        this.ctx.lineTo(x3, y3);
+        this.ctx.lineTo(x4, y4);
+        this.ctx.lineTo(x5, y5);
+        this.ctx.lineTo(x6, y6);
+        this.ctx.moveTo(x2, y2);
+        this.ctx.lineTo(x1, y1);
+        this.ctx.lineTo(x6, y6);
+        this.ctx.lineCap = 'square';
+        this.ctx.stroke();
+        this.ctx.rotate(Math.PI)
+        this.ctx.strokeStyle = this.rgba(outColor, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x2, y2);
+        this.ctx.lineTo(x3, y3);
+        this.ctx.lineTo(x4, y4);
+        this.ctx.lineTo(x5, y5);
+        this.ctx.lineTo(x6, y6);
+        this.ctx.moveTo(x2, y2);
+        this.ctx.lineTo(x1, y1);
+        this.ctx.lineTo(x6, y6);
+        this.ctx.lineCap = 'square';
+        this.ctx.stroke();
+
+        this.pop();
+    },
 
     jellyfish: function (x, y, r, theta, lineWidth, color, alpha) {
         this.ctx.strokeStyle = this.rgba(color, alpha);
