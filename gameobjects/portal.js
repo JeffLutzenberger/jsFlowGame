@@ -41,8 +41,10 @@ Portal.prototype.draw = function (canvas, color) {
 };
 
 Portal.prototype.serialize = function () {
-    var obj = this.base.serialize();
-    obj.outlet = this.outlet.serialize();
+    var obj = this.baseSerialize();
+    if (this.outlet) {
+        obj.outlet = this.outlet.serialize();
+    }
     return obj;
 };
 

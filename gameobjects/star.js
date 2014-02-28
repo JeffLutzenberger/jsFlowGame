@@ -393,7 +393,7 @@ Star.prototype.drawJellyfish = function (w, h, theta, canvas, color) {
 };
 
 Star.prototype.serialize = function () {
-    var obj = this.base.serialize();
+    var obj = this.baseSerialize();
     obj.radius = this.radius;
     obj.force = this.force;
     obj.starType = this.starType;

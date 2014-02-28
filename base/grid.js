@@ -240,31 +240,58 @@ var GameGrid =  function (w, h, gridx, gridy) {
     this.lines = [];
     this.rows = [];
     this.cols = [];
-    for (i = 0; i < nrows + 1; i += 1) {
-        this.rows[i] = i * gridy;
-        for (j = 0; j < ncols; j += 1) {
-            p1 = new Vector(gridx * j, this.gridy * i);
-            p2 = new Vector(gridx * (j + 1), this.gridy * i);
-            this.lines.push(new GridWall(p1, p2));
-        }
-    }
-    for (i = 0; i < ncols + 1; i += 1) {
-        this.cols[i] = i * gridx;
-        for (j = 0; j < nrows; j += 1) {
-            p1 = new Vector(this.gridx * i, gridy * j);
-            p2 = new Vector(this.gridx * i, gridy * (j + 1));
-            this.lines.push(new GridWall(p1, p2));
-        }
-    }
+    this.setRowsCols(nrows, ncols);
 };
 
 GameGrid.prototype = {
+    setRowsCols: function (nrows, ncols) {
+        console.log("rows, cols: " + nrows + "  " + ncols);
+        var i = 0, j = 0, p1, p2;
+        this.lines.length = 0;
+        this.rows.length = 0;
+        this.cols.length = 0;
+        this.h = nrows * this.gridy;
+        this.w = ncols * this.gridx;
+        for (i = 0; i < nrows + 1; i += 1) {
+            this.rows[i] = i * this.gridy;
+            for (j = 0; j < ncols; j += 1) {
+                p1 = new Vector(this.gridx * j, this.gridy * i);
+                p2 = new Vector(this.gridx * (j + 1), this.gridy * i);
+                this.lines.push(new GridWall(p1, p2));
+            }
+        }
+        for (i = 0; i < ncols + 1; i += 1) {
+            this.cols[i] = i * this.gridx;
+            for (j = 0; j < nrows; j += 1) {
+                p1 = new Vector(this.gridx * i, this.gridy * j);
+                p2 = new Vector(this.gridx * i, this.gridy * (j + 1));
+                this.lines.push(new GridWall(p1, p2));
+            }
+        }
+    },
+
+    setCols: function (ncols) {
+        this.setRowsCols(this.rows.length - 1, ncols);
+    },
+
+    setRows: function (nrows) {
+        this.setRowsCols(nrows, this.cols.length - 1);
+    },
+
     nCols: function () {
         return Math.round(this.w / this.gridx);
     },
 
     nRows: function () {
         return Math.round(this.h / this.gridy);
+    },
+
+    extents: function () {
+        return new Vector(this.w, this.h);
+    },
+
+    center: function () {
+        return new Vector(this.w * 0.5, this.h * 0.5);
     },
 
     snapx: function (x) {
@@ -327,6 +354,36 @@ GameGrid.prototype = {
             }
         }
         return undefined;
+    },
+
+    serialize : function () {
+        var obj = {'w' : this.w,
+                   'h' : this.h,
+                   'gridx' : this.gridx,
+                   'gridy' : this.gridy},
+            lines = [], i;
+        for (i = 0; i < this.lines.length; i += 1) {
+            if (this.lines[i].hasDoor) {
+                lines.push({'hasDoor' : true,
+                            's1' : this.lines[i].getS1(),
+                            's2' : this.lines[i].getS2()});
+            } else {
+                lines.push({});
+            }
+        }
+        obj.lines = lines;
+        return obj;
+    }
+};
+
+var gameGridFromJson = function (j) {
+    var i, obj = new GameGrid(j.w, j.h, j.gridx, j.gridy);
+    for (i = 0; i < obj.lines.length; i += 1) {
+        if (j.lines[i].hasDoor) {
+            this.obj.lines[i].hasDoor = true;
+            this.obj.lines[i].setS1(parseFloat(j.lines[i].s1));
+            this.obj.lines[i].setS2(parseFloat(j.lines[i].s2));
+        }
     }
 };
 

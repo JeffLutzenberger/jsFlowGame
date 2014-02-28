@@ -6,8 +6,11 @@ function Source(x, y, w, h, theta, speed, color) {
     this.speed = speed || 1;
     this.color = color || 'red';
     this.nparticles = 50;
+    this.lastAddTime = 0;
+    this.addPeriod = 100; //ms per particle
     this.particles = [];
-    this.addParticles();
+    this.particlePool = [];
+    //this.addParticles();
 }
 
 Source.prototype = new Rectangle();
@@ -29,6 +32,7 @@ Source.prototype.addParticles = function () {
         p = new Particle(x, y, 4, this.color);
         p.source = this;
         p.recycle(p.x, p.y, vx, vy, this.color);
+        //p.age = Math.random() * 10;
         this.particles.push(p);
     }
 };
@@ -44,6 +48,25 @@ Source.prototype.recycleParticle = function (p) {
 };
 
 Source.prototype.update = function (dt) {
+    //add a particle every n seconds...
+    var i, p, p1, p2, v, x, y, vx, vy;
+    this.lastAddTime += dt;
+    if (this.particles.length < this.nparticles && this.lastAddTime > this.addPeriod) {
+        this.lastAddTime = 0;
+        p1 = this.p3;
+        p2 = this.p4;
+        v = new Vector(p2.x - p1.x, p2.y - p1.y);
+        x = p1.x + Math.random() * v.x;
+        y = p1.y + Math.random() * v.y;
+        vx = this.speed * this.n3.x;
+        vy = this.speed * this.n3.y;
+        x = p1.x + Math.random() * v.x;
+        y = p1.y + Math.random() * v.y;
+        p = new Particle(x, y, 4, this.color);
+        p.source = this;
+        p.recycle(p.x, p.y, vx, vy, this.color);
+        this.particles.push(p);
+    }
 };
 
 Source.prototype.draw = function (canvas, color) {

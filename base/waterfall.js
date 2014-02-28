@@ -76,6 +76,11 @@ ParticleWorld.prototype = {
 
         this.backgroundGrid.update(dt);
 
+        for (i = 0; i < this.sources.length; i += 1) {
+            o = this.sources[i];
+            o.update(dt);
+        }
+
         for (i = 0; i < this.sinks.length; i += 1) {
             o = this.sinks[i];
             o.update(dt);
@@ -102,6 +107,11 @@ ParticleWorld.prototype = {
             this.backgroundGrid.applyExplosiveForce(f * 6, new Vector(o.x, o.y), o.radius * 10);
         }
 
+        for (i = 0; i < this.buckets.length; i += 1) {
+            o = this.buckets[i];
+            o.update(dt);
+        }
+ 
         this.moveParticles(dt);
     },
     
@@ -186,11 +196,20 @@ ParticleWorld.prototype = {
     },
 
     hitInfluencers: function (p, dt) {
-        var i, v2, d2, res, influencer;
+        var i, n, influencer;
         for (i = 0; i < this.influencers.length; i += 1) {
             influencer = this.influencers[i];
             if (this.localizeInfluence && !this.grid.sameTile(influencer, p)) {
                 continue;
+            }
+            if (influencer.deflectParticles) {
+                n = influencer.bounce(p);
+                if (n) {
+                    //move the particle outside the circle...
+                    p.bounce(n);
+                    p.move(dt);
+                    return true;
+                }
             }
             influencer.influence(p, dt, this.maxParticleSpeed);
         }
@@ -209,7 +228,7 @@ ParticleWorld.prototype = {
             }
 
             //this is where we would check the color of the particle            
-            if (p.color !== s.color) {
+            if (p.color !== s.inColor) {
                 n = s.bounce(p);
                 if (n) {
                     //move the particle outside the circle...

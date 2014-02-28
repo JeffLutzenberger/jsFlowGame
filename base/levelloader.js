@@ -1,7 +1,7 @@
 'use strict';
 
 var LevelLoader = {
-    load: function (level, world) {
+    load: function (world, level) {
         var i = 0, x = 0, y = 0, portals,
             bucketList = level.buckets,
             influencerList = level.influencers,
@@ -55,7 +55,8 @@ var LevelLoader = {
     
     saveLevel: function (waterfall) {
         var i, level = {};
-        
+       
+        //save grid size and camera information... 
         level.buckets = [];
         for (i = 0; i < waterfall.buckets.length; i += 1) {
             level.buckets.push(waterfall.buckets[i].serialize());
@@ -93,7 +94,8 @@ var LevelLoader = {
             level.stars.push(waterfall.stars[i].serialize());
         }
        
+        level.gameGrid = waterfall.grid.serialize();
+
         return level;
     }
-
 };

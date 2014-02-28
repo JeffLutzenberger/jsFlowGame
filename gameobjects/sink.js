@@ -10,6 +10,8 @@ var Sink = function (x, y, r, force, isSource) {
     this.influenceRadius = this.radius * 5;
     this.speed = 5;
     this.color = 'green';
+    this.inColor = 'green';
+    this.outColor = 'blue';
     this.isSource = isSource || false;
     this.influenceType = 0;
     this.sizeFactor = 1;
@@ -261,6 +263,7 @@ Sink.prototype.recycleParticle = function (p) {
     p.y = this.y + Math.sin(this.theta + dt) * this.influenceRadius * this.sizeFactor;
     p.vel.x = Math.cos(this.theta) * this.speed;
     p.vel.y = Math.sin(this.theta) * this.speed;
+    p.color = this.outColor;
 };
 
 Sink.prototype.drawOrbitals = function (canvas, color) {
@@ -353,7 +356,7 @@ Sink.prototype.draw = function (canvas, color) {
         radius,
         alpha,
         grabberAlpha;
-    color = ParticleWorldColors[this.color];
+    color = ParticleWorldColors[this.inColor];
     this.sizeFactor = 1 + this.radius * this.energy / 1000;
 
     canvas.radialGradient(this.x,
@@ -383,7 +386,7 @@ Sink.prototype.draw = function (canvas, color) {
         //draw a pulsing outer ring to indicate this sink has been locked in
         radius = this.radius * this.sizeFactor;
         alpha = this.grabberFadeDt / this.grabberFadeLength;
-        canvas.radialGradient(this.x,
+        /*canvas.radialGradient(this.x,
                               this.y,
                               this.radius * this.sizeFactor,
                               this.influenceRadius * this.sizeFactor * 1.5,
@@ -394,8 +397,8 @@ Sink.prototype.draw = function (canvas, color) {
         
         canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 20, [255, 255, 255], 0.3 * alpha);
         canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 5, color, 0.5 * alpha);
-        
-        this.drawGrabber(canvas, color, alpha);
+        */
+        this.drawGrabber(canvas, ParticleWorldColors[this.outColor], alpha);
     
     }/* else {
         //draw pulse ring...
@@ -440,10 +443,12 @@ Sink.prototype.draw = function (canvas, color) {
 };
 
 Sink.prototype.serialize = function () {
-    var obj = this.base.serialize();
+    var obj = this.baseSerialize();
     obj.radius = this.radius;
     obj.force = this.force;
     obj.isSource = this.isSource;
+    obj.inColor = this.inColor;
+    obj.outColor = this.outColor;
     obj.influenceRadius = this.influenceRadius;
     obj.influenceType = this.influenceType;
     obj.maxSizeFactor = this.maxSizeFactor;

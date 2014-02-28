@@ -7,6 +7,7 @@ var Influencer = function (x, y, r, force) {
     this.force = force || 1;
     this.influenceRadius = this.radius * 5;
     this.influenceType = 1;
+    this.deflectParticles = false;
     this.sizeFactor = 1;
     this.maxSizeFactor = 3;
     this.showInfluenceRing = true;
@@ -58,6 +59,21 @@ Influencer.prototype.influence = function (p, dt, maxSpeed) {
     v2.y *= res;
     p.vel.x += v2.x;
     p.vel.y += v2.y;
+};
+
+Influencer.prototype.bounce = function (p) {
+    var d1 = new Vector(p.x - this.x, p.y - this.y).length(),
+        r1 = this.influenceRadius * this.sizeFactor + p.radius,
+        r2 = r1 + 10,
+        n;
+    if (d1 < r1) {
+        //get the normal vector at this point
+        n = new Vector(p.x - this.x, p.y - this.y);
+        n = VectorMath.normalize(n);
+        p.x = this.x + r2 * n.x;
+        p.y = this.y + r2 * n.y;
+        return n;
+    }
 };
 
 Influencer.prototype.update = function (dt, hit) {
@@ -161,9 +177,9 @@ Influencer.prototype.draw = function (canvas, color, dt) {
 };
 
 Influencer.prototype.serialize = function () {
-    var obj = this.base.serialize();
+    var obj = this.baseSerialize();
     obj.radius = this.radius;
-    obj.force = this.obj;
+    obj.force = this.force;
     obj.influenceRadius = this.influenceRadius;
     obj.influenceType = this.influenceType;
     obj.maxSizeFactor = this.maxSizeFactor;

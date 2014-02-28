@@ -21,7 +21,7 @@ Obstacle.prototype.draw = function (canvas, color) {
 };
 
 Obstacle.prototype.serialize = function () {
-    var obj = this.base.serialize();
+    var obj = this.baseSerialize();
     obj.reaction = this.reaction;
     return obj;
 };

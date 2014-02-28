@@ -32,7 +32,7 @@ Particle.prototype = {
         this.y = y;
         this.prevx = x;
         this.prevy = y;
-        this.age = Math.random() * 10;
+        this.age = 0;//Math.random() * 10;
         this.brightness = 0;
         this.vel.x = vx;
         this.vel.y = vy;
@@ -276,6 +276,20 @@ PassiveParticle.prototype = {
             //canvas.line(t1, t2, this.traceWidth * 5, c, alpha * 0.25);
         }
     }
+};
+
+var bucketParticleConfigs = {
+    x : 768 * 0.5,
+    y : 1024 * 0.5,
+    particleradius : 5,
+    particlelength : 50,
+    nparticles : 300,
+    nburstparticles: 50,
+    burstradius : 50,
+    speed : 0.6,
+    accel : -0.0005,
+    ntracers : 10,
+    lifetime : 1000
 };
 
 var ParticleSystem = function (x, y, image) {

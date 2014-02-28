@@ -1,7 +1,8 @@
 'use strict';
 
-var EditorUI = function (waterfall) {
+var EditorUI = function (waterfall, camera) {
     this.waterfall = waterfall;
+    this.camera = camera;
     this.gameObjectForm = new GameObjectEditForm(waterfall);
     this.showGrid = false;
     this.showInfluenceRing = true;
@@ -9,7 +10,7 @@ var EditorUI = function (waterfall) {
 
 EditorUI.prototype = {
     show: function () {
-        var val;
+        var val, i = 0;
         $("#editor-form").html('');
         $("#editor-form").off();
 
@@ -70,7 +71,44 @@ EditorUI.prototype = {
             this.waterfall.localizeInfluence = val;
         }, this));
 
-   
+
+        $("#editor-form").append('Load Level: <select id="load-level-select"></select><br>');
+        for (i = 0; i < WorldLevels.length; i += 1) {
+            $("#load-level-select").append('<option value=' + i + '>' + parseInt(i + 1) + '</option>');
+        }
+        
+        $("#editor-form").append('Number of Grid Columns: <input id="grid-cols-input" type="text" value="' + this.waterfall.grid.nCols() + '"></span><br>');
+        $("#editor-form").append('Number of Grid Rows: <input id="grid-rows-input" type="text" value="' + this.waterfall.grid.nRows() + '"></span><br>');
+        $("#grid-cols-input").change($.proxy(function () {
+            val = $("#grid-cols-input").val();
+            if (isPositiveNumber(val)) {
+                console.log("ncols entered: " + val);
+                this.waterfall.grid.setCols(parseInt(val, 10));
+                this.camera.setExtents(this.waterfall.grid.extents().x,
+                                       this.waterfall.grid.extents().y);
+                this.camera.setCenter(this.waterfall.grid.center().x,
+                                      this.waterfall.grid.center().y);
+            }
+        }, this));
+        $("#grid-rows-input").change($.proxy(function () {
+            val = $("#grid-rows-input").val();
+            if (isPositiveNumber(val)) {
+                console.log("nrows entered: " + val);
+                this.waterfall.grid.setRows(parseInt(val, 10));
+                this.camera.setExtents(this.waterfall.grid.extents().x,
+                                       this.waterfall.grid.extents().y);
+                this.camera.setCenter(this.waterfall.grid.center().x,
+                                      this.waterfall.grid.center().y);
+            }
+        }, this));
+
+        $("#load-level-select").val(this.waterfall.level);
+        $("#load-level-select").change($.proxy(function () {
+            val = $("#load-level-select option:selected").text();
+            this.waterfall.level = val;
+            LevelLoader.load(this.waterfall, WorldLevels[val-1]);
+        }, this));
+
         /*$("#grid-button").append('<input type="button" value="Grid">')
             .button()
             .click($.proxy(function () {
@@ -153,11 +191,11 @@ EditorUI.prototype = {
         //toggle particles
         var i = 0;
         for (i = 0; i < this.waterfall.sources.length; i += 1) {
-            if (this.waterfall.sources[i].particles.length <= 0) {
-                this.waterfall.sources[i].nparticles = 50;
-                this.waterfall.sources[i].addParticles();
-            } else {
+            if (this.waterfall.sources[i].particles.length > 0) {
                 this.waterfall.sources[i].nparticles = 0;
+                this.waterfall.sources[i].particles.length = 0;
+            } else {
+                this.waterfall.sources[i].nparticles = 50;
                 this.waterfall.sources[i].particles.length = 0;
             }
         }
@@ -348,7 +386,6 @@ GameObjectEditForm.prototype = {
                     this.gameObject.updatePoints();
                 }
             }, this));
-
         }
 
         if (goType === "Star") {
@@ -363,7 +400,7 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
-        if (goType === "Source" || goType === "Sink" || goType === "Star" || goType === "GridWall") {
+        if (goType === "Source" || goType === "Star" || goType === "GridWall") {
             $("#object-form").append('Color: <select id="color-select"></select><br>');
             for (i in ParticleWorldColors) {
                 $("#color-select").append('<option value=' + i + '>' + i + '</option>');
@@ -383,7 +420,7 @@ GameObjectEditForm.prototype = {
             }
         }
 
-        if (goType === "Bucket") {
+        if (goType === "Bucket" || goType === "Sink") {
             $("#object-form").append('In Color: <select id="in-color-select"></select><br>');
             for (i in ParticleWorldColors) {
                 $("#in-color-select").append('<option value=' + i + '>' + i + '</option>');
@@ -405,6 +442,14 @@ GameObjectEditForm.prototype = {
             }, this));
         }
 
+        if (goType === "Influencer") {
+            $("#object-form").append('Deflects Particles: <input id="deflect-particles-input" type="checkbox" value="' + this.gameObject.deflectParticles + '"></span><br>');
+            $("#deflect-particles-input").change($.proxy(function () {
+                val = $("#deflect-particles-input").prop('checked');
+                this.gameObject.deflectParticles = val;
+            }, this));
+        }
+
         $("#object-form").append('Interactable: <input id="interactable-input" type="checkbox" value="' + this.gameObject.interactable + '"></span><br>');
         $("#interactable-input").change($.proxy(function () {
             val = $("#interactable-input").prop('checked');
@@ -415,7 +460,6 @@ GameObjectEditForm.prototype = {
         $("#delete-button").button().click($.proxy(function () {
             this.deleteObject();
         }, this));
-
     },
 
     hide: function () {
@@ -423,19 +467,6 @@ GameObjectEditForm.prototype = {
         $("#object-form").html('');
         $("#object-form").off();
         //edit our grid
-        $("#object-form").append('<span id="object-type">Gameboard Grid</span><br>');
-        $("#object-form").append('Number of Grid Columns: <input id="grid-cols-input" type="text" value="' + this.waterfall.grid.nCols() + '"></span><br>');
-        $("#grid-cols-input").change($.proxy(function () {
-            val = $("#grid-cols-input").val();
-            if (isPositiveNumber(val)) {
-                //this.gameObject.setRadius(val);
-                //this.gameObject.radius = val;
-                //this.gameObject.w = val;
-                //this.gameObject.h = val;
-                //this.gameObject.updatePoints();
-                console.log("update n grid cols");
-            }
-        }, this));
     },
 
     updateLocation: function () {

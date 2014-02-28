@@ -8,7 +8,7 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.camera = new Camera(canvas);
     this.grid = new GameGrid(768 * hdim, 1024 * vdim, 768, 1024);
     this.waterfall = new ParticleWorld(canvas, this.grid);
-    this.editorui = new EditorUI(this.waterfall);
+    this.editorui = new EditorUI(this.waterfall, this.camera);
     this.hdim = hdim || 3;
     this.vdim = vdim || 3;
     this.drawDt = 0;
@@ -89,7 +89,15 @@ Gameboard.prototype = {
             if (this.waterfall.mouseDown === false) {
                 return;
             }
-            var x = Math.floor((e.pageX - $("#canvas").offset().left)),
+            var n,
+                i,
+                obj,
+                p1,
+                p2,
+                v,
+                l,
+                r,
+                x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top)),
                 p = this.camera.screenToWorld(x, y);
             
@@ -97,6 +105,35 @@ Gameboard.prototype = {
                 //move the sinks grabber...
                 this.waterfall.interactable.moveGrabber(p);
             } else if (this.waterfall.interactable) {
+                //if this object is an influencer we should make sure it does not
+                //overlap other influencers
+                if (this.waterfall.interactable.gameObjectType() === "Influencer") {
+                    //for each influncer see if we overlap, if so, push this
+                    //influencer away
+                    for (i = 0; i < this.waterfall.influencers.length; i += 1) {
+                        obj = this.waterfall.influencers[i];
+                        if (this.waterfall.interactable !== obj) {
+                            //if distance between the objects is less than the sum of their radii
+                            p1 = new Particle(obj.x, obj.y, obj.influenceRadius);
+                            p2 = new Particle(p.x, p.y, this.waterfall.interactable.influenceRadius);
+                            v = new Vector(p2.x - p1.x, p2.y - p1.y);
+                            l = VectorMath.length(v);
+                            r = p1.radius + p2.radius;
+                            if (l < r) {
+                                //collision
+                                //console.log(v);
+                                //console.log(p2);
+                                v = VectorMath.normalize(v);
+                                p.x = p1.x + v.x * (r + 2);
+                                p.y = p1.y + v.y * (r + 2);
+                                //this.waterfall.mouseDown = false;
+                                //return;
+                                break;
+                            }
+                        }
+
+                    }
+                }
                 this.waterfall.interactable.setxy(p.x, p.y);
                 this.editorui.gameObjectForm.updateLocation();
             }
