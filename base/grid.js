@@ -37,6 +37,7 @@ var GridWall = function (p1, p2) {
     this.doorIsOpen = true;
     this.randomSeed = 100;
     this.doorPoints = [];
+    this.flash = new Flash(500, 1);
 
     $(document).bind('opendoor', $.proxy(function (e) {
         console.log("open door message");
@@ -54,6 +55,10 @@ var GridWall = function (p1, p2) {
 GridWall.prototype = {
     gameObjectType: function () {
         return "GridWall";
+    },
+
+    update : function (dt) {
+        this.flash.update(dt);
     },
 
     hit : function (p) {
@@ -169,8 +174,11 @@ GridWall.prototype = {
     },
 
     draw : function (canvas, color) {
-        var p1, p2, n, doorjam = 50,
+        var p1, p2, n, doorjam = 50, f = 1 + this.flash.factor,
             doorColor = ParticleWorldColors[this.doorColor];
+        if (this.flash.factor > 0) {
+            color = canvas.brighten(color, this.flash.factor);
+        }
         if (this.hasDoor) {
             canvas.line(this.p1, this.p2, 30, color, 0.25);
             canvas.line(this.p1, this.p2, 15, color, 0.75);
@@ -198,16 +206,11 @@ GridWall.prototype = {
             canvas.line(this.p6, this.p8, 10, doorColor, 1.0);
             canvas.line(this.p6, this.p8, 5, [255, 255, 255], 0.8);
 
-            if (!this.doorIsOpen) {
-                //darw some electricity
-                //this.drawDoor(canvas, [100, 100, 255], 1.0);
-                //canvas.electricityLine(this.p2, this.p3, 5, 2, [100, 100, 255], 1.0);
-            }
         } else {
-            canvas.line(this.p1, this.p4, 30, color, 0.25);
-            canvas.line(this.p1, this.p4, 15, color, 0.75);
+            canvas.line(this.p1, this.p4, 30, color, 0.25 * f);
+            canvas.line(this.p1, this.p4, 15, color, 0.75 * f);
             canvas.line(this.p1, this.p4, 10, color, 1.0);
-            canvas.line(this.p1, this.p4, 5, [255, 255, 255], 0.8);
+            canvas.line(this.p1, this.p4, 5, [255, 255, 255], 0.8 * f);
         }
     },
 
@@ -323,14 +326,10 @@ GameGrid.prototype = {
         return tile;
     },
 
-    draw: function (canvas, color) {
+    update: function (dt) {
         var i = 0;
         for (i = 0; i < this.lines.length; i += 1) {
-            this.lines[i].draw(canvas, color);
-            canvas.line(this.lines[i].p1, this.lines[i].p2, 30, color, 0.25);
-            canvas.line(this.lines[i].p1, this.lines[i].p2, 15, color, 0.75);
-            canvas.line(this.lines[i].p1, this.lines[i].p2, 10, color, 1.0);
-            canvas.line(this.lines[i].p1, this.lines[i].p2, 5, [255, 255, 255], 0.8);
+            this.lines[i].update(dt);
         }
     },
 
@@ -350,10 +349,22 @@ GameGrid.prototype = {
         for (i = 0; i < this.lines.length; i += 1) {
             n = this.lines[i].hit(p);
             if (n) {
+                this.lines[i].flash.play();
                 return n;
             }
         }
         return undefined;
+    },
+
+    draw: function (canvas, color) {
+        var i = 0;
+        for (i = 0; i < this.lines.length; i += 1) {
+            this.lines[i].draw(canvas, color);
+            canvas.line(this.lines[i].p1, this.lines[i].p2, 30, color, 0.25);
+            canvas.line(this.lines[i].p1, this.lines[i].p2, 15, color, 0.75);
+            canvas.line(this.lines[i].p1, this.lines[i].p2, 10, color, 1.0);
+            canvas.line(this.lines[i].p1, this.lines[i].p2, 5, [255, 255, 255], 0.8);
+        }
     },
 
     serialize : function () {

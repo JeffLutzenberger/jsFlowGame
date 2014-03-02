@@ -71,12 +71,6 @@ EditorUI.prototype = {
             this.waterfall.localizeInfluence = val;
         }, this));
 
-
-        $("#editor-form").append('Load Level: <select id="load-level-select"></select><br>');
-        for (i = 0; i < WorldLevels.length; i += 1) {
-            $("#load-level-select").append('<option value=' + i + '>' + parseInt(i + 1) + '</option>');
-        }
-        
         $("#editor-form").append('Number of Grid Columns: <input id="grid-cols-input" type="text" value="' + this.waterfall.grid.nCols() + '"></span><br>');
         $("#editor-form").append('Number of Grid Rows: <input id="grid-rows-input" type="text" value="' + this.waterfall.grid.nRows() + '"></span><br>');
         $("#grid-cols-input").change($.proxy(function () {
@@ -100,13 +94,6 @@ EditorUI.prototype = {
                 this.camera.setCenter(this.waterfall.grid.center().x,
                                       this.waterfall.grid.center().y);
             }
-        }, this));
-
-        $("#load-level-select").val(this.waterfall.level);
-        $("#load-level-select").change($.proxy(function () {
-            val = $("#load-level-select option:selected").text();
-            this.waterfall.level = val;
-            LevelLoader.load(this.waterfall, WorldLevels[val-1]);
         }, this));
 
         /*$("#grid-button").append('<input type="button" value="Grid">')
@@ -219,7 +206,7 @@ EditorUI.prototype = {
     },
 
     reset: function () {
-        this.waterfall.score = 0;
+        this.waterfall.reset();
     },
 
     save: function () {

@@ -15,7 +15,7 @@ var Sink = function (x, y, r, force, isSource) {
     this.isSource = isSource || false;
     this.influenceType = 0;
     this.sizeFactor = 1;
-    this.targetSizeFactor = 3;
+    this.targetSizeFactor = 1;
     this.maxSizeFactor = 4;
     this.showInfluenceRing = true;
     this.influenceBound = false;
@@ -31,7 +31,7 @@ var Sink = function (x, y, r, force, isSource) {
     this.flashdt = 1e6;
     this.flashlength = 500;
     this.burstSize = 30;
-    this.lockedIn = false;
+    this.lockedIn = true;
     this.grabber = new Rectangle(x + Math.cos(this.theta) * this.r,
                                  y + Math.sin(this.theta) * this.r,
                                  20, 20, 0);
@@ -336,6 +336,7 @@ Sink.prototype.drawGrabber = function (canvas, color, alpha) {
                           color,
                           alpha,
                           0.0);
+    color = ParticleWorldColors[this.inColor];
     canvas.arrowHead(p1, 50, -this.theta - dt1, color, alpha * 0.25);
     canvas.arrowHead(p1, 30, -this.theta - dt1, color, alpha * 0.5);
     canvas.arrowHead(p1, 20, -this.theta - dt1, [255, 255, 255], alpha * 0.5);
@@ -447,6 +448,7 @@ Sink.prototype.serialize = function () {
     obj.radius = this.radius;
     obj.force = this.force;
     obj.isSource = this.isSource;
+    obj.speed = this.speed;
     obj.inColor = this.inColor;
     obj.outColor = this.outColor;
     obj.influenceRadius = this.influenceRadius;

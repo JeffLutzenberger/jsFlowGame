@@ -21,6 +21,10 @@ function Bucket(x, y, w, h, theta) {
     this.explosion.init(x, y, 100, 10);
     this.explode = false;
     this.particleconfigs = bucketParticleConfigs;
+    this.fillSound = new Audio("sounds/bucketfill.mp3");
+    this.fillSound.volume = 0.5;
+    this.fillSound.load();
+
 }
 
 Bucket.prototype = new Rectangle();
@@ -52,6 +56,7 @@ Bucket.prototype.update = function (dt) {
     //go up to level 3
     if (this.fillRate > this.fillLevels[3] && this.explode === false) {
         this.explode = true;
+        this.fillSound.play();
         this.explosion.init(this.x,
                             this.y,
                             this.particleconfigs.particleradius,
@@ -67,6 +72,7 @@ Bucket.prototype.update = function (dt) {
                              this.particleconfigs.nburstparticles,
                              this.particleconfigs.lifetime);
     }
+    /*
     //go down to level 1
     if (this.fillRate < this.fillLevels[2] && this.level === 2) {
         this.level = 1;
@@ -78,6 +84,7 @@ Bucket.prototype.update = function (dt) {
         this.level = 0;
         this.transition1.reverse();
     }
+    */
 
     this.transition1.update(dt);
     this.transition2.update(dt);
@@ -88,12 +95,17 @@ Bucket.prototype.update = function (dt) {
 
     //wobble: for buckets without bottoms
     this.wobbleTime += dt;
-    s = this.wobbleTime * this.fillRate * 0.05;
-    this.wobbleTheta = Math.sin(s * Math.PI * 2) * 0.05;
-    if (s > 1) {
-        this.wobbleTime = 0;
+    if (this.fillRate > 0) {
+        s = this.wobbleTime * 0.0005;
+        this.wobbleTheta = Math.sin(s * Math.PI * 2) * 0.025;
+        if (s > 1) {
+            this.wobbleTime = 0;
+        }
+        this.wobbleTheta = this.wobbleTheta > 2 * Math.PI ? 0 : this.wobbleTheta;
+    } else if (this.wobbleTheta > 0.001 || this.wobbleTheta < 0.001) {
+        //settle back to 0
+        this.wobbleTheta -= dt * 0.0005 * this.wobbleTheta;
     }
-    this.wobbleTheta = this.wobbleTheta > 2 * Math.PI ? 0 : this.wobbleTheta;
 
 };
 
@@ -105,9 +117,10 @@ Bucket.prototype.hit = function (p) {
             //count this as being caught
             //add score and recycle the particle
             if (p.color === this.inColor) {
+                p.caughtSound.play();
                 p.source.recycleParticle(p);
                 this.fill += 1;
-                return undefined;
+                return 'caught';
             } else {
                 return this.n1;
             }
@@ -153,6 +166,13 @@ Bucket.prototype.hit = function (p) {
     return undefined;
 };
 
+Bucket.prototype.reset = function () {
+    this.explode = false;
+    this.fillRate = 0;
+    this.fill = 0;
+    this.t1 = 0;
+    this.level = 0;
+};
 
 Bucket.prototype.draw = function (canvas, inColor, outColor) {
     var alpha = 1.0, theta = Math.PI / 180 * this.theta,
@@ -164,13 +184,13 @@ Bucket.prototype.draw = function (canvas, inColor, outColor) {
         if (this.explode === true) {
             this.explosion.draw(canvas, inColor);
         }
-        f += this.wobbleTheta;
+        //f += this.wobbleTheta;
         canvas.rectangleXY(this.x, this.y, this.w * f, this.h * f, theta, inColor, 0.5);
         canvas.bucket(this.x, this.y, this.w * f, this.h * f, theta, 20, inColor, 0.25);
         canvas.bucket(this.x, this.y, this.w * f, this.h * f, theta, 10, inColor, 0.5);
         canvas.bucket(this.x, this.y, this.w * f, this.h * f, theta, 5, [255, 255, 255], 0.9);
         canvas.bucket(this.x, this.y, this.w * f, this.h * f, theta, 30, inColor, 0.15);
-        canvas.rectangleXY(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 20, inColor, 0.25);
+        //canvas.rectangleXY(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 20, inColor, 0.25);
         //canvas.rectangleXY(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 5, [255, 255, 255], 0.9);
         //canvas.rectangleXY(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 30, inColor, 0.15);
 

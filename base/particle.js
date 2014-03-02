@@ -17,6 +17,16 @@ var Particle = function (x, y, r, color) {
     this.brightness = 0;
     this.color = color;
     this.source = undefined;
+    this.caughtSound = new Audio("sounds/hit2.mp3");
+    this.caughtSound.volume = 0.2;
+    this.caughtSound.load();
+    this.bounceSound = new Audio("sounds/hit1.mp3");
+    this.bounceSound.volume = 0.2;
+    this.bounceSound.load();
+    this.morphSound = new Audio("sounds/morph.mp3");
+    this.morphSound.volume = 0.1;
+    this.morphSound.load();
+ 
     var i = 0, t;
     for (i = 0; i < this.numTracers; i += 1) {
         t = new Tracer(this.x, this.y, this.color);
@@ -57,12 +67,14 @@ Particle.prototype = {
         var dot = 2 * VectorMath.dot(this.vel, n);
         this.vel.x -= dot * n.x;
         this.vel.y -= dot * n.y;
+        this.bounceSound.play();
     },
 
     redirect: function (n) {
         var speed = VectorMath.length(this.vel);
         this.vel.x = speed * n.x;
         this.vel.y = speed * n.y;
+        this.morphSound.play();
     },
 
     distanceSquared: function (p) {

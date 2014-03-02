@@ -17,10 +17,10 @@ var ParticleWorld = function (canvas, grid) {
     this.flux = 0;
     this.sumFlux = 0;
     this.missed = 0;
-    this.level = 1;
+    this.caught = 0;
+    this.totalTime = 0;
+    this.levelComplete = false;
     this.framerate = 30; //fps (how often we draw)
-    this.dt = 0;
-    this.drawDt = 0;
     this.frame = 0;
     this.interactableObjects = [];
     this.interactable = null;
@@ -43,18 +43,13 @@ var ParticleWorld = function (canvas, grid) {
     this.portalColor = [255, 153, 0];
     this.scoreTextColor = [100, 100, 100];
     this.backgroundGrid = new BackgroundGrid(768, 1024, 768 / 16, 1024 / 16);
+    this.particleCaughtSound = new SoundPool('sounds/hit.mp3', 10);
     //this.traileffect = new TrailEffect(canvas);
     //canvas.electricityLine(new Vector(100, 100), new Vector(100, 500), 30, 10, [100, 100, 255], 1.0);
 };
 
 ParticleWorld.prototype = {
    
-    setHandlers: function () {
-        $(document).bind('levelup', $.proxy(function (e) {
-            //this.levelUp();
-        }, this));
-    },
-
     clear: function () {
         this.stars.length = 0;
         this.sources.length = 0;
@@ -67,14 +62,34 @@ ParticleWorld.prototype = {
         this.interactableObjects.length = 0;
     },
 
+    reset : function () {
+        var i = 0;
+        for (i = 0; i < this.buckets.length; i += 1) {
+            this.buckets[i].reset();
+        }
+        //reset sources
+        for (i = 0; i < this.sources.length; i += 1) {
+            if (this.sources[i].particles.length > 0) {
+                this.sources[i].nparticles = 0;
+                this.sources[i].particles.length = 0;
+                this.sources[i].nparticles = 50;
+                this.sources[i].particles.length = 0;
+            }
+        }
+        this.caught = 0;
+        this.missed = 0;
+        this.totalTime = 0;
+        this.levelComplete = false;
+    },
+
     update: function (dt) {
         var i = 0, color, p, f = 1, o;
-
-        this.dt = dt;
 
         this.calculateFlux();
 
         this.backgroundGrid.update(dt);
+
+        this.grid.update(dt);
 
         for (i = 0; i < this.sources.length; i += 1) {
             o = this.sources[i];
@@ -112,8 +127,14 @@ ParticleWorld.prototype = {
             o.update(dt);
         }
  
-        this.moveParticles(dt);
+        if (this.buckets.length > 0 && !this.buckets[0].explode) {
+            this.totalTime += dt;
+            this.moveParticles(dt);
+        } else if (this.buckets.length > 0 && this.buckets[0].explode) {
+            this.levelComplete = true;
+        }
     },
+
     
     calculateFlux : function () {
         var i;
@@ -184,7 +205,9 @@ ParticleWorld.prototype = {
         for (i = 0; i < this.buckets.length; i += 1) {
             b = this.buckets[i];
             h = b.hit(p);
-            if (h) {
+            if (h === 'caught') {
+                this.caught += 1;
+            } else if (h) {
                 //if (h.hasBottom) {
                 //    p.bounce(h);
                 //} else {
@@ -390,6 +413,7 @@ ParticleWorld.prototype = {
         var i, c;
         for (i = 0; i < this.portals.length; i += 1) {
             if (this.portals[i].hit(p)) {
+                p.morphSound.play();
                 return true;
             }
         }
@@ -484,13 +508,13 @@ ParticleWorld.prototype = {
     },
     
     drawScore : function () {
-        var i, b, color = this.scoreTextColor,
-            fontFamily = 'arial', fontSize = 16, str;
-        str = "caught " + this.score;
+        var i, b, color = [255, 255, 255],
+            fontFamily = 'arial', fontSize = 24, str;
+        str = "caught " + this.caught;
         this.canvas.text(50, 50, color, fontFamily, fontSize, str);
         str = "missed " + this.missed;
         this.canvas.text(50, 100, color, fontFamily, fontSize, str);
-        str = "flux " + parseInt(this.flux, 10);
+        str = "time " + (parseInt(this.totalTime, 10) * 0.001).toFixed(0);
         this.canvas.text(50, 150, color, fontFamily, fontSize, str);
     },
 
@@ -517,6 +541,6 @@ ParticleWorld.prototype = {
 
         this.drawGridWalls();
 
-        //this.drawScore();
+        this.drawScore();
     }
 };

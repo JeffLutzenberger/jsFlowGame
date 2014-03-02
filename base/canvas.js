@@ -38,10 +38,10 @@ Canvas.prototype = {
     },
 
     brighten: function (color, n) {
-        var r = color[0] + Math.round(n * 255),
-            g = color[1] + Math.round(n * 255),
-            b = color[2] + Math.round(n * 255);
-        return [Math.min(r, 255), Math.min(g, 255), Math.min(b, 255)];
+        //console.log(n);
+        return [Math.round(Math.min(255, color[0] + n * (255 - color[0]))),
+                Math.round(Math.min(255, color[1] + n * (255 - color[1]))),
+                Math.round(Math.min(255, color[2] + n * (255 - color[2])))];
     },
 
     rotatePoint : function (x, y, theta) {

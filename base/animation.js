@@ -40,4 +40,45 @@ Transition.prototype = {
     }
 };
 
+var Flash = function (duration, magnitude) {
+    this.duration = 500;//duration;
+    this.magnitude = magnitude;
+    this.isPlaying = false;
+    this.dt = 0;
+    this.factor = 0;
+};
+
+Flash.prototype = {
+    play : function () {
+        if (!this.isPlaying) {
+            this.isPlaying = true;
+            this.factor = 0;
+        }
+        this.dt = 0;
+    },
+
+    stop : function () {
+        this.isPlaying = false;
+        this.dt = 0;
+        this.factor = 0;
+    },
+
+    update : function (dt) {
+        if (this.isPlaying) {
+            this.dt += dt;
+            if (this.dt < this.duration) {
+                if (this.factor < 1.0) {
+                    this.factor += dt / this.duration * 4;
+                }
+            } else if (this.dt > this.duration) {
+                //start the decay
+                //this.stop();
+                this.factor -= dt / this.duration * 4;
+                if (this.factor < 0.001) {
+                    this.stop();
+                }
+            }
+        }
+    }
+};
 

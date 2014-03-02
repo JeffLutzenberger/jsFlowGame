@@ -9,6 +9,8 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.grid = new GameGrid(768 * hdim, 1024 * vdim, 768, 1024);
     this.waterfall = new ParticleWorld(canvas, this.grid);
     this.editorui = new EditorUI(this.waterfall, this.camera);
+    this.levels = [];
+    this.level = 0;
     this.hdim = hdim || 3;
     this.vdim = vdim || 3;
     this.drawDt = 0;
@@ -23,7 +25,6 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.startZoomFactor = 1;
     this.finalZoomFactor = 1;
     this.zoomTransition = false;
-    this.loadLevels();
     this.camera.setExtents(768, 1024);
     this.camera.setCenter(768 * 0.5, 1025 * 0.5);
     this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
@@ -31,17 +32,15 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
     this.finalZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
     this.editmode = true;
-
-    //setup ui...
-    //$("#object-form").html('');
-    //$("#object-form").off();
-
-
+    this.loadLevels();
+    LevelLoader.load(this.waterfall, this.levels[this.level].map);
+    this.waterfall.reset();
 };
 
 Gameboard.prototype = {
 
     setHandlers: function () {
+        var i;
         //$('canvas').unbind();
         //$(document).unbind();
         this.hide();
@@ -53,7 +52,7 @@ Gameboard.prototype = {
         //}, this));
 
 
-        $("#editor-toggle").append('<pre>Edit Mode: <input id="edit-mode-input" type="checkbox" value="' + this.editmode + '"></span><br></pre>');
+        $("#gamecontroller-form").append('Edit Mode: <input id="edit-mode-input" type="checkbox" value="' + this.editmode + '"></span><br>');
         $("#edit-mode-input").change($.proxy(function () {
             this.editmode = $("#edit-mode-input").prop('checked');
             if (this.editmode) {
@@ -64,6 +63,23 @@ Gameboard.prototype = {
         }, this));
 
         $("#edit-mode-input").prop('checked', true);
+
+        $("#gamecontroller-form").append('Level: <select id="level-select"></select><br>');
+        for (i = 0; i < this.levels.length; i += 1) {
+            $("#level-select").append('<option value=' + i + '>' + parseInt(i + 1, 10) + '</option>');
+        }
+        
+        $("#level-select").val(this.level);
+        $("#level-select").change($.proxy(function () {
+            var val = $("#level-select option:selected").text();
+            this.levels[this.level].caught = this.waterfall.caught;
+            this.levels[this.level].missed = this.waterfall.missed;
+            this.levels[this.level].totalTime = this.waterfall.totalTime;
+            this.waterfall.clear();
+            this.level = parseInt(val, 10);
+            LevelLoader.load(this.waterfall, this.levels[this.level].map);
+            this.waterfall.reset();
+        }, this));
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
@@ -177,9 +193,6 @@ Gameboard.prototype = {
         $(document).bind('levelup', $.proxy(function (e) {
             this.home();
         }, this));
-        
-        this.waterfall.setHandlers();
-
     },
 
     hide: function () {
@@ -195,23 +208,24 @@ Gameboard.prototype = {
         }
         this.waterfall.update(dt);
         this.draw(dt);
+        //check to see if the level is complete
+        //if so update the high score and save the current score
+        if (this.waterfall.levelComplete) {
+            this.levels[this.level].updateHiScore(this.waterfall.caught,
+                                                  this.waterfall.missed,
+                                                  this.waterfall.totalTime);
+        }
     },
 
     loadLevels: function () {
-        var w = 768, h = 1024, r, x, y, i, j;
-        for (j = 0; j < this.vdim; j += 1) {
-            for (i = 0; i < this.hdim; i += 1) {
-                x = w * i;
-                y = h * j;
-                r = new Rectangle(x + w * 0.5, y + h * 0.5, w, h, 0);
-                this.levelButtons.push(r);
-            }
-        }
-        //level0
-        //LevelLoader.load(this.waterfall, level4, 768, 1024);
-        //LevelLoader.load(this.waterfall, levels[0], 768, 1024);
-        //LevelLoader.load(this.waterfall, awesomelevel, 0, 0);
-        //LevelLoader.addLevel(this.waterfall, level3, 768 * 2, 1024);
+        //read in our level json
+        //initialize our level objects
+        var i, l;
+        for (i = 0; i < WorldLevels.length; i += 1) {
+            l = new Level();
+            l.map = WorldLevels[i];
+            this.levels.push(l);
+        }  
     },
      
     levelButtonHit: function (x, y) {

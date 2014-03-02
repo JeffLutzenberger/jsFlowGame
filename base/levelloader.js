@@ -1,5 +1,33 @@
 'use strict';
 
+var Level = function () {
+    this.map = undefined;
+    this.caught = 0;
+    this.missed = 0;
+    this.totalTime = 0;
+    this.bestCaught = undefined;
+    this.bestMissed = undefined;
+    this.bestTotalTime = undefined;
+    this.levelHash = undefined;
+};
+
+Level.prototype = {
+    updateHiScore : function (caught, missed, totalTime) {
+        this.caught = caught;
+        this.missed = missed;
+        this.totalTime = totalTime;
+        if (this.bestCaught && this.caught < this.bestCaught) {
+            this.bestCaught = this.caught;
+        }
+        if (this.bestMissed && this.missed < this.bestMissed) {
+            this.bestMissed = this.missed;
+        }
+        if (this.totalTime && this.totalTime < this.bestTotalTime) {
+            this.bestTotalTime = this.totalTime;
+        }
+    }
+};
+
 var LevelLoader = {
     load: function (world, level) {
         var i = 0, x = 0, y = 0, portals,
