@@ -8,11 +8,13 @@ function Bucket(x, y, w, h, theta) {
     this.fillSamplePeriod = 1000; //how long to wait to sample the fill
     this.fillRate = 0.0;
     this.targetFillRate = 0.1; //particles per ms
+    this.caught = 0;
     this.hasBottom = false;
     this.inColor = 'red';
     this.outColor = 'green';
     this.level = 0;
-    this.fillLevels = [0.0, 0.005, 0.01, 0.02];
+    //this.fillLevels = [0.0, 0.005, 0.01, 0.02];
+    this.fillLevels = [50, 100, 150, 200];
     this.transition1 = new Transition(500, 0.1);
     this.transition2 = new Transition(500, 0.1);
     this.wobbleTheta = 0;
@@ -21,7 +23,7 @@ function Bucket(x, y, w, h, theta) {
     this.explosion.init(x, y, 100, 10);
     this.explode = false;
     this.particleconfigs = bucketParticleConfigs;
-    this.fillSound = new Audio("sounds/bucketfill.mp3");
+    this.fillSound = new Audio("sounds/morph.mp3");
     this.fillSound.volume = 0.5;
     this.fillSound.load();
 
@@ -44,17 +46,18 @@ Bucket.prototype.update = function (dt) {
    
     //note: the order is important here 
     //go up to level 1
-    if (this.fillRate > this.fillLevels[1] && this.level === 0) {
+    if (this.caught > this.fillLevels[0] && this.level === 0) {
         this.level = 1;
         this.transition1.forward();
     }
     //go up to level 2
-    if (this.fillRate > this.fillLevels[2] && this.level === 1) {
+    if (this.caught > this.fillLevels[1] && this.level === 1) {
         this.level = 2;
         this.transition2.forward();
     }
     //go up to level 3
-    if (this.fillRate > this.fillLevels[3] && this.explode === false) {
+    if (this.caught > this.fillLevels[2] && this.level === 2) {
+        this.level = 3;
         this.explode = true;
         this.fillSound.play();
         this.explosion.init(this.x,
@@ -71,6 +74,7 @@ Bucket.prototype.update = function (dt) {
                              this.particleconfigs.accel,
                              this.particleconfigs.nburstparticles,
                              this.particleconfigs.lifetime);
+                             
     }
     /*
     //go down to level 1
@@ -120,6 +124,7 @@ Bucket.prototype.hit = function (p) {
                 p.caughtSound.play();
                 p.source.recycleParticle(p);
                 this.fill += 1;
+                this.caught += 1;
                 return 'caught';
             } else {
                 return this.n1;
@@ -170,13 +175,14 @@ Bucket.prototype.reset = function () {
     this.explode = false;
     this.fillRate = 0;
     this.fill = 0;
+    this.caught = 0;
     this.t1 = 0;
     this.level = 0;
 };
 
 Bucket.prototype.draw = function (canvas, inColor, outColor) {
     var alpha = 1.0, theta = Math.PI / 180 * this.theta,
-        filled = (this.fillRate > 0.001), fontSize = 32, textWidth = 1,
+        fontSize = 32, textWidth = 1,
         f = 1 + this.transition1.factor + this.transition2.factor;
     inColor = ParticleWorldColors[this.inColor];
     outColor = ParticleWorldColors[this.outColor];
@@ -209,7 +215,7 @@ Bucket.prototype.draw = function (canvas, inColor, outColor) {
         //canvas.ctx.font = fontSize + "pt Arial";
         textWidth = 50;//parseFloat(canvas.ctx.measureText(this.fillRate).width) * 0.5;
         //console.log(textWidth)
-        canvas.text(this.x - textWidth, this.y + this.h * 0.5 + 40, [255, 255, 255], "Arial", fontSize, this.fillRate.toFixed(4));
+        //canvas.text(this.x - textWidth, this.y + this.h * 0.5 + 40, [255, 255, 255], "Arial", fontSize, this.fillRate.toFixed(4));
         //canvas.text(this.x - textWidth, this.y + this.h * 0.5 + 80, [255, 255, 255], "Arial", fontSize, this.continuousFillRate.toFixed(4));
 
     } else {

@@ -11,7 +11,7 @@ var GameController = function (canvas) {
     this.currentTime = 0;
     this.lastTime = 0;
     this.gameState = 'start';
-    this.gameboard = new Gameboard(this.canvas, 3, 3);
+    this.gameboard = new Gameboard(this.canvas);
     this.particlesim = new ParticleSimPage(this.canvas, 0, 0);
     this.interval = setInterval(this.update.bind(this), this.clockrate);
     this.gameboard.setHandlers();

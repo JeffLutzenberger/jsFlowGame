@@ -13,6 +13,7 @@ var ParticleWorld = function (canvas, grid) {
     this.obstacles = [];
     this.sinkIsSource = false;
     this.localizeInfluence = true;
+    this.pause = false;
     this.score = 0;
     this.flux = 0;
     this.sumFlux = 0;
@@ -127,7 +128,7 @@ ParticleWorld.prototype = {
             o.update(dt);
         }
  
-        if (this.buckets.length > 0 && !this.buckets[0].explode) {
+        if (!this.pause && this.buckets.length > 0 && !this.buckets[0].explode) {
             this.totalTime += dt;
             this.moveParticles(dt);
         } else if (this.buckets.length > 0 && this.buckets[0].explode) {

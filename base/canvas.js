@@ -160,6 +160,28 @@ Canvas.prototype = {
         this.ctx.stroke();
     },
 
+    rectangleOutlineXY: function (x, y, w, h, theta, lineWidth, color, alpha) {
+        var x1 = -w * 0.5, y1 = -h * 0.5,
+            x2 =  w * 0.5, y2 = -h * 0.5,
+            x3 =  w * 0.5, y3 = h * 0.5,
+            x4 = -w * 0.5, y4 = h * 0.5;
+        this.push();
+        this.ctx.translate(x, y);
+        this.ctx.rotate(-theta);
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1, y1);
+        this.ctx.lineTo(x2, y2);
+        this.ctx.lineTo(x3, y3);
+        this.ctx.lineTo(x4, y4);
+        this.ctx.lineTo(x1, y1);
+        this.ctx.lineCap = 'round';
+        this.ctx.stroke();
+        this.pop();
+    },
+
+
     triangle: function (p1, p2, p3, color, alpha) {
         this.ctx.fillStyle = this.rgba(color, alpha);
         this.ctx.beginPath();
@@ -505,7 +527,13 @@ Canvas.prototype = {
         this.linexy(points[npoints - 2][0], points[npoints - 2][1], points[npoints - 1][0], points[npoints - 1][1], lineWidth, color, alpha);
     },
 
-    text: function (x, y, color, fontFamily, fontSize, str) {
+    textWithAlpha: function (x, y, color, alpha, fontFamily, fontSize, str) {
+        this.ctx.fillStyle = this.rgba(color, alpha);
+        this.ctx.font = fontSize + "px " + fontFamily;
+        this.ctx.fillText(str, x, y);
+    },
+
+   text: function (x, y, color, fontFamily, fontSize, str) {
         this.ctx.fillStyle = this.rgba(color, 1.0);
         this.ctx.font = fontSize + "px " + fontFamily;
         this.ctx.fillText(str, x, y);

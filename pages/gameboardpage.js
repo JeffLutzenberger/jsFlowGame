@@ -9,6 +9,7 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.grid = new GameGrid(768 * hdim, 1024 * vdim, 768, 1024);
     this.waterfall = new ParticleWorld(canvas, this.grid);
     this.editorui = new EditorUI(this.waterfall, this.camera);
+    this.playButton = new UIButton(768 * 0.25, 1024 * 0.25, 110, 50, 'green', 32, 'neon-lights', 'PLAY');
     this.levels = [];
     this.level = 0;
     this.hdim = hdim || 3;
@@ -35,6 +36,8 @@ var Gameboard = function (canvas, hdim, vdim) {
     this.loadLevels();
     LevelLoader.load(this.waterfall, this.levels[this.level].map);
     this.waterfall.reset();
+    this.waterfall.pause = true;
+    this.playButton.show = true;
 };
 
 Gameboard.prototype = {
@@ -79,12 +82,21 @@ Gameboard.prototype = {
             this.level = parseInt(val, 10);
             LevelLoader.load(this.waterfall, this.levels[this.level].map);
             this.waterfall.reset();
+            this.waterfall.pause = true;
+            this.playButton.show = true;
         }, this));
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
             var x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top)),
-                p = this.camera.screenToWorld(x, y);
+                p = this.camera.screenToWorld(x, y),
+                overlayPoint = new Particle(x, y);
+            if (this.playButton.hit(overlayPoint)) {
+                console.log("play");
+                this.waterfall.pause = false;
+                this.playButton.show = false;
+                return;
+            }
             this.waterfall.mouseDown = true;
             this.waterfall.hitInteractable(p.x, p.y, this.editmode);
             this.editorui.gameObjectForm.gameObject = this.waterfall.interactable;
@@ -102,9 +114,6 @@ Gameboard.prototype = {
         }, this));
 
         $('canvas').bind('mousemove touchmove', $.proxy(function (e) {
-            if (this.waterfall.mouseDown === false) {
-                return;
-            }
             var n,
                 i,
                 obj,
@@ -115,8 +124,15 @@ Gameboard.prototype = {
                 r,
                 x = Math.floor((e.pageX - $("#canvas").offset().left)),
                 y = Math.floor((e.pageY - $("#canvas").offset().top)),
-                p = this.camera.screenToWorld(x, y);
+                p = this.camera.screenToWorld(x, y),
+                overlayPoint = new Particle(x, y);
             
+            this.playButton.hover = this.playButton.hit(overlayPoint);
+            if (this.waterfall.mouseDown === false) {
+                return;
+            }
+
+
             if (this.waterfall.interactable && this.waterfall.interactable.grabberSelected) {
                 //move the sinks grabber...
                 this.waterfall.interactable.moveGrabber(p);
@@ -193,6 +209,13 @@ Gameboard.prototype = {
         $(document).bind('levelup', $.proxy(function (e) {
             this.home();
         }, this));
+
+        $(document).bind('keyup', $.proxy(function (e) {
+            if (e.keyCode === 27) { //esc
+                this.waterfall.pause = true;
+                this.playButton.show = true;
+            } 
+        }, this));
     },
 
     hide: function () {
@@ -214,6 +237,14 @@ Gameboard.prototype = {
             this.levels[this.level].updateHiScore(this.waterfall.caught,
                                                   this.waterfall.missed,
                                                   this.waterfall.totalTime);
+            //load next level
+            if (this.levels.length > this.level + 1) {
+                this.level += 1;
+                LevelLoader.load(this.waterfall, this.levels[this.level].map);
+                this.waterfall.reset();
+                this.waterfall.pause = true;
+                this.playButton.show = true;
+            }
         }
     },
 
@@ -252,6 +283,9 @@ Gameboard.prototype = {
         this.zoomTime = 0;
     },
 
+    tweenLevel: function () {
+        //slide the level into the tile
+    },
     onZoomTransition: function (dt) {
         var duration = 500,
             centerDeltaX = this.finalZoomCenter.x - this.startZoomCenter.x,
@@ -304,6 +338,15 @@ Gameboard.prototype = {
         this.selectLevel(i);
     },
 
+    drawStartButton: function () {
+        var x = 0, y = 0, w = 110, h = 50, color = [0, 255, 0];
+        this.canvas.rectangleXY(x, y, w, h, 0, color, 0.25);
+        this.canvas.rectangleOutlineXY(x, y, w, h, 0, 10, color, 0.25);
+        this.canvas.rectangleOutlineXY(x, y, w, h, 0, 5, color, 0.5);
+        this.canvas.rectangleOutlineXY(x, y, w, h, 0, 2, [255, 255, 255], 0.8);
+        this.canvas.textWithAlpha(x - 38, y + 11, color, 1.0, "neon-lights", 32, "PLAY");
+    },
+
     draw: function (dt) {
         this.drawDt += dt;
         if (this.drawDt > this.framerate) {
@@ -323,6 +366,12 @@ Gameboard.prototype = {
             }*/
             
             this.waterfall.draw(this.drawDt);
+            
+            //draw overlay
+            
+            this.camera.pop();
+            
+            this.playButton.draw(this.canvas, false, false);
             
             this.drawDt = 0;
         }
