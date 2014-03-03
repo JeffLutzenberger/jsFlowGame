@@ -2,7 +2,6 @@
        
 var ParticleWorld = function (canvas) {
     this.canvas = canvas;
-    //this.grid = grid;
     this.grid = new GameGrid(768, 1024, 768, 1024);
     this.stars = [];
     this.sources = [];
@@ -47,7 +46,6 @@ var ParticleWorld = function (canvas) {
     this.backgroundGrid = new BackgroundGrid(768, 1024, 768 / 16, 1024 / 16);
     this.particleCaughtSound = new SoundPool('sounds/hit.mp3', 10);
     //this.traileffect = new TrailEffect(canvas);
-    //canvas.electricityLine(new Vector(100, 100), new Vector(100, 500), 30, 10, [100, 100, 255], 1.0);
 };
 
 ParticleWorld.prototype = {
@@ -527,17 +525,6 @@ ParticleWorld.prototype = {
         this.backgroundGrid.draw(this.canvas, color);
     },
     
-    drawScore : function () {
-        var i, b, color = [255, 255, 255],
-            fontFamily = 'arial', fontSize = 24, str;
-        str = "caught " + this.caught;
-        this.canvas.text(50, 50, color, fontFamily, fontSize, str);
-        str = "missed " + this.missed;
-        this.canvas.text(50, 100, color, fontFamily, fontSize, str);
-        str = "time " + (parseInt(this.totalTime, 10) * 0.001).toFixed(0);
-        this.canvas.text(50, 150, color, fontFamily, fontSize, str);
-    },
-
     draw: function (dt) {
         this.drawBackground(dt);
 
@@ -561,6 +548,5 @@ ParticleWorld.prototype = {
 
         this.drawGridWalls();
 
-        this.drawScore();
     }
 };

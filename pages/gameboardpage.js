@@ -32,10 +32,6 @@ var Gameboard = function (canvas) {
     this.editmode = true;
     this.loadLevels();
     this.loadLevel();
-    //LevelLoader.load(this.waterfall, this.levels[this.level].map);
-    //this.waterfall.reset();
-    //this.waterfall.pause = true;
-    //this.playButton.show = true;
 };
 
 Gameboard.prototype = {
@@ -71,11 +67,6 @@ Gameboard.prototype = {
             this.waterfall.clear();
             this.level = parseInt(val, 10);
             this.loadLevel();
-            //LevelLoader.load(this.waterfall, this.levels[this.level].map);
-            //this.waterfall.reset();
-            //this.waterfall.pause = true;
-            //this.playButton.show = true;
-
         }, this));
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
@@ -232,10 +223,6 @@ Gameboard.prototype = {
             if (this.levels.length > this.level + 1) {
                 this.level += 1;
                 this.loadLevel();
-                //LevelLoader.load(this.waterfall, this.levels[this.level].map);
-                //this.waterfall.reset();
-                //this.waterfall.pause = true;
-                //this.playButton.show = true;
             }
         }
     },
@@ -346,6 +333,23 @@ Gameboard.prototype = {
         this.canvas.textWithAlpha(x - 38, y + 11, color, 1.0, "neon-lights", 32, "PLAY");
     },
 
+    drawScoreAndTime: function () {
+        var i, b, color = [0, 255, 0],
+            fontFamily = 'neon-lights', fontSize = 24, str,
+            caught = parseFloat(this.waterfall.caught),
+            missed = parseFloat(this.waterfall.missed);
+        //if (caught > 0) {
+        //    caught = (caught / (missed + caught));
+        //}
+        str = "CAUGHT " + caught;
+        this.canvas.text(10, 30, color, fontFamily, fontSize, str);
+        str = (parseInt(this.waterfall.totalTime, 10) * 0.001).toFixed(0);
+        this.canvas.text(180, 30, color, fontFamily, fontSize, str);
+        str = "MISSED " + missed;
+        this.canvas.text(250, 30, color, fontFamily, fontSize, str);
+ 
+    },
+
     draw: function (dt) {
         this.drawDt += dt;
         if (this.drawDt > this.framerate) {
@@ -363,8 +367,14 @@ Gameboard.prototype = {
             //draw overlay
             
             this.camera.pop();
+
+            if (this.waterfall.isPaused) {
+                this.canvas.rectangleXY(384 * 0.5, 512 * 0.5, 384, 512, 0, [0, 0, 0], 0.5);
+            }
             
             this.playButton.draw(this.canvas, false, false);
+
+            this.drawScoreAndTime();
             
             this.drawDt = 0;
         }
