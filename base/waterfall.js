@@ -1,8 +1,9 @@
 'use strict';
        
-var ParticleWorld = function (canvas, grid) {
+var ParticleWorld = function (canvas) {
     this.canvas = canvas;
-    this.grid = grid;
+    //this.grid = grid;
+    this.grid = new GameGrid(768, 1024, 768, 1024);
     this.stars = [];
     this.sources = [];
     this.sinks = [];

@@ -3,17 +3,14 @@
  * The gameboard controller is responsible for setting up a level and managing gameplay for
  * a level
  * */
-var Gameboard = function (canvas, hdim, vdim) {
+var Gameboard = function (canvas) {
     this.canvas = canvas;
     this.camera = new Camera(canvas);
-    this.grid = new GameGrid(768 * hdim, 1024 * vdim, 768, 1024);
-    this.waterfall = new ParticleWorld(canvas, this.grid);
+    this.waterfall = new ParticleWorld(canvas);
     this.editorui = new EditorUI(this.waterfall, this.camera);
     this.playButton = new UIButton(768 * 0.25, 1024 * 0.25, 110, 50, 'green', 32, 'neon-lights', 'PLAY');
     this.levels = [];
     this.level = 0;
-    this.hdim = hdim || 3;
-    this.vdim = vdim || 3;
     this.drawDt = 0;
     this.framerate = 30;
     this.currentDrawTime = 0;
@@ -177,16 +174,16 @@ Gameboard.prototype = {
             //console.log(e.keyCode);
             switch (e.keyCode) {
             case 39: //right arrow
-                this.moveRight();
+                this.move(768, 0);
                 break;
             case 37:
-                this.moveLeft();
+                this.move(-768, 0);
                 break;
             case 38:
-                this.moveUp();
+                this.move(0, -1024);
                 break;
             case 40:
-                this.moveDown();
+                this.move(0, 1024);
                 break;
             default:
                 break;
@@ -199,8 +196,11 @@ Gameboard.prototype = {
             console.log(e.keyCode);
             switch (e.keyCode) {
             case 45: //minus
-                this.home();
+                //zoom out...
+                this.zoom(1024);
                 break;
+            case 61: //equal/plus
+                this.zoom(-1024);
             default:
                 break;
             }
@@ -248,6 +248,15 @@ Gameboard.prototype = {
         }
     },
 
+    loadLevel: function () {
+        LevelLoader.load(this.waterfall, this.levels[this.level].map);
+        this.waterfall.reset();
+        this.waterfall.pause = true;
+        this.playButton.show = true;
+        this.camera.setExtents(this.waterfall.grid.extents().x, 1024 * this.waterfall.grid.extents().y);
+        this.camera.setCenter(this.waterfall.grid.center().x, this.waterfall.grid.center().y);
+    },
+
     loadLevels: function () {
         //read in our level json
         //initialize our level objects
@@ -286,6 +295,7 @@ Gameboard.prototype = {
     tweenLevel: function () {
         //slide the level into the tile
     },
+
     onZoomTransition: function (dt) {
         var duration = 500,
             centerDeltaX = this.finalZoomCenter.x - this.startZoomCenter.x,
@@ -318,24 +328,24 @@ Gameboard.prototype = {
         this.zoomTime = 0;
     },
 
-    moveRight: function () {
-        var i = Math.min(this.selectedLevel + 1, this.hdim * this.vdim);
-        this.selectLevel(i);
+    zoom: function (factor) {
+        var aspect = this.camera.viewportWidth / this.camera.viewportHeight;
+        this.zoomTransition = true;
+        this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
+        this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
+        this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
+        this.finalZoomExtents = new Vector(this.camera.viewportWidth  + factor * aspect, this.camera.viewportHeight + factor);
+        this.zoomTime = 0;
     },
-
-    moveLeft: function () {
-        var i = Math.max(this.selectedLevel - 1, 0);
-        this.selectLevel(i);
-    },
-
-    moveUp: function () {
-        var i = Math.max(this.selectedLevel - this.vdim, 0);
-        this.selectLevel(i);
-    },
-
-    moveDown: function () {
-        var i = Math.min(this.selectedLevel + this.vdim, this.hdim * this.vdim);
-        this.selectLevel(i);
+    
+    move: function (dx, dy) {
+        //zoom to level and enable interactabble object handlers
+        this.zoomTransition = true;
+        this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
+        this.finalZoomCenter = new Vector(this.camera.center.x + dx, this.camera.center.y + dy);
+        this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
+        this.finalZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
+        this.zoomTime = 0;
     },
 
     drawStartButton: function () {
@@ -359,12 +369,6 @@ Gameboard.prototype = {
 
             this.camera.show();
            
-            /*if (this.hoverLevel > -1) {
-                var color = 'rgba(100,100,255,1)',
-                    b = this.levelButtons[this.hoverLevel];
-                this.canvas.rectangleOutline(b.p1, b.p2, b.p3, b.p4, 4, color);
-            }*/
-            
             this.waterfall.draw(this.drawDt);
             
             //draw overlay
