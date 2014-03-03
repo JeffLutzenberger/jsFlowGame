@@ -31,26 +31,19 @@ var Gameboard = function (canvas) {
     this.finalZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
     this.editmode = true;
     this.loadLevels();
-    LevelLoader.load(this.waterfall, this.levels[this.level].map);
-    this.waterfall.reset();
-    this.waterfall.pause = true;
-    this.playButton.show = true;
+    this.loadLevel();
+    //LevelLoader.load(this.waterfall, this.levels[this.level].map);
+    //this.waterfall.reset();
+    //this.waterfall.pause = true;
+    //this.playButton.show = true;
 };
 
 Gameboard.prototype = {
 
     setHandlers: function () {
         var i;
-        //$('canvas').unbind();
-        //$(document).unbind();
         this.hide();
         this.editorui.show();
-
-        //$(document).bind('opendoor', $.proxy(function (e) {
-        //    console.log("open door message");
-        //    //this.doorIsOpen = true;
-        //}, this));
-
 
         $("#gamecontroller-form").append('Edit Mode: <input id="edit-mode-input" type="checkbox" value="' + this.editmode + '"></span><br>');
         $("#edit-mode-input").change($.proxy(function () {
@@ -77,10 +70,12 @@ Gameboard.prototype = {
             this.levels[this.level].totalTime = this.waterfall.totalTime;
             this.waterfall.clear();
             this.level = parseInt(val, 10);
-            LevelLoader.load(this.waterfall, this.levels[this.level].map);
-            this.waterfall.reset();
-            this.waterfall.pause = true;
-            this.playButton.show = true;
+            this.loadLevel();
+            //LevelLoader.load(this.waterfall, this.levels[this.level].map);
+            //this.waterfall.reset();
+            //this.waterfall.pause = true;
+            //this.playButton.show = true;
+
         }, this));
 
         $('canvas').bind('mousedown touchstart', $.proxy(function (e) {
@@ -90,7 +85,7 @@ Gameboard.prototype = {
                 overlayPoint = new Particle(x, y);
             if (this.playButton.hit(overlayPoint)) {
                 console.log("play");
-                this.waterfall.pause = false;
+                this.waterfall.play();
                 this.playButton.show = false;
                 return;
             }
@@ -149,14 +144,9 @@ Gameboard.prototype = {
                             l = VectorMath.length(v);
                             r = p1.radius + p2.radius;
                             if (l < r) {
-                                //collision
-                                //console.log(v);
-                                //console.log(p2);
                                 v = VectorMath.normalize(v);
                                 p.x = p1.x + v.x * (r + 2);
                                 p.y = p1.y + v.y * (r + 2);
-                                //this.waterfall.mouseDown = false;
-                                //return;
                                 break;
                             }
                         }
@@ -201,6 +191,7 @@ Gameboard.prototype = {
                 break;
             case 61: //equal/plus
                 this.zoom(-1024);
+                break;
             default:
                 break;
             }
@@ -212,7 +203,7 @@ Gameboard.prototype = {
 
         $(document).bind('keyup', $.proxy(function (e) {
             if (e.keyCode === 27) { //esc
-                this.waterfall.pause = true;
+                this.waterfall.pause();
                 this.playButton.show = true;
             } 
         }, this));
@@ -240,21 +231,29 @@ Gameboard.prototype = {
             //load next level
             if (this.levels.length > this.level + 1) {
                 this.level += 1;
-                LevelLoader.load(this.waterfall, this.levels[this.level].map);
-                this.waterfall.reset();
-                this.waterfall.pause = true;
-                this.playButton.show = true;
+                this.loadLevel();
+                //LevelLoader.load(this.waterfall, this.levels[this.level].map);
+                //this.waterfall.reset();
+                //this.waterfall.pause = true;
+                //this.playButton.show = true;
             }
         }
     },
 
     loadLevel: function () {
+        //zoom way out
+        this.camera.setExtents(768 * 2, 1024 * 2);
+        //load the level
         LevelLoader.load(this.waterfall, this.levels[this.level].map);
         this.waterfall.reset();
-        this.waterfall.pause = true;
+        this.waterfall.pause();
         this.playButton.show = true;
-        this.camera.setExtents(this.waterfall.grid.extents().x, 1024 * this.waterfall.grid.extents().y);
-        this.camera.setCenter(this.waterfall.grid.center().x, this.waterfall.grid.center().y);
+        this.zoomTransition = true;
+        this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
+        this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
+        this.startZoomExtents = new Vector(768 * 2, 1024 * 2);
+        this.finalZoomExtents = new Vector(this.waterfall.grid.extents().x, this.waterfall.grid.extents().y);
+        this.zoomTime = 0;
     },
 
     loadLevels: function () {
@@ -265,7 +264,7 @@ Gameboard.prototype = {
             l = new Level();
             l.map = WorldLevels[i];
             this.levels.push(l);
-        }  
+        }
     },
      
     levelButtonHit: function (x, y) {
@@ -279,21 +278,11 @@ Gameboard.prototype = {
         return -1;
     },
 
-    
-    selectLevel: function (i) {
-        //zoom to level and enable interactabble object handlers
-        var r = this.levelButtons[i];
-        this.selectedLevel = i;
-        this.zoomTransition = true;
-        this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
-        this.finalZoomCenter = new Vector(r.x, r.y);
-        this.startZoomExtents = new Vector(this.camera.viewportWidth, this.camera.viewportHeight);
-        this.finalZoomExtents = new Vector(r.w, r.h);
-        this.zoomTime = 0;
-    },
-
     tweenLevel: function () {
-        //slide the level into the tile
+        //zoom in on the new level
+        //1. zoom way out
+        //2. load the new level
+        //3. zoom in on it
     },
 
     onZoomTransition: function (dt) {

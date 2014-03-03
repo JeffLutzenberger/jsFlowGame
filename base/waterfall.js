@@ -14,7 +14,7 @@ var ParticleWorld = function (canvas) {
     this.obstacles = [];
     this.sinkIsSource = false;
     this.localizeInfluence = true;
-    this.pause = false;
+    this.isPaused = false;
     this.score = 0;
     this.flux = 0;
     this.sumFlux = 0;
@@ -75,13 +75,31 @@ ParticleWorld.prototype = {
                 this.sources[i].nparticles = 0;
                 this.sources[i].particles.length = 0;
                 this.sources[i].nparticles = 50;
-                this.sources[i].particles.length = 0;
             }
         }
         this.caught = 0;
         this.missed = 0;
         this.totalTime = 0;
         this.levelComplete = false;
+    },
+
+    pause: function () {
+        var i = 0;
+        this.isPaused = true;
+        //reset sources
+        for (i = 0; i < this.sources.length; i += 1) {
+            this.sources[i].nparticles = 0;
+            this.sources[i].particles.length = 0;
+        }
+    },
+
+    play: function () {
+        var i = 0;
+        this.isPaused = false;
+        //reset sources
+        for (i = 0; i < this.sources.length; i += 1) {
+            this.sources[i].nparticles = 50;
+        }
     },
 
     update: function (dt) {
@@ -129,7 +147,7 @@ ParticleWorld.prototype = {
             o.update(dt);
         }
  
-        if (!this.pause && this.buckets.length > 0 && !this.buckets[0].explode) {
+        if (!this.isPaused && this.buckets.length > 0 && !this.buckets[0].explode) {
             this.totalTime += dt;
             this.moveParticles(dt);
         } else if (this.buckets.length > 0 && this.buckets[0].explode) {

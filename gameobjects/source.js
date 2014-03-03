@@ -10,7 +10,6 @@ function Source(x, y, w, h, theta, speed, color) {
     this.addPeriod = 100; //ms per particle
     this.particles = [];
     this.particlePool = [];
-    //this.addParticles();
 }
 
 Source.prototype = new Rectangle();
@@ -32,7 +31,6 @@ Source.prototype.addParticles = function () {
         p = new Particle(x, y, 4, this.color);
         p.source = this;
         p.recycle(p.x, p.y, vx, vy, this.color);
-        //p.age = Math.random() * 10;
         this.particles.push(p);
     }
 };
