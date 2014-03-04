@@ -7,13 +7,13 @@ var UIButton = function (x, y, w, h, color, fontSize, fontFamily, text) {
     this.h = h;
     this.color = color;
     this.text = text;
-    this.textXOffset = -38;
-    this.textYOffset = 11;
+    this.textXOffset = -42;
+    this.textYOffset = 12;
     this.fontSize = fontSize;
     this.fontFamily = fontFamily;
     this.text = text;
     this.hover = false;
-    this.show = true;
+    this.show = false;
 };
 
 UIButton.prototype = {

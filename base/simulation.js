@@ -153,7 +153,6 @@ ParticleWorld.prototype = {
         }
     },
 
-    
     calculateFlux : function () {
         var i;
         this.frame += 1;

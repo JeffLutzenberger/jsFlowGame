@@ -8,7 +8,16 @@ var Gameboard = function (canvas) {
     this.camera = new Camera(canvas);
     this.waterfall = new ParticleWorld(canvas);
     this.editorui = new EditorUI(this.waterfall, this.camera);
-    this.playButton = new UIButton(768 * 0.25, 1024 * 0.25, 110, 50, 'green', 32, 'neon-lights', 'PLAY');
+    this.startButton = new UIButton(768 * 0.25, 1024 * 0.25, 90, 40, 'green', 28, 'neon-lights', 'PLAY');
+    this.startButton.textXOffset = -35;
+    this.startButton.textYOffset = 10;
+    this.nextButton = new UIButton(768 * 0.25, 1024 * 0.25 - 30, 90, 40, 'green', 28, 'neon-lights', 'NEXT');
+    this.nextButton.textXOffset = -35;
+    this.nextButton.textYOffset = 10;
+    this.replayButton = new UIButton(768 * 0.25, 1024 * 0.25 + 30, 130, 40, 'green', 28, 'neon-lights', 'REPLAY');
+    this.replayButton.textXOffset = -55;
+    this.replayButton.textYOffset = 10;
+    this.isPaused = false;
     this.levels = [];
     this.level = 0;
     this.drawDt = 0;
@@ -74,20 +83,27 @@ Gameboard.prototype = {
                 y = Math.floor((e.pageY - $("#canvas").offset().top)),
                 p = this.camera.screenToWorld(x, y),
                 overlayPoint = new Particle(x, y);
-            if (this.playButton.hit(overlayPoint)) {
-                console.log("play");
-                this.waterfall.play();
-                this.playButton.show = false;
+            if (this.startButton.hit(overlayPoint)) {
+                this.play();
                 return;
             }
+            
+            if (this.nextButton.hit(overlayPoint)) {
+                this.nextLevel();
+                return;
+            }
+            
+            if (this.replayButton.hit(overlayPoint)) {
+                this.replayLevel();
+                return;
+            }
+
             this.waterfall.mouseDown = true;
             this.waterfall.hitInteractable(p.x, p.y, this.editmode);
             this.editorui.gameObjectForm.gameObject = this.waterfall.interactable;
             this.editorui.gameObjectForm.hide();
             if (this.waterfall.interactable) {
                 this.editorui.gameObjectForm.show();
-            } else {
-                this.selectLevel(this.levelButtonHit(p.x, p.y));
             }
         }, this));
 
@@ -110,7 +126,9 @@ Gameboard.prototype = {
                 p = this.camera.screenToWorld(x, y),
                 overlayPoint = new Particle(x, y);
             
-            this.playButton.hover = this.playButton.hit(overlayPoint);
+            this.startButton.hover = this.startButton.hit(overlayPoint);
+            this.nextButton.hover = this.nextButton.hit(overlayPoint);
+            this.replayButton.hover = this.replayButton.hit(overlayPoint);
             if (this.waterfall.mouseDown === false) {
                 return;
             }
@@ -147,7 +165,6 @@ Gameboard.prototype = {
                 this.waterfall.interactable.setxy(p.x, p.y);
                 this.editorui.gameObjectForm.updateLocation();
             }
-            this.hoverLevel = this.levelButtonHit(p.x, p.y);
         }, this));
 
         $(document).bind('keydown', $.proxy(function (e) {
@@ -194,10 +211,54 @@ Gameboard.prototype = {
 
         $(document).bind('keyup', $.proxy(function (e) {
             if (e.keyCode === 27) { //esc
-                this.waterfall.pause();
-                this.playButton.show = true;
+                this.pause();
             } 
         }, this));
+    },
+
+    pause: function () {
+        this.waterfall.pause();
+        this.startButton.show = true;
+        this.replayButton.show = false;
+        this.nextButton.show = false;
+        this.isPaused = true;
+    },
+
+    play: function () {
+        this.waterfall.play();
+        this.startButton.show = false;
+        this.isPaused = false;
+    },
+
+    setLevelComplete: function () {
+        this.levels[this.level].updateHiScore(this.waterfall.caught,
+                                              this.waterfall.missed,
+                                              this.waterfall.totalTime);
+        //load next level
+        //if (this.levels.length > this.level + 1) {
+        //    this.level += 1;
+        //    this.loadLevel();
+        //}
+        this.waterfall.pause();
+        this.nextButton.show = true;
+        this.replayButton.show = true;
+        this.isLevelComplete = true;
+    },
+
+    nextLevel: function () {
+        //load next level
+        this.replayButton.show = false;
+        this.nextButton.show = false;
+        if (this.levels.length > this.level + 1) {
+            this.level += 1;
+            this.loadLevel();
+        }
+    },
+
+    replayLevel: function () {
+        this.replayButton.show = false;
+        this.nextButton.show = false;
+        this.loadLevel();
     },
 
     hide: function () {
@@ -216,14 +277,7 @@ Gameboard.prototype = {
         //check to see if the level is complete
         //if so update the high score and save the current score
         if (this.waterfall.levelComplete) {
-            this.levels[this.level].updateHiScore(this.waterfall.caught,
-                                                  this.waterfall.missed,
-                                                  this.waterfall.totalTime);
-            //load next level
-            if (this.levels.length > this.level + 1) {
-                this.level += 1;
-                this.loadLevel();
-            }
+            this.setLevelComplete();
         }
     },
 
@@ -234,7 +288,7 @@ Gameboard.prototype = {
         LevelLoader.load(this.waterfall, this.levels[this.level].map);
         this.waterfall.reset();
         this.waterfall.pause();
-        this.playButton.show = true;
+        this.startButton.show = true;
         this.zoomTransition = true;
         this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
         this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
@@ -254,17 +308,6 @@ Gameboard.prototype = {
         }
     },
      
-    levelButtonHit: function (x, y) {
-        var i = 0, p = new Particle(x, y), b;
-        for (i = 0; i < this.levelButtons.length; i += 1) {
-            b = this.levelButtons[i].bbHit(p);
-            if (b) {
-                return i;
-            }
-        }
-        return -1;
-    },
-
     tweenLevel: function () {
         //zoom in on the new level
         //1. zoom way out
@@ -324,18 +367,9 @@ Gameboard.prototype = {
         this.zoomTime = 0;
     },
 
-    drawStartButton: function () {
-        var x = 0, y = 0, w = 110, h = 50, color = [0, 255, 0];
-        this.canvas.rectangleXY(x, y, w, h, 0, color, 0.25);
-        this.canvas.rectangleOutlineXY(x, y, w, h, 0, 10, color, 0.25);
-        this.canvas.rectangleOutlineXY(x, y, w, h, 0, 5, color, 0.5);
-        this.canvas.rectangleOutlineXY(x, y, w, h, 0, 2, [255, 255, 255], 0.8);
-        this.canvas.textWithAlpha(x - 38, y + 11, color, 1.0, "neon-lights", 32, "PLAY");
-    },
-
     drawScoreAndTime: function () {
         var i, b, color = [0, 255, 0],
-            fontFamily = 'neon-lights', fontSize = 24, str,
+            fontFamily = 'neon-lights', fontSize = 18, str,
             caught = parseFloat(this.waterfall.caught),
             missed = parseFloat(this.waterfall.missed);
         //if (caught > 0) {
@@ -344,9 +378,9 @@ Gameboard.prototype = {
         str = "CAUGHT " + caught;
         this.canvas.text(10, 30, color, fontFamily, fontSize, str);
         str = (parseInt(this.waterfall.totalTime, 10) * 0.001).toFixed(0);
-        this.canvas.text(180, 30, color, fontFamily, fontSize, str);
+        this.canvas.text(190, 30, color, fontFamily, fontSize, str);
         str = "MISSED " + missed;
-        this.canvas.text(250, 30, color, fontFamily, fontSize, str);
+        this.canvas.text(260, 30, color, fontFamily, fontSize, str);
  
     },
 
@@ -368,11 +402,15 @@ Gameboard.prototype = {
             
             this.camera.pop();
 
-            if (this.waterfall.isPaused) {
+            if (this.startButton.show || this.nextButton.show || this.replayButton.show) {
                 this.canvas.rectangleXY(384 * 0.5, 512 * 0.5, 384, 512, 0, [0, 0, 0], 0.5);
             }
             
-            this.playButton.draw(this.canvas, false, false);
+            this.startButton.draw(this.canvas);
+
+            this.nextButton.draw(this.canvas);
+
+            this.replayButton.draw(this.canvas);
 
             this.drawScoreAndTime();
             
