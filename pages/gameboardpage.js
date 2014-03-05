@@ -8,13 +8,13 @@ var Gameboard = function (canvas) {
     this.camera = new Camera(canvas);
     this.waterfall = new ParticleWorld(canvas);
     this.editorui = new EditorUI(this.waterfall, this.camera);
-    this.startButton = new UIButton(768 * 0.25, 1024 * 0.25, 90, 40, 'green', 28, 'neon-lights', 'PLAY');
-    this.startButton.textXOffset = -35;
+    this.startButton = new UIButton(768 * 0.25, 1024 * 0.25, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'PLAY');
+    //this.startButton.textXOffset = -35;
     this.startButton.textYOffset = 10;
-    this.nextButton = new UIButton(768 * 0.25, 1024 * 0.25 - 30, 90, 40, 'green', 28, 'neon-lights', 'NEXT');
+    this.nextButton = new UIButton(768 * 0.25, 1024 * 0.25 - 30, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'NEXT');
     this.nextButton.textXOffset = -35;
     this.nextButton.textYOffset = 10;
-    this.replayButton = new UIButton(768 * 0.25, 1024 * 0.25 + 30, 130, 40, 'green', 28, 'neon-lights', 'REPLAY');
+    this.replayButton = new UIButton(768 * 0.25, 1024 * 0.25 + 30, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'REPLAY');
     this.replayButton.textXOffset = -55;
     this.replayButton.textYOffset = 10;
     this.isPaused = false;
@@ -230,6 +230,16 @@ Gameboard.prototype = {
         this.isPaused = false;
     },
 
+    checkLevelComplete: function () {
+        var i = 0;
+        for (i = 0; i < this.sources.length; i += 1) {
+            if (this.sources[i].isGoal && this.sources[i].isFull) {
+                this.setLevelComplete();
+                break;
+            }
+        }
+    },
+
     setLevelComplete: function () {
         this.levels[this.level].updateHiScore(this.waterfall.caught,
                                               this.waterfall.missed,
@@ -369,19 +379,26 @@ Gameboard.prototype = {
 
     drawScoreAndTime: function () {
         var i, b, color = [0, 255, 0],
-            fontFamily = 'neon-lights', fontSize = 18, str,
+            fontFamily = 'neon-lights', fontSize = 16, str,
             caught = parseFloat(this.waterfall.caught),
             missed = parseFloat(this.waterfall.missed);
         //if (caught > 0) {
         //    caught = (caught / (missed + caught));
         //}
-        str = "CAUGHT " + caught;
-        this.canvas.text(10, 30, color, fontFamily, fontSize, str);
+        str = "CAUGHT";// + caught;
+        this.canvas.text(20, 35, color, fontFamily, fontSize, str);
+        str = caught;
+        this.canvas.text(20, 60, color, fontFamily, fontSize + 5, str);
         str = (parseInt(this.waterfall.totalTime, 10) * 0.001).toFixed(0);
-        this.canvas.text(190, 30, color, fontFamily, fontSize, str);
-        str = "MISSED " + missed;
-        this.canvas.text(260, 30, color, fontFamily, fontSize, str);
- 
+        this.canvas.ctx.textAlign = "center";
+        this.canvas.text(190, 35, color, fontFamily, fontSize + 5, str);
+        this.canvas.ctx.textAlign = "left";
+        str = "MISSED";
+        this.canvas.text(300, 35, color, fontFamily, fontSize, str);
+        str = missed;
+        this.canvas.ctx.textAlign = "right";
+        this.canvas.text(360, 60, color, fontFamily, fontSize + 5, str);
+        this.canvas.ctx.textAlign = "left";
     },
 
     draw: function (dt) {

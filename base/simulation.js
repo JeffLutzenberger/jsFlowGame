@@ -20,7 +20,7 @@ var ParticleWorld = function (canvas) {
     this.missed = 0;
     this.caught = 0;
     this.totalTime = 0;
-    this.levelComplete = false;
+    this.isSimulationComplete = false;
     this.framerate = 30; //fps (how often we draw)
     this.frame = 0;
     this.interactableObjects = [];
@@ -78,7 +78,7 @@ ParticleWorld.prototype = {
         this.caught = 0;
         this.missed = 0;
         this.totalTime = 0;
-        this.levelComplete = false;
+        this.isSimulationComplete = false;
     },
 
     pause: function () {
@@ -103,12 +103,16 @@ ParticleWorld.prototype = {
     update: function (dt) {
         var i = 0, color, p, f = 1, o;
 
-        this.calculateFlux();
-
         this.backgroundGrid.update(dt);
 
         this.grid.update(dt);
 
+        if (this.isPaused || this.isSimulationComplete) {
+            return;
+        }
+        
+        this.calculateFlux();
+        
         for (i = 0; i < this.sources.length; i += 1) {
             o = this.sources[i];
             o.update(dt);
@@ -145,12 +149,9 @@ ParticleWorld.prototype = {
             o.update(dt);
         }
  
-        if (!this.isPaused && this.buckets.length > 0 && !this.buckets[0].explode) {
-            this.totalTime += dt;
-            this.moveParticles(dt);
-        } else if (this.buckets.length > 0 && this.buckets[0].explode) {
-            this.levelComplete = true;
-        }
+        this.totalTime += dt;
+        
+        this.moveParticles(dt);
     },
 
     calculateFlux : function () {

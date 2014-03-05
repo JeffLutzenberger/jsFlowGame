@@ -13,6 +13,7 @@ var Sink = function (x, y, r, force, isSource) {
     this.inColor = 'green';
     this.outColor = 'blue';
     this.isSource = isSource || false;
+    this.isGoal = false;
     this.influenceType = 0;
     this.sizeFactor = 1;
     this.targetSizeFactor = 1;
@@ -32,6 +33,9 @@ var Sink = function (x, y, r, force, isSource) {
     this.flashlength = 500;
     this.burstSize = 30;
     this.lockedIn = true;
+    this.sparks = new ParticleSystem(0, 0);
+    this.particleconfigs = SparksParticleConfigs;
+
     this.grabber = new Rectangle(x + Math.cos(this.theta) * this.r,
                                  y + Math.sin(this.theta) * this.r,
                                  20, 20, 0);
@@ -95,6 +99,7 @@ Sink.prototype.influence = function (p, dt, maxSpeed) {
         }
     }
     res *= dt * 0.08;
+    res = Math.min(res, maxSpeed);
     //res = Math.min(res, maxSpeed);
     v2 = VectorMath.normalize(v2);
     v2.x *= res;
@@ -132,25 +137,19 @@ Sink.prototype.moveGrabber = function (p) {
 };
 
 Sink.prototype.trap = function (p) {
-    var v = new Vector(p.vel.x, p.vel.y),
-        c1 = new Particle(p.x, p.y, p.radius),
-        p1 = new Vector(p.prevx, p.prevy),
-        p2 = new Vector(p.x, p.y),
-        d1 = new Vector(p1.x - this.x, p1.y - this.y).length(),
-        d2 = new Vector(p2.x - this.x, p2.y - this.y).length(),
-        hitPoint;
-    if (d1 < d2) {
-        hitPoint = c1.circleCircleCollision(this.x, this.y, this.influenceRadius);
-        if (hitPoint) {
-            v = new Vector(this.x - hitPoint.x, this.y - hitPoint.y);
-            d1 = v.length() + 20;
-            //there should only be a collision if the particle circle overlaps the edge
-            //of the influence radius
-            if (d1 >= this.influenceRadius) {
-                return v.normalize();
-            }
-        }
+    var d1 = new Vector(p.x - this.x, p.y - this.y).length(),
+        r1 = this.influenceRadius * this.sizeFactor,
+        r2 = r1 - 5,
+        n;
+    if (d1 > r1) {
+        //get the normal vector at this point
+        n = new Vector(p.x - this.x, p.y - this.y);
+        n = VectorMath.normalize(n);
+        p.x = this.x + r2 * n.x;
+        p.y = this.y + r2 * n.y;
+        return n;
     }
+
 };
 
 Sink.prototype.bounce = function (p) {
@@ -164,10 +163,27 @@ Sink.prototype.bounce = function (p) {
         n = VectorMath.normalize(n);
         p.x = this.x + r2 * n.x;
         p.y = this.y + r2 * n.y;
+        this.spark(p.x, p.y);
         return n;
     }
 };
 
+Sink.prototype.spark = function (x, y) {
+    this.sparks.init(x,
+                     y,
+                     this.particleconfigs.particleradius,
+                     this.particleconfigs.particlelength,
+                     this.particleconfigs.ntracers,
+                     this.particleconfigs.nparticles);
+
+    this.sparks.burst(x,
+                      y,
+                      this.particleconfigs.burstradius,
+                      this.particleconfigs.speed,
+                      this.particleconfigs.accel,
+                      this.particleconfigs.nburstparticles,
+                      this.particleconfigs.lifetime);
+};
 
 Sink.prototype.update = function (dt, hit) {
     var i;
@@ -206,6 +222,7 @@ Sink.prototype.update = function (dt, hit) {
     }
 
     this.updateOrbitals(dt);
+    this.sparks.update(dt);
 };
 
 Sink.prototype.getOrbitalShell = function () {
@@ -360,6 +377,7 @@ Sink.prototype.draw = function (canvas, color) {
     color = ParticleWorldColors[this.inColor];
     this.sizeFactor = 1 + this.radius * this.energy / 1000;
 
+    this.sparks.draw(canvas, color);
     canvas.radialGradient(this.x,
                           this.y,
                           this.radius * this.sizeFactor,
@@ -401,7 +419,7 @@ Sink.prototype.draw = function (canvas, color) {
         */
         this.drawGrabber(canvas, ParticleWorldColors[this.outColor], alpha);
     
-    }/* else {
+    } else {
         //draw pulse ring...
         //this.drawPulseRing(canvas, color);
         if (this.flashdt >= 0 && this.flashdt < this.flashlength) {
@@ -438,7 +456,7 @@ Sink.prototype.draw = function (canvas, color) {
 
     if (this.selected) {
         canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, [0, 100, 255], 0.25);
-    }*/
+    }
 
     //this.drawOrbitals(canvas, c);
 };

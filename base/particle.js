@@ -266,14 +266,14 @@ PassiveParticle.prototype = {
                           this.y,
                           this.x - this.dir.x * l,
                           this.y - this.dir.y * l,
-                          10,
+                          this.radius * 2,
                           c,
                           alpha * 0.25);
             canvas.linexy(this.x,
                           this.y,
                           this.x - this.dir.x * l,
                           this.y - this.dir.y * l,
-                          5,
+                          this.radius,
                           [255, 255, 255],
                           alpha);
         } else {
@@ -288,6 +288,18 @@ PassiveParticle.prototype = {
             //canvas.line(t1, t2, this.traceWidth * 5, c, alpha * 0.25);
         }
     }
+};
+
+var SparksParticleConfigs = {
+    particleradius : 1,
+    particlelength : 50,
+    nparticles : 100,
+    nburstparticles: 10,
+    burstradius : 20,
+    speed : 0.5,
+    accel : -0.0005,
+    ntracers : 10,
+    lifetime : 500
 };
 
 var bucketParticleConfigs = {

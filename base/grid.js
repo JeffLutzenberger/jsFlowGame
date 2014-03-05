@@ -28,6 +28,7 @@ Grid.prototype = {
 };
 
 var GridWall = function (p1, p2) {
+    var i = 0, explosion;
     this.p1 = p1;
     this.p2 = p2;
     this.p3 = p1;
@@ -38,6 +39,8 @@ var GridWall = function (p1, p2) {
     this.randomSeed = 100;
     this.doorPoints = [];
     this.flash = new Flash(500, 1);
+    this.sparks = new ParticleSystem(0, 0);
+    this.particleconfigs = SparksParticleConfigs;
 
     $(document).bind('opendoor', $.proxy(function (e) {
         console.log("open door message");
@@ -59,6 +62,24 @@ GridWall.prototype = {
 
     update : function (dt) {
         this.flash.update(dt);
+        this.sparks.update(dt);
+    },
+
+    spark : function (x, y) {
+        this.sparks.init(x,
+                         y,
+                         this.particleconfigs.particleradius,
+                         this.particleconfigs.particlelength,
+                         this.particleconfigs.ntracers,
+                         this.particleconfigs.nparticles);
+
+        this.sparks.burst(x,
+                          y,
+                          this.particleconfigs.burstradius,
+                          this.particleconfigs.speed,
+                          this.particleconfigs.accel,
+                          this.particleconfigs.nburstparticles,
+                          this.particleconfigs.lifetime);
     },
 
     hit : function (p) {
@@ -67,15 +88,18 @@ GridWall.prototype = {
             //if (p.circleCollision(this.p1, this.p2)) {
             if (p.lineCollision(this.p1, this.p2, r)) {
                 n = new Vector(-(this.p2.y - this.p1.y), this.p2.x - this.p1.x).normalize();
+                this.spark(p.x, p.y);
                 return n;
             }
             if (p.lineCollision(this.p3, this.p4, r)) {
                 n = new Vector(-(this.p4.y - this.p3.y), this.p4.x - this.p3.x).normalize();
+                this.spark(p.x, p.y);
                 return n;
             }
         } else {
             if (p.lineCollision(this.p1, this.p4, r)) {
                 n = new Vector(-(this.p4.y - this.p1.y), this.p4.x - this.p1.x).normalize();
+                this.spark(p.x, p.y);
                 return n;
             }
         }
@@ -176,6 +200,7 @@ GridWall.prototype = {
     draw : function (canvas, color) {
         var p1, p2, n, doorjam = 50, f = 1 + this.flash.factor,
             doorColor = ParticleWorldColors[this.doorColor];
+        this.sparks.draw(canvas, color);
         if (this.flash.factor > 0) {
             color = canvas.brighten(color, this.flash.factor);
         }
