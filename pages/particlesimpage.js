@@ -25,8 +25,8 @@ var ParticleSimPage = function (canvas, hdim, vdim) {
         nparticles : 300,
         nburstparticles: 50,
         burstradius : 50,
-        speed : 0.6,
-        accel : -0.0005,
+        speed : 0.8,
+        accel : -0.001,
         ntracers : 10,
         lifetime : 1000
     };

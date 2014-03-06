@@ -11,7 +11,6 @@ var ParticleWorld = function (canvas) {
     this.portals = [];
     this.buckets = [];
     this.obstacles = [];
-    this.sinkIsSource = false;
     this.localizeInfluence = true;
     this.isPaused = false;
     this.score = 0;
@@ -20,29 +19,21 @@ var ParticleWorld = function (canvas) {
     this.missed = 0;
     this.caught = 0;
     this.totalTime = 0;
+    this.timerIsOn = false;
     this.isSimulationComplete = false;
     this.framerate = 30; //fps (how often we draw)
     this.frame = 0;
     this.interactableObjects = [];
     this.interactable = null;
-    this.mouseDown = false;
-    this.showGrid = false;
-    this.gridx = 24;
-    this.gridy = 16;
     this.forceMultiplier = 1e4;
     this.maxParticleSpeed = 1;
     this.maxParticleAge = 10;
     this.minDSquared = 1000;
-    this.particleColor = ParticleWorldColors.blue;
-    this.sourceColor = ParticleWorldColors.blue;
-    this.sinkColor =  ParticleWorldColors.green;
-    this.starColor =  [255, 150, 200];
     this.influencerColor = ParticleWorldColors.blue;
     this.obstacleColor = ParticleWorldColors.gray1;
     this.bucketColor = [0, 153, 255];
     this.gridColor = [200, 50, 255];
     this.portalColor = [255, 153, 0];
-    this.scoreTextColor = [100, 100, 100];
     this.backgroundGrid = new BackgroundGrid(768, 1024, 768 / 16, 1024 / 16);
     this.particleCaughtSound = new SoundPool('sounds/hit.mp3', 10);
     //this.traileffect = new TrailEffect(canvas);
@@ -81,9 +72,8 @@ ParticleWorld.prototype = {
         this.isSimulationComplete = false;
     },
 
-    pause: function () {
+    stopParticles: function () {
         var i = 0;
-        this.isPaused = true;
         //reset sources
         for (i = 0; i < this.sources.length; i += 1) {
             this.sources[i].nparticles = 0;
@@ -91,9 +81,25 @@ ParticleWorld.prototype = {
         }
     },
 
+    stopTimer: function () {
+        this.timerIsOn = false;
+    },
+
+    startTimer: function () {
+        this.timerIsOn = true;
+    },
+
+    pause: function () {
+        var i = 0;
+        this.isPaused = true;
+        this.stopParticles();
+        this.stopTimer();
+    },
+
     play: function () {
         var i = 0;
         this.isPaused = false;
+        this.startTimer();
         //reset sources
         for (i = 0; i < this.sources.length; i += 1) {
             this.sources[i].nparticles = 50;
@@ -103,13 +109,17 @@ ParticleWorld.prototype = {
     update: function (dt) {
         var i = 0, color, p, f = 1, o;
 
-        this.backgroundGrid.update(dt);
-
-        this.grid.update(dt);
+        //this.backgroundGrid.update(dt);
 
         if (this.isPaused || this.isSimulationComplete) {
             return;
         }
+ 
+        if (this.timerIsOn) {
+            this.totalTime += dt;
+        }
+        
+        this.grid.update(dt);
         
         this.calculateFlux();
         
@@ -149,8 +159,7 @@ ParticleWorld.prototype = {
             o.update(dt);
         }
  
-        this.totalTime += dt;
-        
+       
         this.moveParticles(dt);
     },
 
@@ -287,7 +296,7 @@ ParticleWorld.prototype = {
                     return false;
                 } else {
                     p.source.recycleParticle(p);
-                    s.addEnergy();
+                    this.caught += 1;
                     return true;
                 }
             }
@@ -327,6 +336,30 @@ ParticleWorld.prototype = {
         }
         return false;
     },
+
+    hitPortals: function (p) {
+        var i, c;
+        for (i = 0; i < this.portals.length; i += 1) {
+            if (this.portals[i].hit(p)) {
+                p.morphSound.play();
+                return true;
+            }
+        }
+        return false;
+    },
+
+    hitGridWall: function (p, dt) {
+        //where is the particle...
+        //i.e. get the grid rect that the particle is in
+        var h = this.grid.hit(p);
+        if (h) {
+            p.bounce(h);
+            p.move(dt);
+            return true;
+        }
+        return false;
+    },
+
 
     hitInteractable: function (x, y, checkall) {
         var i, p = new Particle(x, y);
@@ -427,29 +460,6 @@ ParticleWorld.prototype = {
         return false;
     },
 
-    hitPortals: function (p) {
-        var i, c;
-        for (i = 0; i < this.portals.length; i += 1) {
-            if (this.portals[i].hit(p)) {
-                p.morphSound.play();
-                return true;
-            }
-        }
-        return false;
-    },
-
-    hitGridWall: function (p, dt) {
-        //where is the particle...
-        //i.e. get the grid rect that the particle is in
-        var h = this.grid.hit(p);
-        if (h) {
-            p.bounce(h);
-            p.move(dt);
-            return true;
-        }
-        return false;
-    },
-
     drawBackground: function (dt) {
         //this.backgroundeffect.update(dt);
         //this.backgroundeffect.draw(this.canvas);
@@ -457,47 +467,46 @@ ParticleWorld.prototype = {
     },
 
     drawParticles : function () {
-        var i = 0, j = 0, color = this.particleColor;
+        var i = 0, j = 0;
         for (i = 0; i < this.sources.length; i += 1) {
             for (j = 0; j < this.sources[i].particles.length; j += 1) {
-                this.sources[i].particles[j].draw(this.canvas, color);
+                this.sources[i].particles[j].draw(this.canvas);
             }
         }
     },
 
     drawSources : function () {
-        var i, o, color = this.sourceColor;
+        var i, o;
         for (i = 0; i < this.sources.length; i += 1) {
-            this.sources[i].draw(this.canvas, color);
+            this.sources[i].draw(this.canvas);
         }
     },
 
-    drawSinks : function (dt) {
-        var i = 0, color = this.sinkColor;
+    drawSinks : function () {
+        var i = 0;
         for (i = 0; i < this.sinks.length; i += 1) {
-            this.sinks[i].draw(this.canvas, color, dt);
+            this.sinks[i].draw(this.canvas);
         }
     },
 
-    drawStars : function (dt) {
-        var i = 0, color = this.starColor;
+    drawStars : function () {
+        var i = 0;
         for (i = 0; i < this.stars.length; i += 1) {
-            this.stars[i].draw(this.canvas, color, dt);
+            this.stars[i].draw(this.canvas);
         }
     },
 
-    drawInfluencers : function (dt) {
+    drawInfluencers : function () {
         var i = 0, color = this.influencerColor;
         for (i = 0; i < this.influencers.length; i += 1) {
-            this.influencers[i].draw(this.canvas, color, dt);
+            this.influencers[i].draw(this.canvas, color);
         }
     },
 
     drawBuckets : function () {
-        var i, b, alpha = Math.min(this.score / 1000 + 0.25, 1),
-            color = this.bucketColor;
+        var i, b, alpha = Math.min(this.score / 1000 + 0.25, 1);
         for (i = 0; i < this.buckets.length; i += 1) {
-            this.buckets[i].draw(this.canvas, color);
+            this.buckets[i].draw(this.canvas);
         }
     },
 
@@ -534,19 +543,18 @@ ParticleWorld.prototype = {
 
         this.drawSources();
 
-        this.drawSinks(dt);
+        this.drawSinks();
         
-        this.drawStars(dt);
+        this.drawStars();
     
         this.drawObstacles();
     
         this.drawPortals();
     
-        this.drawInfluencers(dt);
+        this.drawInfluencers();
 
         this.drawBuckets();
 
         this.drawGridWalls();
-
     }
 };

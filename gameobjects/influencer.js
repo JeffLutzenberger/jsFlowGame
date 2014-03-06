@@ -112,7 +112,7 @@ Influencer.prototype.drawGrabber = function (canvas, color, alpha) {
 };
 
 
-Influencer.prototype.draw = function (canvas, color, dt) {
+Influencer.prototype.draw = function (canvas, color) {
     var decayFactor = 0.001,
         maxHitAlpha = 0.15,
         hitFactor = 0.005,

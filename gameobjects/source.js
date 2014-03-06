@@ -67,9 +67,8 @@ Source.prototype.update = function (dt) {
     }
 };
 
-Source.prototype.draw = function (canvas, color) {
-    var alpha = 1.0;
-    color = ParticleWorldColors[this.color];
+Source.prototype.draw = function (canvas) {
+    var alpha = 1.0, color = ParticleWorldColors[this.color];
     canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 20, color, 0.25);
     canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 10, color, 0.5);
     canvas.rectangleOutline(this.p1, this.p2, this.p3, this.p4, 5, [255, 255, 255], 0.9);

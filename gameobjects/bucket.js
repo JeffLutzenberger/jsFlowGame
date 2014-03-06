@@ -35,6 +35,10 @@ Bucket.prototype.gameObjectType = function () {
     return "Bucket";
 };
 
+Bucket.prototype.full = function () {
+    return (this.caught >= this.fillLevels[3]);
+};
+
 Bucket.prototype.update = function (dt) {
     var s = 0;
     this.t1 += dt;
@@ -180,12 +184,12 @@ Bucket.prototype.reset = function () {
     this.level = 0;
 };
 
-Bucket.prototype.draw = function (canvas, inColor, outColor) {
+Bucket.prototype.draw = function (canvas) {
     var alpha = 1.0, theta = Math.PI / 180 * this.theta,
         fontSize = 32, textWidth = 1,
-        f = 1 + this.transition1.factor + this.transition2.factor;
-    inColor = ParticleWorldColors[this.inColor];
-    outColor = ParticleWorldColors[this.outColor];
+        f = 1 + this.transition1.factor + this.transition2.factor,
+        inColor = ParticleWorldColors[this.inColor],
+        outColor = ParticleWorldColors[this.outColor];
     if (this.hasBottom) {
         if (this.explode === true) {
             this.explosion.draw(canvas, inColor);

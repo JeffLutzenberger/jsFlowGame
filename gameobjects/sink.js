@@ -9,30 +9,26 @@ var Sink = function (x, y, r, force, isSource) {
     this.force = force || 1;
     this.influenceRadius = this.radius * 5;
     this.speed = 5;
-    this.color = 'green';
     this.inColor = 'green';
     this.outColor = 'blue';
     this.isSource = isSource || false;
-    this.isGoal = false;
+    this.isGoal = true;
     this.influenceType = 0;
     this.sizeFactor = 1;
-    this.targetSizeFactor = 1;
-    this.maxSizeFactor = 4;
+    this.maxSizeFactor = 0.5;
     this.showInfluenceRing = true;
     this.influenceBound = false;
-    this.growthFactor = 0.15;
-    this.decayFactor = 0.05;
-    this.maxOrbitals = 4;
+    this.maxFill = 100;
+    this.fillLevels = [50, 100, 150, 200];
+    this.caught = 0;
     this.orbitals = [];
-    this.energy = 0;
-    this.maxEnergy = 100;
     this.lockedInEnergyFactor = 0.25;
-    this.energyPerOrbital = 10;
     this.flash = false;
     this.flashdt = 1e6;
     this.flashlength = 500;
-    this.burstSize = 30;
+    this.exploded = false;
     this.lockedIn = true;
+    this.explodeFlash = new Flash(500, 20);
     this.sparks = new ParticleSystem(0, 0);
     this.particleconfigs = SparksParticleConfigs;
 
@@ -41,7 +37,6 @@ var Sink = function (x, y, r, force, isSource) {
                                  20, 20, 0);
     this.grabberFadeLength = 1000;
     this.grabberFadeDt = 0;
-    this.continuousPulse = false; //when we hit 90% of max
     this.pulseRates = [5000, 4000, 3000, 2000, 1000, 500, 250, 100]; //milliseconds
     this.ringpulsedt = 0;
     this.ringpulselength = 2000;
@@ -80,6 +75,10 @@ Sink.prototype.setRadius = function (val) {
     this.h = val;
 };
 
+Sink.prototype.full = function () {
+    return (this.caught >= this.maxFill);
+};
+
 Sink.prototype.influence = function (p, dt, maxSpeed) {
     var v2 = new Vector(this.x - p.x, this.y - p.y),
         r2 = Math.max(v2.squaredLength(), this.radius * this.radius),
@@ -100,7 +99,6 @@ Sink.prototype.influence = function (p, dt, maxSpeed) {
     }
     res *= dt * 0.08;
     res = Math.min(res, maxSpeed);
-    //res = Math.min(res, maxSpeed);
     v2 = VectorMath.normalize(v2);
     v2.x *= res;
     v2.y *= res;
@@ -110,8 +108,13 @@ Sink.prototype.influence = function (p, dt, maxSpeed) {
 
 Sink.prototype.hit = function (p) {
     var v2 = new Vector(this.x - p.x, this.y - p.y),
-        d2 = v2.squaredLength();
-    return (d2 <= 2 * this.radius * this.radius * this.sizeFactor * this.sizeFactor);
+        d2 = v2.squaredLength(),
+        hit = false;
+    hit = (d2 <= 2 * this.radius * this.radius * this.sizeFactor * this.sizeFactor);
+    if (hit) {
+        this.caught += 1;
+    }
+    return hit;
 };
 
 Sink.prototype.insideInfluenceRing = function (p) {
@@ -149,7 +152,6 @@ Sink.prototype.trap = function (p) {
         p.y = this.y + r2 * n.y;
         return n;
     }
-
 };
 
 Sink.prototype.bounce = function (p) {
@@ -185,15 +187,43 @@ Sink.prototype.spark = function (x, y) {
                       this.particleconfigs.lifetime);
 };
 
+Sink.prototype.explode = function () {
+    this.sparks.init(this.x,
+                     this.y,
+                     this.particleconfigs.particleradius,
+                     this.particleconfigs.particlelength,
+                     this.particleconfigs.ntracers,
+                     this.particleconfigs.nparticles);
+
+    this.sparks.burst(this.x,
+                      this.y,
+                      this.particleconfigs.burstradius,
+                      this.particleconfigs.speed,
+                      this.particleconfigs.accel,
+                      this.particleconfigs.nburstparticles,
+                      this.particleconfigs.lifetime);
+
+};
+
 Sink.prototype.update = function (dt, hit) {
     var i;
-    this.energy = Math.max(0, this.energy - this.energy * 0.0001 * dt);
     this.brightness = Math.min(this.brightness, 1.0);
-    if (this.energy / this.maxEnergy >= this.lockedInEnergyFactor && this.lockedIn === false) {
-        //level up: create some new random objects
-        this.lockedIn = true;
-        //$(document).trigger('levelup');
+    if (!this.full()) {
+        this.sizeFactor = 1 + this.maxSizeFactor * this.caught / this.maxFill;
+        this.sizeFactor = Math.min(this.sizeFactor, 1 + this.maxSizeFactor);
+    } else {
+        //big flash...
+        this.explodeFlash.play();
+        this.sizeFactor -= 0.005 * dt;
+        this.sizeFactor = Math.max(0.001, this.sizeFactor);
+        if (this.sizeFactor < 0.01 && !this.exploded) {
+            //explode
+            this.exploded = true;
+            this.explode();
+            console.log("explode");
+        }
     }
+   
     if (this.lockedIn) {
         //start grabber fade
         if (this.grabberFadeDt < this.grabberFadeLength) {
@@ -201,13 +231,11 @@ Sink.prototype.update = function (dt, hit) {
         } else {
             this.grabberFadeDt = this.grabberFadeLength;
         }
-        this.energy = this.lockedInEnergyFactor * this.maxEnergy;
     }
        
-    this.continuousPulse = true;
     this.pulsedt += dt;
     
-    if (this.pulsedt >= this.pulseRates[this.getOrbitalShell()]) {
+    if (this.pulsedt >= this.pulseRates[0]) {
         this.pulsedt = 0;
         this.flashdt = 0;
     }
@@ -222,22 +250,8 @@ Sink.prototype.update = function (dt, hit) {
     }
 
     this.updateOrbitals(dt);
+    this.explodeFlash.update(dt);
     this.sparks.update(dt);
-};
-
-Sink.prototype.getOrbitalShell = function () {
-    return Math.min(this.maxOrbitals, Math.round(this.energy / this.energyPerOrbital));
-};
-
-Sink.prototype.addEnergy = function () {
-    this.energy += this.growthFactor;
-    this.flash = true;
-    if (this.energy > this.maxEnergy) {
-        this.energy = this.maxEnergy;
-    }
-    if (this.getOrbitalShell() > this.orbitals.length) {
-        this.addOrbital();
-    }
 };
 
 Sink.prototype.addOrbital = function () {
@@ -253,9 +267,6 @@ Sink.prototype.addOrbital = function () {
 
 Sink.prototype.updateOrbitals = function (dt) {
     var i, p, v, r, x, y;
-    if (this.getOrbitalShell() < this.orbitals.length) {
-        this.orbitals.pop();
-    }
     for (i = 0; i < this.orbitals.length; i += 1) {
         p = this.orbitals[i];
         p.prevx = p.x;
@@ -297,35 +308,6 @@ Sink.prototype.drawPulseRing = function (canvas, color) {
     canvas.circleOutline(this.x, this.y, r, 20, color, alpha * 0.25);
 };
 
-Sink.prototype.tonemap = function (n) {
-    var exposure = 1.0;
-    return (1 - Math.pow(2, -n * 0.005 * exposure)) * 255;
-};
-
-function contrastColor(color, contrast) {
-
-    var factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-
-    color[0] = 1 + (factor * ((color[0] - 128) + 128));
-    color[1] = 1 + (factor * ((color[1] - 128) + 128));
-    color[2] = 1 + (factor * ((color[2] - 128) + 128));
-    
-    return color;
-}
-
-function brighten(color, factor) {
-    var c = [0, 0, 0], intensity = 10;
-    c[0] = color[0] + intensity * 0.2126 * factor;
-    c[1] = color[1] + intensity * 0.7152 * factor;
-    c[2] = color[2] + intensity * 0.0722 * factor;
-
-    c[0] = Math.min(255, ~~c[0]);
-    c[1] = Math.min(255, ~~c[1]);
-    c[2] = Math.min(255, ~~c[2]);
-
-    return c;
-}
-
 Sink.prototype.drawGrabber = function (canvas, color, alpha) {
     var size = this.radius,
         dt1 = 0.3,
@@ -362,20 +344,16 @@ Sink.prototype.drawGrabber = function (canvas, color, alpha) {
     canvas.arrowHead(p2, 20, -this.theta + dt1 + Math.PI, [255, 255, 255], alpha * 0.5);
 };
 
-Sink.prototype.draw = function (canvas, color) {
+Sink.prototype.draw = function (canvas) {
     var maxHitAlpha = 0.15,
         hitFactor = 0.005,
-        r = color[0],
-        g = color[1],
-        b = color[2],
-        c = [r, g, b],
         intensity = 1000,
         i,
         radius,
         alpha,
-        grabberAlpha;
-    color = ParticleWorldColors[this.inColor];
-    this.sizeFactor = 1 + this.radius * this.energy / 1000;
+        grabberAlpha,
+        f,
+        color = ParticleWorldColors[this.inColor];
 
     this.sparks.draw(canvas, color);
     canvas.radialGradient(this.x,
@@ -405,36 +383,8 @@ Sink.prototype.draw = function (canvas, color) {
         //draw a pulsing outer ring to indicate this sink has been locked in
         radius = this.radius * this.sizeFactor;
         alpha = this.grabberFadeDt / this.grabberFadeLength;
-        /*canvas.radialGradient(this.x,
-                              this.y,
-                              this.radius * this.sizeFactor,
-                              this.influenceRadius * this.sizeFactor * 1.5,
-                              [255, 255, 255],
-                              color,
-                              0.5 * alpha,
-                              0.0);
-        
-        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 20, [255, 255, 255], 0.3 * alpha);
-        canvas.circleOutline(this.x, this.y, this.influenceRadius * this.sizeFactor, 5, color, 0.5 * alpha);
-        */
         this.drawGrabber(canvas, ParticleWorldColors[this.outColor], alpha);
-    
     } else {
-        //draw pulse ring...
-        //this.drawPulseRing(canvas, color);
-        if (this.flashdt >= 0 && this.flashdt < this.flashlength) {
-            alpha = this.getOrbitalShell() / this.maxOrbitals * 0.75;
-            alpha *= Math.sin(this.flashdt / this.flashlength * Math.PI) * 0.5;
-            canvas.radialGradient(this.x,
-                                  this.y,
-                                  this.radius * this.sizeFactor * 1.25,
-                                  this.influenceRadius * this.sizeFactor * 1.25,
-                                  [255, 255, 255],
-                                  color,
-                                  alpha,
-                                  0.0);
-        }
-
         radius = (1 - this.ringpulsedt / this.ringpulselength) * this.radius * this.sizeFactor;
         alpha = this.ringpulsedt / this.ringpulselength;
         alpha = Math.sin(alpha * Math.PI);
@@ -458,7 +408,18 @@ Sink.prototype.draw = function (canvas, color) {
         canvas.circleOutline(this.x, this.y, this.radius * this.sizeFactor, 2, [0, 100, 255], 0.25);
     }
 
-    //this.drawOrbitals(canvas, c);
+    if (this.caught >= this.maxFill) {
+        f = this.explodeFlash.factor * this.explodeFlash.magnitude;
+        canvas.radialGradient(this.x,
+                              this.y,
+                              this.radius * (1 + f),
+                              this.radius * 1.5 * this.sizeFactor * (1 + f),
+                              [255, 255, 255],
+                              color,
+                              1.0,
+                              0.0);
+    }
+
 };
 
 Sink.prototype.serialize = function () {
@@ -472,7 +433,6 @@ Sink.prototype.serialize = function () {
     obj.influenceRadius = this.influenceRadius;
     obj.influenceType = this.influenceType;
     obj.maxSizeFactor = this.maxSizeFactor;
-    obj.targetSizeFactor = this.targetSizeFactor;
     obj.influenceBound = this.influenceBound;
     obj.showInfluenceRing = this.showInfluenceRing;
     return obj;

@@ -41,7 +41,7 @@ Transition.prototype = {
 };
 
 var Flash = function (duration, magnitude) {
-    this.duration = 500;//duration;
+    this.duration = duration;
     this.magnitude = magnitude;
     this.isPlaying = false;
     this.dt = 0;
@@ -71,8 +71,6 @@ Flash.prototype = {
                     this.factor += dt / this.duration * 4;
                 }
             } else if (this.dt > this.duration) {
-                //start the decay
-                //this.stop();
                 this.factor -= dt / this.duration * 4;
                 if (this.factor < 0.001) {
                     this.stop();

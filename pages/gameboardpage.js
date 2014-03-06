@@ -230,14 +230,30 @@ Gameboard.prototype = {
         this.isPaused = false;
     },
 
-    checkLevelComplete: function () {
+    checkSinksFull: function () {
         var i = 0;
-        for (i = 0; i < this.sources.length; i += 1) {
-            if (this.sources[i].isGoal && this.sources[i].isFull) {
-                this.setLevelComplete();
-                break;
+        for (i = 0; i < this.waterfall.sinks.length; i += 1) {
+            if (this.waterfall.sinks[i].isGoal && this.waterfall.sinks[i].full()) {
+                this.waterfall.stopParticles();
+                this.waterfall.stopTimer();
+                //this.setLevelComplete();
+                return true;
             }
         }
+        return false;
+    },
+
+    checkBucketsFull: function () {
+        var i = 0;
+        for (i = 0; i < this.waterfall.buckets.length; i += 1) {
+            if (this.waterfall.buckets[i].full()) {
+                this.waterfall.stopParticles();
+                this.waterfall.stopTimer();
+                //this.setLevelComplete();
+                return true;
+            }
+        }
+        return false;
     },
 
     setLevelComplete: function () {
@@ -282,13 +298,9 @@ Gameboard.prototype = {
         if (this.zoomTransition) {
             this.onZoomTransition(dt);
         }
+        this.checkSinksFull();
         this.waterfall.update(dt);
         this.draw(dt);
-        //check to see if the level is complete
-        //if so update the high score and save the current score
-        if (this.waterfall.levelComplete) {
-            this.setLevelComplete();
-        }
     },
 
     loadLevel: function () {
@@ -318,13 +330,6 @@ Gameboard.prototype = {
         }
     },
      
-    tweenLevel: function () {
-        //zoom in on the new level
-        //1. zoom way out
-        //2. load the new level
-        //3. zoom in on it
-    },
-
     onZoomTransition: function (dt) {
         var duration = 500,
             centerDeltaX = this.finalZoomCenter.x - this.startZoomCenter.x,

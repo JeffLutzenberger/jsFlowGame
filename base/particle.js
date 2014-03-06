@@ -95,8 +95,8 @@ Particle.prototype = {
         this.trail[0].color = this.color;
     },
     
-    draw: function (canvas, color) {
-        var i = 0, alpha = 1.0, t1, t2;
+    draw: function (canvas) {
+        var i = 0, alpha = 1.0, t1, t2,
         color = ParticleWorldColors[this.color];
         canvas.circle(this.x, this.y, this.radius * 2, color, 0.25);
         canvas.circle(this.x, this.y, this.radius, color, 1);
@@ -297,21 +297,19 @@ var SparksParticleConfigs = {
     nburstparticles: 10,
     burstradius : 20,
     speed : 0.5,
-    accel : -0.0005,
+    accel : -0.0007,
     ntracers : 10,
     lifetime : 500
 };
 
 var bucketParticleConfigs = {
-    x : 768 * 0.5,
-    y : 1024 * 0.5,
     particleradius : 5,
     particlelength : 50,
     nparticles : 300,
     nburstparticles: 50,
     burstradius : 50,
-    speed : 0.6,
-    accel : -0.0005,
+    speed : 0.5,
+    accel : -0.0007,
     ntracers : 10,
     lifetime : 1000
 };
