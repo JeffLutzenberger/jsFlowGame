@@ -34,7 +34,7 @@ var ParticleWorld = function (canvas) {
     this.bucketColor = [0, 153, 255];
     this.gridColor = [200, 50, 255];
     this.portalColor = [255, 153, 0];
-    this.backgroundGrid = new BackgroundGrid(768, 1024, 768 / 16, 1024 / 16);
+    this.backgroundGrid = new BackgroundGrid(768, 1024, 768 / 32, 1024 / 32);
     this.particleCaughtSound = new SoundPool('sounds/hit.mp3', 10);
     //this.traileffect = new TrailEffect(canvas);
 };

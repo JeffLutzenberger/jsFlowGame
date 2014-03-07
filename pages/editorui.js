@@ -354,21 +354,21 @@ GameObjectEditForm.prototype = {
             $("#object-form").append('Is Goal: <input id="is-goal-input" type="checkbox"' + (this.gameObject.isGoal ? "checked" : "") + '></span><br>');
             $("#is-goal-input").change($.proxy(function () {
                 val = $("#is-goal-input").prop('checked');
-                this.gameObject.isGoal = val;
+                this.gameObject.isGoal = Boolean(val);
             }, this));
 
             $("#object-form").append('Is Source: <input id="is-source-input" type="checkbox"' + (this.gameObject.isSource ? "checked" : "") + '></span><br>');
             $("#is-source-input").change($.proxy(function () {
                 val = $("#is-source-input").prop('checked');
-                this.gameObject.isSource = val;
-                this.gameObject.lockedIn = val;
+                this.gameObject.isSource = Boolean(val);
+                this.gameObject.lockedIn = Boolean(val);
             }, this));
 
             
             $("#object-form").append('Influence Bound: <input id="influence-bound-input" type="checkbox"' + (this.gameObject.influenceBound ? "checked" : "") + '></span><br>');
             $("#influence-bound-input").change($.proxy(function () {
                 val = $("#influence-bound-input").prop('checked');
-                this.gameObject.influenceBound = val;
+                this.gameObject.influenceBound = Boolean(val);
             }, this));
         }
 

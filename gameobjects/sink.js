@@ -208,10 +208,7 @@ Sink.prototype.explode = function () {
 Sink.prototype.update = function (dt, hit) {
     var i;
     this.brightness = Math.min(this.brightness, 1.0);
-    if (!this.full()) {
-        this.sizeFactor = 1 + this.maxSizeFactor * this.caught / this.maxFill;
-        this.sizeFactor = Math.min(this.sizeFactor, 1 + this.maxSizeFactor);
-    } else {
+    if (this.full() && this.isGoal) {
         //big flash...
         this.explodeFlash.play();
         this.sizeFactor -= 0.005 * dt;
@@ -222,6 +219,9 @@ Sink.prototype.update = function (dt, hit) {
             this.explode();
             console.log("explode");
         }
+    } else {
+        this.sizeFactor = 1 + this.maxSizeFactor * this.caught / this.maxFill;
+        this.sizeFactor = Math.min(this.sizeFactor, 1 + this.maxSizeFactor);
     }
    
     if (this.lockedIn) {

@@ -292,7 +292,7 @@ PassiveParticle.prototype = {
 
 var SparksParticleConfigs = {
     particleradius : 1,
-    particlelength : 50,
+    particlelength : 10,
     nparticles : 100,
     nburstparticles: 10,
     burstradius : 20,
@@ -304,7 +304,7 @@ var SparksParticleConfigs = {
 
 var bucketParticleConfigs = {
     particleradius : 5,
-    particlelength : 50,
+    particlelength : 10,
     nparticles : 300,
     nburstparticles: 50,
     burstradius : 50,

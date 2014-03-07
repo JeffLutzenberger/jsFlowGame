@@ -40,6 +40,13 @@ var LevelLoader = {
             starList = level.stars;
         
         world.clear();
+      
+        world.grid = gameGridFromJson(level.gameGrid);
+
+        world.backgroundGrid = new BackgroundGrid(world.grid.extents().x,
+                                                  world.grid.extents().y,
+                                                  world.grid.extents().x / 32,
+                                                  world.grid.extents().y / 32);
         
         for (i = 0; i < bucketList.length; i += 1) {
             world.buckets[i] = new bucketFromJson(bucketList[i]);

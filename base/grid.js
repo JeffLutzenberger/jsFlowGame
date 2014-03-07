@@ -421,6 +421,7 @@ var gameGridFromJson = function (j) {
             this.obj.lines[i].setS2(parseFloat(j.lines[i].s2));
         }
     }
+    return obj;
 };
 
 var PointMass = function (x, y, invMass) {

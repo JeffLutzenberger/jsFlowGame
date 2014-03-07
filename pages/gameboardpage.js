@@ -9,14 +9,20 @@ var Gameboard = function (canvas) {
     this.waterfall = new ParticleWorld(canvas);
     this.editorui = new EditorUI(this.waterfall, this.camera);
     this.startButton = new UIButton(768 * 0.25, 1024 * 0.25, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'PLAY');
-    //this.startButton.textXOffset = -35;
     this.startButton.textYOffset = 10;
     this.nextButton = new UIButton(768 * 0.25, 1024 * 0.25 - 30, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'NEXT');
-    this.nextButton.textXOffset = -35;
     this.nextButton.textYOffset = 10;
     this.replayButton = new UIButton(768 * 0.25, 1024 * 0.25 + 30, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'REPLAY');
-    this.replayButton.textXOffset = -55;
     this.replayButton.textYOffset = 10;
+    
+    //main menu buttons
+    //this.Button = new UIButton(768 * 0.25, 1024 * 0.25, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'PLAY');
+    //this.startButton.textYOffset = 10;
+    //this.nextButton = new UIButton(768 * 0.25, 1024 * 0.25 - 30, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'NEXT');
+    //this.nextButton.textYOffset = 10;
+    //this.replayButton = new UIButton(768 * 0.25, 1024 * 0.25 + 30, 768 * 0.5, 40, 'green', 26, 'neon-lights', 'REPLAY');
+    //this.replayButton.textYOffset = 10;
+    
     this.isPaused = false;
     this.levels = [];
     this.level = 0;
@@ -236,7 +242,17 @@ Gameboard.prototype = {
             if (this.waterfall.sinks[i].isGoal && this.waterfall.sinks[i].full()) {
                 this.waterfall.stopParticles();
                 this.waterfall.stopTimer();
-                //this.setLevelComplete();
+                return true;
+            }
+        }
+        return false;
+    },
+
+    checkSinksExploded: function () {
+        var i = 0, s;
+        for (i = 0; i < this.waterfall.sinks.length; i += 1) {
+            s = this.waterfall.sinks[i];
+            if (s.exploded && s.explodeFlash.isPlaying) {
                 return true;
             }
         }
@@ -249,7 +265,6 @@ Gameboard.prototype = {
             if (this.waterfall.buckets[i].full()) {
                 this.waterfall.stopParticles();
                 this.waterfall.stopTimer();
-                //this.setLevelComplete();
                 return true;
             }
         }
@@ -293,12 +308,18 @@ Gameboard.prototype = {
         this.editorui.hide();
     },
 
-
     update: function (dt) {
         if (this.zoomTransition) {
             this.onZoomTransition(dt);
         }
         this.checkSinksFull();
+        if (!this.isLevelComplete && this.checkSinksExploded()) {
+            this.setLevelComplete();
+        }
+        if (this.checkBucketsFull()) {
+            this.setLevelComplete();
+        }
+ 
         this.waterfall.update(dt);
         this.draw(dt);
     },
@@ -312,8 +333,8 @@ Gameboard.prototype = {
         this.waterfall.pause();
         this.startButton.show = true;
         this.zoomTransition = true;
-        this.startZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
-        this.finalZoomCenter = new Vector(this.camera.center.x, this.camera.center.y);
+        this.startZoomCenter = new Vector(this.waterfall.grid.center().x, this.waterfall.grid.center().y);
+        this.finalZoomCenter = new Vector(this.waterfall.grid.center().x, this.waterfall.grid.center().y);
         this.startZoomExtents = new Vector(768 * 2, 1024 * 2);
         this.finalZoomExtents = new Vector(this.waterfall.grid.extents().x, this.waterfall.grid.extents().y);
         this.zoomTime = 0;
