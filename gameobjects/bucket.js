@@ -3,9 +3,7 @@
 function Bucket(x, y, w, h, theta) {
     this.base = Rectangle;
     this.base(x, y, w, h, theta);
-    this.t1 = 0;
     this.fill = 0;
-    this.fillSamplePeriod = 1000; //how long to wait to sample the fill
     this.fillRate = 0.0;
     this.targetFillRate = 0.1; //particles per ms
     this.caught = 0;
@@ -13,20 +11,12 @@ function Bucket(x, y, w, h, theta) {
     this.inColor = 'red';
     this.outColor = 'green';
     this.level = 0;
-    //this.fillLevels = [0.0, 0.005, 0.01, 0.02];
-    this.fillLevels = [50, 100, 150, 200];
+    this.fillLevels = [25, 50, 75, 100];
     this.transition1 = new Transition(500, 0.1);
     this.transition2 = new Transition(500, 0.1);
     this.wobbleTheta = 0;
     this.wobbleTime = 0;
-    this.explosion = new ParticleSystem(x, y);
-    this.explosion.init(x, y, 100, 10);
     this.explode = false;
-    this.particleconfigs = bucketParticleConfigs;
-    this.fillSound = new Audio("sounds/morph.mp3");
-    this.fillSound.volume = 0.5;
-    this.fillSound.load();
-
 }
 
 Bucket.prototype = new Rectangle();
@@ -41,12 +31,6 @@ Bucket.prototype.full = function () {
 
 Bucket.prototype.update = function (dt) {
     var s = 0;
-    this.t1 += dt;
-    if (this.t1 > this.fillSamplePeriod) {
-        this.fillRate = this.fill / this.t1;
-        this.fill = 0;
-        this.t1 = 0;
-    }
    
     //note: the order is important here 
     //go up to level 1
@@ -62,38 +46,8 @@ Bucket.prototype.update = function (dt) {
     //go up to level 3
     if (this.caught > this.fillLevels[2] && this.level === 2) {
         this.level = 3;
-        this.explode = true;
-        this.fillSound.play();
-        this.explosion.init(this.x,
-                            this.y,
-                            this.particleconfigs.particleradius,
-                            this.particleconfigs.particlelength,
-                            this.particleconfigs.ntracers,
-                            this.particleconfigs.nparticles);
-
-        this.explosion.burst(this.x,
-                             this.y,
-                             this.particleconfigs.burstradius,
-                             this.particleconfigs.speed,
-                             this.particleconfigs.accel,
-                             this.particleconfigs.nburstparticles,
-                             this.particleconfigs.lifetime);
-                             
     }
-    /*
-    //go down to level 1
-    if (this.fillRate < this.fillLevels[2] && this.level === 2) {
-        this.level = 1;
-        this.explode = false;
-        this.transition2.reverse();
-    }
-    //go down to level 0
-    if (this.fillRate < this.fillLevels[1] && this.level === 1) {
-        this.level = 0;
-        this.transition1.reverse();
-    }
-    */
-
+    
     this.transition1.update(dt);
     this.transition2.update(dt);
 
@@ -125,7 +79,6 @@ Bucket.prototype.hit = function (p) {
             //count this as being caught
             //add score and recycle the particle
             if (p.color === this.inColor) {
-                p.caughtSound.play();
                 p.source.recycleParticle(p);
                 this.fill += 1;
                 this.caught += 1;
@@ -180,7 +133,6 @@ Bucket.prototype.reset = function () {
     this.fillRate = 0;
     this.fill = 0;
     this.caught = 0;
-    this.t1 = 0;
     this.level = 0;
 };
 
@@ -194,15 +146,11 @@ Bucket.prototype.draw = function (canvas) {
         if (this.explode === true) {
             this.explosion.draw(canvas, inColor);
         }
-        //f += this.wobbleTheta;
         canvas.rectangleXY(this.x, this.y, this.w * f, this.h * f, theta, inColor, 0.5);
         canvas.bucket(this.x, this.y, this.w * f, this.h * f, theta, 20, inColor, 0.25);
         canvas.bucket(this.x, this.y, this.w * f, this.h * f, theta, 10, inColor, 0.5);
         canvas.bucket(this.x, this.y, this.w * f, this.h * f, theta, 5, [255, 255, 255], 0.9);
         canvas.bucket(this.x, this.y, this.w * f, this.h * f, theta, 30, inColor, 0.15);
-        //canvas.rectangleXY(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 20, inColor, 0.25);
-        //canvas.rectangleXY(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 5, [255, 255, 255], 0.9);
-        //canvas.rectangleXY(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 30, inColor, 0.15);
 
         if (this.level > 0) {
             canvas.bucket(this.x, this.y, this.w * 0.75 * f, this.h * 0.75 * f, theta, 20, inColor, 0.25);
@@ -216,15 +164,7 @@ Bucket.prototype.draw = function (canvas) {
             canvas.bucket(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 5, [255, 255, 255], 0.9);
             canvas.bucket(this.x, this.y, this.w * 0.5 * f, this.h * 0.5 * f, theta, 30, inColor, 0.15);
         }
-        //canvas.ctx.font = fontSize + "pt Arial";
-        textWidth = 50;//parseFloat(canvas.ctx.measureText(this.fillRate).width) * 0.5;
-        //console.log(textWidth)
-        //canvas.text(this.x - textWidth, this.y + this.h * 0.5 + 40, [255, 255, 255], "Arial", fontSize, this.fillRate.toFixed(4));
-        //canvas.text(this.x - textWidth, this.y + this.h * 0.5 + 80, [255, 255, 255], "Arial", fontSize, this.continuousFillRate.toFixed(4));
-
     } else {
-        //console.log(this.wobbleTheta);
-        //theta += this.wobbleTheta;
         f = 1 + this.wobbleTheta;
         canvas.funnel(this.x, this.y, this.w * f, this.h * f, theta, 20, inColor, outColor, 0.25);
         canvas.funnel(this.x, this.y, this.w * f, this.h * f, theta, 10, inColor, outColor, 0.5);

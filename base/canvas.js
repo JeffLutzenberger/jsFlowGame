@@ -76,6 +76,23 @@ Canvas.prototype = {
         this.ctx.fill();
     },
 
+    arc: function (x, y, r, theta1, theta2, width, color, alpha) {
+        this.ctx.fillStyle = this.rgba(color, alpha);
+        this.ctx.beginPath();
+        this.ctx.moveTo(x * this.m + r * this.m, y * this.m);
+        this.ctx.arc(x * this.m, y * this.m, r * this.m, 0, Math.PI * 2, false);
+        this.ctx.fill();
+    },
+
+    arcOutline: function (x, y, r, theta1, theta2, lineWidth, color, alpha) {
+        this.ctx.strokeStyle = this.rgba(color, alpha);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + r, y);
+        this.ctx.arc(x, y, r, theta1, theta2, false);
+        this.ctx.stroke();
+    },
+
     ellipse: function (xc, yc, w, h, lineWidth, color, alpha) {
         var kappa = 0.5522848,
             x = xc - 0.5 * w,
